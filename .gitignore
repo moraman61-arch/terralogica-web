@@ -22,3 +22,7 @@ dist-ssr
 *.njsproj
 *.sln
 *.sw?
+DOCUMENTOS/
+LOGOS/
+RECURSOS/
+*.code-workspace
