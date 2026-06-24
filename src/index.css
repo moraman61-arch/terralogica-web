@@ -1,0 +1,67 @@
+@import url('https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;700;800&family=Space+Grotesk:wght@500;700&display=swap');
+
+:root {
+  --background: #04143d;
+  --surface: rgba(9, 27, 74, 0.84);
+  --surface-strong: #0b2464;
+  --heading: #dca060;
+  --muted: #c5d0ea;
+  --muted-strong: #e5ebff;
+  --accent: #2276d5;
+  --accent-2: #3890f5;
+  --border: rgba(255, 255, 255, 0.09);
+  --border-strong: rgba(226, 237, 255, 0.24);
+  --shadow: 0 24px 80px rgba(2, 8, 28, 0.42);
+  --body: 'Manrope', 'Segoe UI', sans-serif;
+  --display: 'Space Grotesk', 'Segoe UI', sans-serif;
+  font: 16px/1.55 var(--body);
+  color: var(--muted);
+  background:
+    radial-gradient(circle at top, rgba(57, 143, 244, 0.2), transparent 24%),
+    radial-gradient(circle at 85% 14%, rgba(52, 171, 64, 0.1), transparent 26%),
+    linear-gradient(180deg, #041238 0%, #03102f 100%);
+  font-synthesis: none;
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  margin: 0;
+  min-width: 320px;
+  min-height: 100vh;
+}
+
+body::before {
+  content: '';
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  background-image:
+    linear-gradient(rgba(176, 201, 255, 0.04) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(176, 201, 255, 0.04) 1px, transparent 1px);
+  background-size: 56px 56px;
+  mask-image: radial-gradient(circle at center, black, transparent 80%);
+}
+
+a {
+  color: inherit;
+}
+
+p {
+  margin: 0;
+}
+
+#root {
+  width: min(1200px, 100%);
+  margin: 0 auto;
+  min-height: 100vh;
+}

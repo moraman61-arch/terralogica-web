@@ -1,0 +1,26 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 900 540" role="img" aria-label="Tecnica avanzada">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#0a3a91"/>
+      <stop offset="100%" stop-color="#0f5ec8"/>
+    </linearGradient>
+  </defs>
+  <rect width="900" height="540" fill="url(#bg)"/>
+  <g opacity="0.3" fill="#d6e8ff">
+    <rect x="70" y="90" width="760" height="20" rx="10"/>
+    <rect x="70" y="160" width="760" height="20" rx="10"/>
+    <rect x="70" y="230" width="760" height="20" rx="10"/>
+    <rect x="70" y="300" width="760" height="20" rx="10"/>
+    <rect x="70" y="370" width="760" height="20" rx="10"/>
+  </g>
+  <g fill="none" stroke="#ffffff" stroke-opacity="0.65" stroke-width="6">
+    <path d="M110 400 L250 250 L350 320 L530 140 L790 320"/>
+  </g>
+  <g fill="#ffffff" fill-opacity="0.85">
+    <circle cx="110" cy="400" r="9"/>
+    <circle cx="250" cy="250" r="9"/>
+    <circle cx="350" cy="320" r="9"/>
+    <circle cx="530" cy="140" r="9"/>
+    <circle cx="790" cy="320" r="9"/>
+  </g>
+</svg>
