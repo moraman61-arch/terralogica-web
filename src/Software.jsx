@@ -11,6 +11,14 @@ function Software() {
             <span className="brand-text">Terralógica</span>
           </Link>
           <nav className="topnav" aria-label="Navegación secundaria">
+            <div className="dropdown">
+              <button className="dropdown-toggle" aria-haspopup="true" aria-expanded="false">
+                Productos
+              </button>
+              <div className="dropdown-menu" aria-label="Opciones de productos">
+                <Link to="/servicios/software/inventrees">INVENTREES para gobiernos y comunidades</Link>
+              </div>
+            </div>
             <Link to="/">Inicio</Link>
           </nav>
         </header>
