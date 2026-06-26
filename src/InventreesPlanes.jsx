@@ -137,7 +137,7 @@ const currencyFormatter = new Intl.NumberFormat('en-US', {
   minimumFractionDigits: 2,
 })
 
-const contactEmail = 'info@terralogica.mx'
+const contactEmail = 'moraman61@gmail.com'
 
 const introVideos = [
   {
