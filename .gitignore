@@ -26,3 +26,10 @@ DOCUMENTOS/
 LOGOS/
 RECURSOS/
 *.code-workspace
+
+# wrangler files
+.wrangler
+.dev.vars*
+!.dev.vars.example
+.env*
+!.env.example
