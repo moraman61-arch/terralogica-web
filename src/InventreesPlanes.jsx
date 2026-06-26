@@ -1,5 +1,6 @@
-import { useRef, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
+import Hls from 'hls.js'
 import shp from 'shpjs'
 import { kml as kmlToGeoJSON } from '@tmcw/togeojson'
 import './App.css'
@@ -141,15 +142,15 @@ const contactEmail = 'info@terralogica.mx'
 const introVideos = [
   {
     label: 'Geolocalizador',
-    src: '/banners/Geolocalizador.mp4',
+    src: 'https://customer-kywq3a5r9m82v8jr.cloudflarestream.com/5e33222f0d842e505fbbde0cd1c5a43e/manifest/video.m3u8',
   },
   {
     label: 'Medidor',
-    src: '/banners/Medidor.mp4',
+    src: 'https://customer-kywq3a5r9m82v8jr.cloudflarestream.com/7a612d900ce0f73a0090525603f4235c/manifest/video.m3u8',
   },
   {
     label: 'Caracterizador',
-    src: '/banners/Caracterizador.mp4',
+    src: 'https://customer-kywq3a5r9m82v8jr.cloudflarestream.com/1c000c5fad5fd0d9a7dcb04adcce4907/manifest/video.m3u8',
   },
 ]
 
@@ -719,6 +720,36 @@ function InventreesPlanes() {
 
   const currentIntroVideo = introVideos[currentIntroVideoIndex]
 
+  useEffect(() => {
+    const videoElement = introVideoRef.current
+    if (!videoElement) {
+      return undefined
+    }
+
+    let hlsInstance = null
+
+    if (videoElement.canPlayType('application/vnd.apple.mpegurl')) {
+      videoElement.src = currentIntroVideo.src
+    } else if (Hls.isSupported()) {
+      hlsInstance = new Hls()
+      hlsInstance.loadSource(currentIntroVideo.src)
+      hlsInstance.attachMedia(videoElement)
+    } else {
+      videoElement.src = currentIntroVideo.src
+    }
+
+    videoElement
+      .play()
+      .then(() => setIsIntroVideoPlaying(true))
+      .catch(() => setIsIntroVideoPlaying(false))
+
+    return () => {
+      if (hlsInstance) {
+        hlsInstance.destroy()
+      }
+    }
+  }, [currentIntroVideo.src])
+
   const handleIntroVideoEnded = () => {
     setIsIntroVideoPlaying(true)
     setCurrentIntroVideoIndex((previousIndex) => (previousIndex + 1) % introVideos.length)
@@ -821,7 +852,6 @@ function InventreesPlanes() {
           <div className="inventory-intro-video-block" aria-label="Demostración secuencial de módulos INVENTREES">
             <video
               ref={introVideoRef}
-              key={currentIntroVideo.src}
               className="inventory-intro-video"
               autoPlay
               muted
@@ -830,9 +860,7 @@ function InventreesPlanes() {
               onEnded={handleIntroVideoEnded}
               onPlay={() => setIsIntroVideoPlaying(true)}
               onPause={() => setIsIntroVideoPlaying(false)}
-            >
-              <source src={currentIntroVideo.src} type="video/mp4" />
-            </video>
+            />
             <div className="inventory-intro-video-labels" aria-label="Selector de módulos de video">
               {introVideos.map((video, index) => (
                 <button

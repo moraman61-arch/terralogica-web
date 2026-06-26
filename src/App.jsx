@@ -62,7 +62,6 @@ const heroBannerParts = [
   {
     text: '... esto es Terralógica ...',
     image: '/banners/terralogics-ai.jpg',
-    video: '/banners/esto-es-terralogics.mp4',
   },
 ]
 
