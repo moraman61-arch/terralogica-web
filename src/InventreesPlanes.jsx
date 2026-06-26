@@ -896,7 +896,7 @@ function InventreesPlanes() {
           </div>
           <h1>Crear y mantener su propio inventario de arbolado público urbano es ahora muy fácil!.</h1>
           <p className="hero-text">
-            Estructura comercial flexible y equitativa para comunidades pequeñas, ciudades medias y grandes, con reglas claras por cobertura de km de vialidad.
+            Estructura comercial flexible y equitativa para comunidades pequeñas, ciudades medias y grandes, con reglas claras por cobertura de km de vialidad. INVENTREES es solo para gobiernos locales y comunidades. No trabajamos con empresas.
           </p>
         </div>
       </section>
@@ -904,7 +904,7 @@ function InventreesPlanes() {
       <section className="services-section inventory-requirements-section">
         <div className="section-heading compact">
           <p className="eyebrow">Requisitos del cliente</p>
-          <h2>Para cualquier licencia se requiere una capa de polígonos del área de interés.</h2>
+          <h2>Para cualquier licencia se requiere una capa de polígonos del área de interés. El cliente debe ser un representante del gobierno local o comunidad.</h2>
         </div>
         <div className="identity-card inventory-requirements-card">
           <p>
