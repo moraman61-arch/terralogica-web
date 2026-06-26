@@ -62,6 +62,8 @@ const heroBannerParts = [
   {
     text: '... esto es Terralógica ...',
     image: '/banners/terralogics-ai.jpg',
+    videoEmbed:
+      'https://customer-kywq3a5r9m82v8jr.cloudflarestream.com/c6e07bb41ae37e52b6c2ef6b76fe39a2/iframe?autoplay=true&muted=true&loop=true&controls=false',
   },
 ]
 
@@ -129,9 +131,19 @@ function App() {
                     key={`${part.text}-${idx}`}
                     className="hero-banner-card"
                     aria-hidden={idx >= heroBannerParts.length}
-                    style={{ backgroundImage: part.video ? undefined : `url(${part.image})` }}
+                    style={{ backgroundImage: part.video || part.videoEmbed ? undefined : `url(${part.image})` }}
                   >
-                    {part.video ? (
+                    {part.videoEmbed ? (
+                      <iframe
+                        className="hero-banner-iframe"
+                        src={part.videoEmbed}
+                        title={part.text}
+                        loading="lazy"
+                        allow="accelerometer; autoplay; encrypted-media; gyroscope; picture-in-picture"
+                        allowFullScreen
+                        aria-hidden="true"
+                      ></iframe>
+                    ) : part.video ? (
                       <video
                         className="hero-banner-video"
                         autoPlay
