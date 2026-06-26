@@ -550,7 +550,7 @@ function calculateQuote(plan, km) {
   }
 }
 
-function buildQuoteMailto({ moduleName, planType, kmValueText, amountLabel, recommendedLabel }) {
+function buildQuoteEmailDraft({ moduleName, planType, kmValueText, amountLabel, recommendedLabel }) {
   const subject = `Solicitud de cotización INVENTREES - ${moduleName}`
   const body = [
     'Hola,',
@@ -567,7 +567,7 @@ function buildQuoteMailto({ moduleName, planType, kmValueText, amountLabel, reco
     'Quedo atento(a) a su propuesta.',
   ].join('\n')
 
-  return `mailto:${contactEmail}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`
+  return { subject, body }
 }
 
 function attachmentToFile(attachment) {
@@ -659,26 +659,27 @@ function InventreesPlanes() {
   const hasPolygonForAttachment =
     Boolean(currentRegistration?.polygonAttachment) ||
     (Array.isArray(currentRegistration?.polygon) && currentRegistration.polygon.length >= 3)
-  const quoteMailto =
+  const quoteEmailDraft =
     quote.status === 'valid'
-      ? buildQuoteMailto({
+      ? buildQuoteEmailDraft({
           moduleName: selectedModule.name,
           planType: selectedPlan.type,
           kmValueText: formatKmLimit(parsedKm),
           amountLabel: quote.amountLabel,
           recommendedLabel: recommendedOption?.label,
         })
-      : `mailto:${contactEmail}?subject=${encodeURIComponent('Solicitud de información INVENTREES')}`
+      : {
+          subject: 'Solicitud de información INVENTREES',
+          body: 'Hola,\n\nSolicito información adicional sobre INVENTREES.\n',
+        }
 
-  const handleRequestQuote = async (event) => {
+  const handleRequestQuote = async () => {
     if (quote.status !== 'valid') {
-      event.preventDefault()
       return
     }
 
-    event.preventDefault()
-
     const attachmentFile = buildAttachmentFileFromRegistration(currentRegistration)
+    let attachmentStatusMessage
 
     if (attachmentFile && navigator.share && navigator.canShare?.({ files: [attachmentFile] })) {
       try {
@@ -687,22 +688,38 @@ function InventreesPlanes() {
           text: 'Se prepara el archivo del polígono para adjuntarlo a la solicitud.',
           files: [attachmentFile],
         })
-        setQuoteAttachmentMessage(`Archivo preparado: ${attachmentFile.name}. Verifique que quede adjunto antes de enviar.`)
+        attachmentStatusMessage = `Archivo preparado: ${attachmentFile.name}. Verifique que quede adjunto antes de enviar.`
       } catch {
-        setQuoteAttachmentMessage(
-          `Gmail Web no adjunta archivos desde mailto. Se abrirá el correo y debe adjuntar manualmente: ${attachmentFile.name}.`,
-        )
+        attachmentStatusMessage =
+          `Gmail Web no adjunta archivos desde mailto. Debe adjuntar manualmente: ${attachmentFile.name}.`
       }
     } else if (attachmentFile) {
       downloadFile(attachmentFile)
-      setQuoteAttachmentMessage(
-        `Se descargó ${attachmentFile.name}. En Gmail Web adjúntelo manualmente antes de enviar la cotización.`,
-      )
+      attachmentStatusMessage =
+        `Se descargó ${attachmentFile.name}. En Gmail Web adjúntelo manualmente antes de enviar la cotización.`
     } else {
-      setQuoteAttachmentMessage('No se encontró archivo de polígono para adjuntar en esta solicitud.')
+      attachmentStatusMessage = 'No se encontró archivo de polígono para adjuntar en esta solicitud.'
     }
 
-    window.location.href = quoteMailto
+    const draftText = [`Para: ${contactEmail}`, `Asunto: ${quoteEmailDraft.subject}`, '', quoteEmailDraft.body].join('\n')
+
+    if (navigator.clipboard?.writeText) {
+      try {
+        await navigator.clipboard.writeText(draftText)
+        setQuoteAttachmentMessage(
+          `${attachmentStatusMessage} Se copió la cotización al portapapeles para pegarla en su correo sin abrir una nueva página del navegador.`,
+        )
+      } catch {
+        setQuoteAttachmentMessage(
+          `${attachmentStatusMessage} No fue posible copiar automáticamente; use el botón y complete el correo manualmente a ${contactEmail}.`,
+        )
+      }
+      return
+    }
+
+    setQuoteAttachmentMessage(
+      `${attachmentStatusMessage} Copie manualmente los datos y envíelos a ${contactEmail}.`,
+    )
   }
 
   const handleDownloadPolygonAttachment = () => {
@@ -975,14 +992,14 @@ function InventreesPlanes() {
                 Recomendación automática: {recommendedOption.label}
               </p>
             ) : null}
-            <a
+            <button
+              type="button"
               className={`primary-link inventory-quote-cta${quote.status !== 'valid' ? ' inventory-quote-cta-disabled' : ''}`}
-              href={quoteMailto}
-              aria-disabled={quote.status !== 'valid'}
               onClick={handleRequestQuote}
+              disabled={quote.status !== 'valid'}
             >
               Solicitar cotización
-            </a>
+            </button>
             <button
               type="button"
               className="secondary-link inventory-quote-attachment-download"
