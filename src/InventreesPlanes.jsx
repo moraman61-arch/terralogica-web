@@ -142,11 +142,11 @@ const contactEmail = 'info@terralogica.mx'
 const introVideos = [
   {
     label: 'Geolocalizador',
-    src: 'https://customer-kywq3a5r9m82v8jr.cloudflarestream.com/5e33222f0d842e505fbbde0cd1c5a43e/manifest/video.m3u8',
+    src: 'https://customer-kywq3a5r9m82v8jr.cloudflarestream.com/7a612d900ce0f73a0090525603f4235c/manifest/video.m3u8',
   },
   {
     label: 'Medidor',
-    src: 'https://customer-kywq3a5r9m82v8jr.cloudflarestream.com/7a612d900ce0f73a0090525603f4235c/manifest/video.m3u8',
+    src: 'https://customer-kywq3a5r9m82v8jr.cloudflarestream.com/5e33222f0d842e505fbbde0cd1c5a43e/manifest/video.m3u8',
   },
   {
     label: 'Caracterizador',
