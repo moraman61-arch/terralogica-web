@@ -1,6 +1,7 @@
 import './App.css'
 import { Link } from 'react-router-dom'
-import { useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
+import Hls from 'hls.js'
 
 
 
@@ -62,8 +63,8 @@ const heroBannerParts = [
   {
     text: '... esto es Terralógica ...',
     image: '/banners/terralogics-ai.jpg',
-    videoEmbed:
-      'https://customer-kywq3a5r9m82v8jr.cloudflarestream.com/c6e07bb41ae37e52b6c2ef6b76fe39a2/iframe?autoplay=true&muted=true&loop=true&controls=false',
+    videoHls:
+      'https://customer-kywq3a5r9m82v8jr.cloudflarestream.com/c6e07bb41ae37e52b6c2ef6b76fe39a2/manifest/video.m3u8',
   },
 ]
 
@@ -92,6 +93,40 @@ const clientTypes = [
 
 function App() {
   const [hoveredClient, setHoveredClient] = useState(null)
+  const heroVideoRefs = useRef([])
+
+  useEffect(() => {
+    const hlsInstances = []
+
+    heroVideoRefs.current.forEach((videoElement) => {
+      if (!videoElement) {
+        return
+      }
+
+      const sourceUrl = videoElement.dataset.src
+      if (!sourceUrl) {
+        return
+      }
+
+      if (videoElement.canPlayType('application/vnd.apple.mpegurl')) {
+        videoElement.src = sourceUrl
+      } else if (Hls.isSupported()) {
+        const hls = new Hls()
+        hls.loadSource(sourceUrl)
+        hls.attachMedia(videoElement)
+        hlsInstances.push(hls)
+      } else {
+        videoElement.src = sourceUrl
+      }
+
+      videoElement.play().catch(() => {})
+    })
+
+    return () => {
+      hlsInstances.forEach((hls) => hls.destroy())
+    }
+  }, [])
+
   return (
     <main className="page-shell">
       <section className="hero-section">
@@ -131,18 +166,22 @@ function App() {
                     key={`${part.text}-${idx}`}
                     className="hero-banner-card"
                     aria-hidden={idx >= heroBannerParts.length}
-                    style={{ backgroundImage: part.video || part.videoEmbed ? undefined : `url(${part.image})` }}
+                    style={{ backgroundImage: part.video || part.videoHls ? undefined : `url(${part.image})` }}
                   >
-                    {part.videoEmbed ? (
-                      <iframe
-                        className="hero-banner-iframe"
-                        src={part.videoEmbed}
-                        title={part.text}
-                        loading="lazy"
-                        allow="accelerometer; autoplay; encrypted-media; gyroscope; picture-in-picture"
-                        allowFullScreen
+                    {part.videoHls ? (
+                      <video
+                        ref={(node) => {
+                          heroVideoRefs.current[idx] = node
+                        }}
+                        data-src={part.videoHls}
+                        className="hero-banner-video"
+                        autoPlay
+                        loop
+                        muted
+                        playsInline
+                        preload="metadata"
                         aria-hidden="true"
-                      ></iframe>
+                      />
                     ) : part.video ? (
                       <video
                         className="hero-banner-video"
