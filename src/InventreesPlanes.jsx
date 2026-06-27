@@ -30,31 +30,40 @@ const plansByModule = [
       {
         licenseId: 'small-monthly',
         type: 'Suscripción mensual para comunidades pequeñas',
-        price: 'USD 0.50 por km de vialidad',
+        price: 'USD 0.60 por km de vialidad (mínimo USD 100.00)',
         range: 'Hasta 500 km',
         mode: 'rate',
         billing: 'monthly',
-        rate: 0.5,
+        rate: 0.6,
+        minAmount: 100,
         minKm: 0,
         maxKm: 500,
       },
       {
         licenseId: 'monthly-medium-large',
         type: 'Suscripción mensual para ciudades medias y grandes',
-        price: 'USD 350.00 mensuales',
-        range: 'A partir de 500 km',
-        mode: 'flat-monthly',
-        flatAmount: 350,
+        price: 'USD 450.00 a USD 500.00 mensuales (descuento por meses)',
+        range: 'Más de 500 km y hasta 10,000 km',
+        mode: 'scaled-monthly',
+        minAmount: 450,
+        maxAmount: 500,
+        startKm: 500,
+        endKm: 10000,
+        discountPerExtraMonth: 0.01,
         minKm: 500,
+        minKmExclusive: true,
+        maxKm: 10000,
       },
       {
         licenseId: 'permanent-medium-large',
         type: 'Licencia permanente para ciudades medias y grandes',
-        price: 'USD 1.00 por km de vialidad',
-        range: 'Desde 10,000 km en adelante',
+        price: 'USD 1.20 por km de vialidad (tope USD 15,000.00)',
+        range: 'Más de 10,000 km',
         mode: 'rate',
-        rate: 1,
+        rate: 1.2,
+        maxAmount: 15000,
         minKm: 10000,
+        minKmExclusive: true,
       },
     ],
   },
@@ -65,31 +74,40 @@ const plansByModule = [
       {
         licenseId: 'small-monthly',
         type: 'Suscripción mensual para comunidades pequeñas',
-        price: 'USD 0.75 por km de vialidad',
+        price: 'USD 0.85 por km de vialidad (mínimo USD 150.00)',
         range: 'Hasta 500 km',
         mode: 'rate',
         billing: 'monthly',
-        rate: 0.75,
+        rate: 0.85,
+        minAmount: 150,
         minKm: 0,
         maxKm: 500,
       },
       {
         licenseId: 'monthly-medium-large',
         type: 'Suscripción mensual para ciudades medias y grandes',
-        price: 'USD 400.00 mensuales',
-        range: 'A partir de 500 km',
-        mode: 'flat-monthly',
-        flatAmount: 400,
+        price: 'USD 500.00 a USD 550.00 mensuales (descuento por meses)',
+        range: 'Más de 500 km y hasta 10,000 km',
+        mode: 'scaled-monthly',
+        minAmount: 500,
+        maxAmount: 550,
+        startKm: 500,
+        endKm: 10000,
+        discountPerExtraMonth: 0.01,
         minKm: 500,
+        minKmExclusive: true,
+        maxKm: 10000,
       },
       {
         licenseId: 'permanent-medium-large',
         type: 'Licencia permanente para ciudades medias y grandes',
-        price: 'USD 1.50 por km de vialidad',
-        range: 'Desde 10,000 km en adelante',
+        price: 'USD 1.70 por km de vialidad (tope USD 18,000.00)',
+        range: 'Más de 10,000 km',
         mode: 'rate',
-        rate: 1.5,
+        rate: 1.7,
+        maxAmount: 18000,
         minKm: 10000,
+        minKmExclusive: true,
       },
     ],
   },
@@ -100,31 +118,40 @@ const plansByModule = [
       {
         licenseId: 'small-monthly',
         type: 'Suscripción mensual para comunidades pequeñas',
-        price: 'USD 0.75 por km de vialidad',
+        price: 'USD 0.85 por km de vialidad (mínimo USD 150.00)',
         range: 'Hasta 500 km',
         mode: 'rate',
         billing: 'monthly',
-        rate: 0.75,
+        rate: 0.85,
+        minAmount: 150,
         minKm: 0,
         maxKm: 500,
       },
       {
         licenseId: 'monthly-medium-large',
         type: 'Suscripción mensual para ciudades medias y grandes',
-        price: 'USD 400.00 mensuales',
-        range: 'A partir de 500 km',
-        mode: 'flat-monthly',
-        flatAmount: 400,
+        price: 'USD 500.00 a USD 550.00 mensuales (descuento por meses)',
+        range: 'Más de 500 km y hasta 10,000 km',
+        mode: 'scaled-monthly',
+        minAmount: 500,
+        maxAmount: 550,
+        startKm: 500,
+        endKm: 10000,
+        discountPerExtraMonth: 0.01,
         minKm: 500,
+        minKmExclusive: true,
+        maxKm: 10000,
       },
       {
         licenseId: 'permanent-medium-large',
         type: 'Licencia permanente para ciudades medias y grandes',
-        price: 'USD 1.50 por km de vialidad',
-        range: 'Desde 10,000 km en adelante',
+        price: 'USD 1.70 por km de vialidad (tope USD 18,000.00)',
+        range: 'Más de 10,000 km',
         mode: 'rate',
-        rate: 1.5,
+        rate: 1.7,
+        maxAmount: 18000,
         minKm: 10000,
+        minKmExclusive: true,
       },
     ],
   },
@@ -501,14 +528,14 @@ function getRecommendedLicenseId(km) {
     return 'small-monthly'
   }
 
-  if (km >= 10000) {
+  if (km > 10000) {
     return 'permanent-medium-large'
   }
 
   return 'monthly-medium-large'
 }
 
-function calculateQuote(plan, km) {
+function calculateQuote(plan, km, months = 1) {
   if (!Number.isFinite(km) || km <= 0) {
     return {
       status: 'pending',
@@ -523,10 +550,33 @@ function calculateQuote(plan, km) {
     }
   }
 
-  if (plan.minKm !== undefined && km < plan.minKm) {
+  if (plan.minKm !== undefined && (plan.minKmExclusive ? km <= plan.minKm : km < plan.minKm)) {
     return {
       status: 'invalid',
-      message: `Esta modalidad aplica a partir de ${formatKmLimit(plan.minKm)} km de vialidad.`,
+      message: plan.minKmExclusive
+        ? `Esta modalidad aplica para valores mayores a ${formatKmLimit(plan.minKm)} km de vialidad.`
+        : `Esta modalidad aplica a partir de ${formatKmLimit(plan.minKm)} km de vialidad.`,
+    }
+  }
+
+  const normalizedMonths = Number.isFinite(Number(months)) && Number(months) >= 1 ? Math.floor(Number(months)) : 1
+
+  if (plan.mode === 'scaled-monthly') {
+    const kmBase = Math.min(Math.max(km, plan.startKm), plan.endKm)
+    const kmSpan = Math.max(plan.endKm - plan.startKm, 1)
+    const growthRatio = (kmBase - plan.startKm) / kmSpan
+    const baseAmount = plan.minAmount + (plan.maxAmount - plan.minAmount) * growthRatio
+    const discountRate = normalizedMonths >= 2 ? (normalizedMonths - 1) * (plan.discountPerExtraMonth ?? 0) : 0
+    const discountedAmount = Math.max(baseAmount * (1 - discountRate), 0)
+    const discountPercent = Math.max(discountRate * 100, 0)
+
+    return {
+      status: 'valid',
+      amountLabel: `${currencyFormatter.format(discountedAmount)} / mes`,
+      detail:
+        normalizedMonths >= 2
+          ? `Escala mensual entre ${currencyFormatter.format(plan.minAmount)} y ${currencyFormatter.format(plan.maxAmount)} según km. Incluye descuento de ${discountPercent.toFixed(0)}% por contratar ${normalizedMonths} meses desde el inicio.`
+          : `Escala mensual entre ${currencyFormatter.format(plan.minAmount)} y ${currencyFormatter.format(plan.maxAmount)} según km.`,
     }
   }
 
@@ -538,7 +588,9 @@ function calculateQuote(plan, km) {
     }
   }
 
-  const total = km * plan.rate
+  const rawTotal = km * plan.rate
+  const withMin = plan.minAmount !== undefined ? Math.max(rawTotal, plan.minAmount) : rawTotal
+  const total = plan.maxAmount !== undefined ? Math.min(withMin, plan.maxAmount) : withMin
 
   return {
     status: 'valid',
@@ -550,22 +602,25 @@ function calculateQuote(plan, km) {
   }
 }
 
-function buildQuoteEmailDraft({ moduleName, planType, kmValueText, amountLabel, recommendedLabel }) {
+function buildQuoteEmailDraft({ moduleName, planType, kmValueText, amountLabel, recommendedLabel, monthsText }) {
   const subject = `Solicitud de cotización INVENTREES - ${moduleName}`
-  const body = [
+  const bodyLines = [
     'Hola,',
     '',
     'Solicito una cotización para INVENTREES con la siguiente configuración:',
     `Módulo: ${moduleName}`,
     `Licencia seleccionada: ${planType}`,
     `Km de vialidad: ${kmValueText}`,
+    ...(monthsText ? [`Meses de contratación inicial: ${monthsText}`] : []),
     `Estimado mostrado: ${amountLabel}`,
     `Licencia recomendada por el cotizador: ${recommendedLabel ?? 'No disponible'}`,
     '',
     'Adjuntaremos la capa de polígonos requerida en formato SHP (ZIP), KML o GeoJSON.',
     '',
     'Quedo atento(a) a su propuesta.',
-  ].join('\n')
+  ]
+
+  const body = bodyLines.join('\n')
 
   return { subject, body }
 }
@@ -626,6 +681,7 @@ function InventreesPlanes() {
 
   const [selectedModuleId, setSelectedModuleId] = useState(plansByModule[0].id)
   const [selectedLicenseId, setSelectedLicenseId] = useState(initialRecommendedLicenseId)
+  const [contractMonths, setContractMonths] = useState(1)
   const [kmValue, setKmValue] = useState(initialKmValue ? formatInitialKmValue(initialKmValue) : '')
   const [currentIntroVideoIndex, setCurrentIntroVideoIndex] = useState(0)
   const [isIntroVideoPlaying, setIsIntroVideoPlaying] = useState(true)
@@ -652,7 +708,7 @@ function InventreesPlanes() {
   const selectedPlan =
     selectedModule.plans.find((plan) => plan.licenseId === selectedLicenseId) ?? selectedModule.plans[0]
   const parsedKm = parseKmInput(kmValue)
-  const quote = calculateQuote(selectedPlan, parsedKm)
+  const quote = calculateQuote(selectedPlan, parsedKm, contractMonths)
   const recommendedLicenseId = getRecommendedLicenseId(parsedKm)
   const recommendedOption = licenseOptions.find((option) => option.id === recommendedLicenseId) ?? null
   const currentRegistration = readPolygonRegistration()
@@ -665,6 +721,7 @@ function InventreesPlanes() {
           moduleName: selectedModule.name,
           planType: selectedPlan.type,
           kmValueText: formatKmLimit(parsedKm),
+          monthsText: selectedPlan.mode === 'scaled-monthly' ? String(contractMonths) : null,
           amountLabel: quote.amountLabel,
           recommendedLabel: recommendedOption?.label,
         })
@@ -966,6 +1023,23 @@ function InventreesPlanes() {
               </select>
             </label>
 
+            {selectedPlan.mode === 'scaled-monthly' ? (
+              <label className="inventory-field">
+                <span>Meses de contratación inicial</span>
+                <input
+                  type="number"
+                  min="1"
+                  step="1"
+                  value={contractMonths}
+                  onChange={(event) => {
+                    const parsedValue = Number(event.target.value)
+                    setContractMonths(Number.isFinite(parsedValue) && parsedValue >= 1 ? Math.floor(parsedValue) : 1)
+                  }}
+                  placeholder="Ej. 2"
+                />
+              </label>
+            ) : null}
+
             <label className="inventory-field">
               <span>Km de vialidad</span>
               <input
@@ -979,7 +1053,7 @@ function InventreesPlanes() {
           </div>
 
           <p className="inventory-threshold-note">
-            <em>Nota:</em> para 500 km o menos, el cotizador recomienda la suscripción mensual para comunidades pequeñas. A partir de valores mayores a 500 km recomienda la suscripción mensual para ciudades medias y grandes.
+            <em>Nota:</em> para 500 km o menos, el cotizador recomienda la suscripción mensual para comunidades pequeñas. Para más de 500 km y hasta 10,000 km recomienda la suscripción mensual para ciudades medias y grandes. Para más de 10,000 km recomienda la licencia permanente.
           </p>
 
           <div className={`inventory-quote-result inventory-quote-result-${quote.status}`}>
