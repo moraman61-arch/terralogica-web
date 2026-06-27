@@ -181,6 +181,46 @@ const introVideos = [
   },
 ]
 
+const moduleFeaturePanels = [
+  {
+    title: 'Geolocalizador',
+    features: [
+      'Geolocalización de árboles vivos',
+      'Geolocalización de cepas vacantes',
+      'Geolocalización de tocones',
+      'Geolocalización de árboles muertos',
+      'Precisión 30 cm @ 5 m, 70 cm @ 10 m',
+      'Definición de cercas limitantes',
+      'Trazo de guías auxiliares',
+      'Corrección por elevación',
+    ],
+  },
+  {
+    title: 'Medidor',
+    features: [
+      'Incluye Geolocalizador',
+      'Medición de inclinación',
+      'Medición de DAP (1.30 m)',
+      'Precisión 2 cm @ 5 m',
+      'Medición de copa',
+      'Estimación de desbalance de copa',
+      'Medición de altura',
+    ],
+  },
+  {
+    title: 'Caracterizador',
+    features: [
+      'Incluye Geolocalizador',
+      'Identificación de especie con IA',
+      'Especies frecuentes',
+      'Estructura del árbol',
+      'Indicación de mantenimiento',
+      'Indicación de desmoche',
+      'Indicación de interferencia con infraestructura aérea y terrestre',
+    ],
+  },
+]
+
 function readPolygonRegistration() {
   try {
     const rawValue = window.localStorage.getItem(polygonStorageKey)
@@ -958,6 +998,18 @@ function InventreesPlanes() {
 
         <div className="hero-copy subpage-intro">
           <p className="eyebrow">INVENTREES</p>
+          <div className="inventory-feature-panels" aria-label="Características principales por módulo">
+            {moduleFeaturePanels.map((panel) => (
+              <article key={panel.title} className="inventory-feature-panel">
+                <h3>{panel.title}</h3>
+                <ul>
+                  {panel.features.map((feature) => (
+                    <li key={feature}>{feature}</li>
+                  ))}
+                </ul>
+              </article>
+            ))}
+          </div>
           <div className="inventory-intro-video-block" aria-label="Demostración secuencial de módulos INVENTREES">
             <video
               ref={introVideoRef}
@@ -986,7 +1038,7 @@ function InventreesPlanes() {
               ))}
             </div>
           </div>
-          <h1 className="inventory-hero-title">Crear y mantener su propio inventario de arbolado público urbano es ahora muy fácil!.</h1>
+          <h1 className="inventory-hero-title">Crear y mantener su propio inventario de arbolado público urbano es ahora ¡muy fácil!</h1>
           <p className="hero-text inventory-hero-description">
             Estructura comercial flexible y equitativa para comunidades pequeñas, ciudades medias y grandes, con reglas claras por cobertura de km de vialidad. INVENTREES es solo para gobiernos locales y comunidades. No trabajamos con empresas.
           </p>
