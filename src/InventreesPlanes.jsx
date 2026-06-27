@@ -951,8 +951,8 @@ function InventreesPlanes() {
               ))}
             </div>
           </div>
-          <h1>Crear y mantener su propio inventario de arbolado público urbano es ahora muy fácil!.</h1>
-          <p className="hero-text">
+          <h1 className="inventory-hero-title">Crear y mantener su propio inventario de arbolado público urbano es ahora muy fácil!.</h1>
+          <p className="hero-text inventory-hero-description">
             Estructura comercial flexible y equitativa para comunidades pequeñas, ciudades medias y grandes, con reglas claras por cobertura de km de vialidad. INVENTREES es solo para gobiernos locales y comunidades. No trabajamos con empresas.
           </p>
         </div>
