@@ -997,7 +997,7 @@ function InventreesPlanes() {
         </header>
 
         <div className="hero-copy subpage-intro">
-          <p className="eyebrow">INVENTREES</p>
+          <p className="eyebrow inventory-hero-eyebrow">INVENTREES: Inventario de Arbolado Público Urbano</p>
           <div className="inventory-feature-panels" aria-label="Características principales por módulo">
             {moduleFeaturePanels.map((panel) => (
               <article key={panel.title} className="inventory-feature-panel">

@@ -722,6 +722,12 @@
   font-size: 1.1rem;
 }
 
+.inventory-feature-panel:nth-child(1) h3,
+.inventory-feature-panel:nth-child(2) h3,
+.inventory-feature-panel:nth-child(3) h3 {
+  text-align: center;
+}
+
 .inventory-feature-panel ul {
   margin: 0.7rem 0 0;
   padding-left: 1.1rem;
@@ -812,6 +818,19 @@
   margin-left: auto;
   margin-right: auto;
   text-align: center;
+}
+
+.inventory-hero-eyebrow {
+  width: 100%;
+  max-width: none !important;
+  text-align: center;
+  white-space: nowrap;
+}
+
+@media (max-width: 960px) {
+  .inventory-hero-eyebrow {
+    white-space: normal;
+  }
 }
 
 .inventory-requirements-card {
