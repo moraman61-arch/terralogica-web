@@ -668,6 +668,18 @@ function buildAttachmentFileFromRegistration(registration) {
   return attachmentFile
 }
 
+function getRegisteredPolygonFileName(registration) {
+  if (typeof registration?.polygonFileName === 'string' && registration.polygonFileName.trim()) {
+    return registration.polygonFileName.trim()
+  }
+
+  if (registration?.status === 'registered' && Array.isArray(registration?.polygon) && registration.polygon.length >= 3) {
+    return 'inventrees-poligono.kml'
+  }
+
+  return null
+}
+
 function InventreesPlanes() {
   const navigate = useNavigate()
   const polygonRegistration = readPolygonRegistration()
@@ -687,9 +699,14 @@ function InventreesPlanes() {
   const [isIntroVideoPlaying, setIsIntroVideoPlaying] = useState(true)
   const [polygonStatus, setPolygonStatus] = useState(() => polygonRegistration.status)
   const [uploadStatus, setUploadStatus] = useState('idle')
-  const [uploadMessage, setUploadMessage] = useState('No hay archivo cargado.')
+  const [uploadMessage, setUploadMessage] = useState(() => {
+    const initialFileName = getRegisteredPolygonFileName(polygonRegistration)
+    return initialFileName ? `Archivo registrado disponible: ${initialFileName}.` : 'No hay archivo cargado.'
+  })
+  const [selectedUploadFileName, setSelectedUploadFileName] = useState('')
   const [quoteAttachmentMessage, setQuoteAttachmentMessage] = useState('')
   const introVideoRef = useRef(null)
+  const polygonUploadInputRef = useRef(null)
 
   const polygonStatusMessage = polygonStatus === 'registered' ? 'Polígono registrado' : 'Polígono no registrado'
 
@@ -715,6 +732,8 @@ function InventreesPlanes() {
   const hasPolygonForAttachment =
     Boolean(currentRegistration?.polygonAttachment) ||
     (Array.isArray(currentRegistration?.polygon) && currentRegistration.polygon.length >= 3)
+  const registeredPolygonFileName = getRegisteredPolygonFileName(currentRegistration)
+  const filePickerLabel = selectedUploadFileName || registeredPolygonFileName || 'Ningún archivo seleccionado'
   const quoteEmailDraft =
     quote.status === 'valid'
       ? buildQuoteEmailDraft({
@@ -824,6 +843,19 @@ function InventreesPlanes() {
     }
   }, [currentIntroVideo.src])
 
+  useEffect(() => {
+    if (uploadStatus !== 'idle') {
+      return
+    }
+
+    if (registeredPolygonFileName) {
+      setUploadMessage(`Archivo registrado disponible: ${registeredPolygonFileName}.`)
+      return
+    }
+
+    setUploadMessage('No hay archivo cargado.')
+  }, [registeredPolygonFileName, uploadStatus])
+
   const handleIntroVideoEnded = () => {
     setIsIntroVideoPlaying(true)
     setCurrentIntroVideoIndex((previousIndex) => (previousIndex + 1) % introVideos.length)
@@ -853,6 +885,7 @@ function InventreesPlanes() {
       return
     }
 
+    setSelectedUploadFileName(selectedFile.name)
     setUploadStatus('loading')
     setUploadMessage(`Validando archivo ${selectedFile.name}...`)
 
@@ -880,6 +913,7 @@ function InventreesPlanes() {
       const errorMessage = error instanceof Error ? error.message : 'No fue posible procesar el archivo cargado.'
       setUploadStatus('error')
       setUploadMessage(errorMessage)
+      setSelectedUploadFileName('')
     }
 
     event.target.value = ''
@@ -904,6 +938,7 @@ function InventreesPlanes() {
     setKmValue('')
     setSelectedLicenseId(licenseOptions[0].id)
     setUploadStatus('idle')
+    setSelectedUploadFileName('')
     setUploadMessage('No hay archivo cargado.')
   }
 
@@ -970,15 +1005,27 @@ function InventreesPlanes() {
           <p>
             Formatos aceptados: SHP (archivos comprimidos en ZIP), KML o GeoJSON. También lo puede generar <Link to="/servicios/software/inventrees/poligono">aquí</Link>.
           </p>
-          <label className="inventory-file-upload" htmlFor="inventory-polygon-upload">
+          <div className="inventory-file-upload">
             <span>Subir archivo del polígono</span>
+            <div className="inventory-file-picker">
+              <button
+                type="button"
+                className="inventory-file-picker-button"
+                onClick={() => polygonUploadInputRef.current?.click()}
+              >
+                Elegir archivo
+              </button>
+              <span className="inventory-file-picker-name">{filePickerLabel}</span>
+            </div>
             <input
+              ref={polygonUploadInputRef}
               id="inventory-polygon-upload"
+              className="inventory-file-upload-input"
               type="file"
               accept=".zip,.kml,.geojson,.json"
               onChange={handlePolygonFileUpload}
             />
-          </label>
+          </div>
           <p className={`inventory-upload-message inventory-upload-message-${uploadStatus}`}>{uploadMessage}</p>
           <div className="inventory-polygon-actions">
             <div className={`inventory-polygon-status inventory-polygon-status-${polygonStatus}`}>

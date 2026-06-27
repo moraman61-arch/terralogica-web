@@ -829,15 +829,51 @@
   text-transform: uppercase;
 }
 
-.inventory-file-upload input {
+.inventory-file-picker {
   width: 100%;
-  min-height: 3rem;
-  padding: 0.7rem 0.85rem;
+  min-height: 3.2rem;
+  padding: 0.45rem 0.6rem;
+  display: flex;
+  align-items: center;
+  gap: 0.65rem;
   border: 1px solid rgba(146, 198, 255, 0.3);
   border-radius: 0.95rem;
   background: rgba(7, 19, 47, 0.92);
-  color: #f5f9ff;
+}
+
+.inventory-file-picker-button {
+  min-height: 2.2rem;
+  padding: 0.3rem 0.8rem;
+  border: 1px solid rgba(146, 198, 255, 0.42);
+  border-radius: 0.55rem;
+  background: rgba(255, 255, 255, 0.92);
+  color: #0a1e4e;
   font: inherit;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.inventory-file-picker-button:hover,
+.inventory-file-picker-button:focus-visible {
+  background: #ffffff;
+}
+
+.inventory-file-picker-name {
+  color: #f5f9ff;
+  font-size: 0.98rem;
+  line-height: 1.3;
+  word-break: break-word;
+}
+
+.inventory-file-upload-input {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  margin: -1px;
+  padding: 0;
+  overflow: hidden;
+  border: 0;
+  clip: rect(0 0 0 0);
 }
 
 .inventory-upload-message {
