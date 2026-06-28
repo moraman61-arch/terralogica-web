@@ -57,7 +57,7 @@ const heroBannerParts = [
     image: '/banners/tecnica-avanzada-real.png?v=2',
   },
   {
-    text: 'Tecnología de Punta',
+    text: 'Tecnología de Vanguardia',
     image: '/banners/tecnologia-punta-real.png',
   },
   {
