@@ -1485,11 +1485,11 @@
   .roadmap-grid,
   .pillar-list,
   .signal-grid {
-    flex-direction: column;
-    flex-wrap: nowrap;
+    grid-template-columns: 1fr;
   }
 
   .topbar {
+    justify-items: start;
     gap: 1rem;
     margin-bottom: 2rem;
   }
@@ -1497,6 +1497,20 @@
   .topnav {
     justify-content: flex-start;
     flex-wrap: wrap;
+  }
+
+  .hero-grid {
+    gap: 1.2rem;
+  }
+
+  .hero-actions {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .client-info-panel {
+    position: static;
+    width: 100%;
+    margin: 0.65rem 0 0;
   }
 
   .cta-section {
@@ -1548,6 +1562,40 @@
   .roadmap-section,
   .cta-section {
     padding: 1.2rem;
+  }
+
+  .topbar {
+    margin-bottom: 1.35rem;
+  }
+
+  .topnav {
+    gap: 0.8rem;
+    font-size: 0.95rem;
+  }
+
+  .brand {
+    gap: 0.7rem;
+  }
+
+  .brand-logo {
+    width: 3.45rem;
+    height: 3.45rem;
+  }
+
+  .hero-grid {
+    gap: 1rem;
+  }
+
+  .hero-copy {
+    gap: 0.9rem;
+  }
+
+  .hero-actions {
+    grid-template-columns: 1fr;
+  }
+
+  .primary-link {
+    min-height: 3rem;
   }
 
   .hero-banner-card {
