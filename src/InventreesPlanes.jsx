@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react'
-import { Link, useNavigate } from 'react-router-dom'
+import { Link, useLocation, useNavigate } from 'react-router-dom'
 import Hls from 'hls.js'
 import shp from 'shpjs'
 import { kml as kmlToGeoJSON } from '@tmcw/togeojson'
@@ -721,6 +721,7 @@ function getRegisteredPolygonFileName(registration) {
 }
 
 function InventreesPlanes() {
+  const location = useLocation()
   const navigate = useNavigate()
   const polygonRegistration = readPolygonRegistration()
   const initialKmValue =
@@ -747,6 +748,7 @@ function InventreesPlanes() {
   const [quoteAttachmentMessage, setQuoteAttachmentMessage] = useState('')
   const introVideoRef = useRef(null)
   const polygonUploadInputRef = useRef(null)
+  const requirementsSectionRef = useRef(null)
 
   const polygonStatusMessage = polygonStatus === 'registered' ? 'Polígono registrado' : 'Polígono no registrado'
 
@@ -895,6 +897,19 @@ function InventreesPlanes() {
 
     setUploadMessage('No hay archivo cargado.')
   }, [registeredPolygonFileName, uploadStatus])
+
+  useEffect(() => {
+    if (location.state?.scrollToSection !== 'requirements') {
+      return
+    }
+
+    requirementsSectionRef.current?.scrollIntoView({
+      behavior: 'smooth',
+      block: 'start',
+    })
+
+    navigate(location.pathname, { replace: true, state: null })
+  }, [location.pathname, location.state, navigate])
 
   const handleIntroVideoEnded = () => {
     setIsIntroVideoPlaying(true)
@@ -1045,10 +1060,10 @@ function InventreesPlanes() {
         </div>
       </section>
 
-      <section className="services-section inventory-requirements-section">
+      <section ref={requirementsSectionRef} className="services-section inventory-requirements-section" id="requisitos-cliente">
         <div className="section-heading compact">
           <p className="eyebrow">Requisitos del cliente</p>
-          <h2>Para cualquier licencia se requiere una capa de polígonos del área de interés. El cliente debe ser un representante del gobierno local o comunidad.</h2>
+          <h2>Para cualquier licencia se requiere una capa de polígonos del área de interés. El cliente debe ser un gobierno local o comunidad.</h2>
         </div>
         <div className="identity-card inventory-requirements-card">
           <p>

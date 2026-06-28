@@ -408,7 +408,11 @@ function InventreesPolygon() {
     })
 
     setIsEstimatingRoads(false)
-    navigate('/servicios/software/inventrees')
+    navigate('/servicios/software/inventrees', {
+      state: {
+        scrollToSection: 'requirements',
+      },
+    })
   }
 
   const handleCancel = () => {
