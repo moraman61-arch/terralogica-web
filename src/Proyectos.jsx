@@ -11,6 +11,7 @@ const projectServices = [
     title: 'Planeación Urbana y Ordenamiento del Territorio',
     description:
       'Impulsamos iniciativas para ordenar el crecimiento urbano, zonificar usos del suelo y mejorar la ocupación equilibrada del territorio.',
+    linkTo: '/servicios/proyectos/planeacion-ordenamiento',
   },
   {
     title: 'Agricultura y Desarrollo Rural',
@@ -33,7 +34,7 @@ const projectServices = [
       'Implementamos proyectos para identificar fuentes de contaminación, evaluar impactos y priorizar acciones de mitigación con enfoque de salud pública.',
   },
   {
-    title: 'Infarestructura, Movilidad y Transporte',
+    title: 'Infraestructura, Movilidad y Transporte',
     description:
       'Estructuramos proyectos para optimizar redes de infraestructura y transporte, mejorando conectividad, seguridad y eficiencia operativa.',
   },
@@ -81,6 +82,11 @@ function Proyectos() {
             <article key={item.title} className="service-card project-card">
               <h3>{item.title}</h3>
               <p>{item.description}</p>
+              {item.linkTo ? (
+                <Link className="service-card-cta project-panel-link" to={item.linkTo}>
+                  Proyectos
+                </Link>
+              ) : null}
             </article>
           ))}
         </div>

@@ -48,6 +48,16 @@
   letter-spacing: -0.03em;
 }
 
+.planeacion-intro {
+  align-items: center;
+  text-align: center;
+}
+
+.planeacion-intro .hero-text {
+  width: 100%;
+  max-width: none;
+}
+
 .topbar,
 .hero-grid,
 .identity-grid,
@@ -1370,6 +1380,56 @@
 .projects-grid .project-card:hover::before,
 .projects-grid .project-card:focus-within::before {
   transform: translateX(70%);
+}
+
+.project-panel-link {
+  display: block;
+  text-align: center;
+}
+
+.planeacion-projects-grid {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+.planeacion-projects-heading {
+  max-width: none;
+  width: 100%;
+}
+
+.planeacion-projects-heading h2 {
+  width: 100%;
+  max-width: none;
+  text-align: center;
+}
+
+.planeacion-project-card {
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-start;
+  gap: 0.8rem;
+}
+
+.planeacion-project-image {
+  width: 100%;
+  aspect-ratio: 16 / 9;
+  object-fit: cover;
+  object-position: center;
+  display: block;
+  border-radius: 0.9rem;
+  border: 1px solid rgba(146, 198, 255, 0.2);
+  background: rgba(7, 23, 63, 0.75);
+}
+
+.planeacion-project-card h3 {
+  text-align: center;
+  margin-bottom: 0;
+}
+
+.planeacion-project-card p {
+  margin: 0;
+  text-align: center;
+  width: 100%;
+  max-width: none;
 }
 
 .difference-section {
