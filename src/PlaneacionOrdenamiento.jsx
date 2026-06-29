@@ -6,6 +6,7 @@ const planeacionProjectTypes = [
     title: 'Inventarios de Arbolado, Señalización y Luminarias',
     image: '/planeacion/inventario-puebla-01.png',
     imageAlt: 'Vista ilustrativa para inventarios urbanos',
+    linkTo: '/servicios/proyectos/inventrees-proyectos',
     description:
       'Desarrollamos levantamientos territoriales para registrar, ubicar y evaluar infraestructura urbana clave para su mantenimiento y gestión.',
   },
@@ -78,11 +79,21 @@ function PlaneacionOrdenamiento() {
         <div className="service-grid projects-grid planeacion-projects-grid">
           {planeacionProjectTypes.map((projectType) => (
             <article key={projectType.title} className="service-card project-card planeacion-project-card">
-              <img
-                className="planeacion-project-image"
-                src={projectType.image}
-                alt={projectType.imageAlt}
-              />
+              {projectType.linkTo ? (
+                <Link className="planeacion-project-image-link" to={projectType.linkTo} aria-label={`Abrir ${projectType.title}`}>
+                  <img
+                    className="planeacion-project-image"
+                    src={projectType.image}
+                    alt={projectType.imageAlt}
+                  />
+                </Link>
+              ) : (
+                <img
+                  className="planeacion-project-image"
+                  src={projectType.image}
+                  alt={projectType.imageAlt}
+                />
+              )}
               <h3>{projectType.title}</h3>
               <p>{projectType.description}</p>
             </article>

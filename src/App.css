@@ -599,6 +599,19 @@
   gap: 1rem;
 }
 
+.inventrees-panels-grid {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+.inventrees-panels-grid .identity-card {
+  text-align: center;
+}
+
+.inventrees-panels-grid .identity-card p {
+  width: 100%;
+  max-width: none;
+}
+
 .values-grid {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -1418,6 +1431,17 @@
   border-radius: 0.9rem;
   border: 1px solid rgba(146, 198, 255, 0.2);
   background: rgba(7, 23, 63, 0.75);
+}
+
+.planeacion-project-image-link {
+  display: block;
+  line-height: 0;
+}
+
+.planeacion-project-image-link:hover .planeacion-project-image,
+.planeacion-project-image-link:focus-visible .planeacion-project-image {
+  outline: 2px solid rgba(146, 198, 255, 0.5);
+  outline-offset: 2px;
 }
 
 .planeacion-project-card h3 {

@@ -7,6 +7,7 @@ import QuienesSomos from './QuienesSomos.jsx'
 import Servicios from './Servicios.jsx'
 import Proyectos from './Proyectos.jsx'
 import PlaneacionOrdenamiento from './PlaneacionOrdenamiento.jsx'
+import InventreesProyectos from './InventreesProyectos.jsx'
 import Capacitacion from './Capacitacion.jsx'
 import Software from './Software.jsx'
 import InventreesPlanes from './InventreesPlanes.jsx'
@@ -21,6 +22,7 @@ createRoot(document.getElementById('root')).render(
         <Route path="/servicios" element={<Servicios />} />
         <Route path="/servicios/proyectos" element={<Proyectos />} />
         <Route path="/servicios/proyectos/planeacion-ordenamiento" element={<PlaneacionOrdenamiento />} />
+        <Route path="/servicios/proyectos/inventrees-proyectos" element={<InventreesProyectos />} />
         <Route path="/servicios/capacitacion" element={<Capacitacion />} />
         <Route path="/servicios/software" element={<Software />} />
         <Route path="/servicios/software/inventrees" element={<InventreesPlanes />} />
