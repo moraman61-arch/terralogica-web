@@ -612,6 +612,14 @@
   max-width: none;
 }
 
+.inventrees-intro-note {
+  margin: 0.85rem auto 0;
+  width: 80%;
+  max-width: 80%;
+  text-align: center;
+  color: var(--muted);
+}
+
 .values-grid {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
