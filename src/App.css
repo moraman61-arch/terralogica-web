@@ -607,6 +607,16 @@
   text-align: center;
 }
 
+.inventrees-panel-image {
+  width: 100%;
+  aspect-ratio: 16 / 9;
+  object-fit: cover;
+  border-radius: 0.95rem;
+  border: 1px solid rgba(146, 198, 255, 0.24);
+  margin: 0 0 0.95rem;
+  background: rgba(7, 23, 63, 0.85);
+}
+
 .inventrees-panels-grid .identity-card p {
   width: 100%;
   max-width: none;
@@ -1374,6 +1384,18 @@
     radial-gradient(circle at top right, rgba(88, 158, 255, 0.16), transparent 52%),
     linear-gradient(180deg, rgba(255, 255, 255, 0.03), rgba(255, 255, 255, 0.01));
   transition: transform 220ms ease, border-color 220ms ease, box-shadow 220ms ease, background 220ms ease;
+}
+
+.project-card-image {
+  width: 100%;
+  aspect-ratio: 16 / 9;
+  object-fit: cover;
+  object-position: center;
+  display: block;
+  border-radius: 0.85rem;
+  border: 1px solid rgba(146, 198, 255, 0.24);
+  background: rgba(7, 23, 63, 0.8);
+  margin-bottom: 0.9rem;
 }
 
 .projects-grid .project-card::before {
