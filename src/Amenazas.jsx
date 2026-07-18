@@ -1,7 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
 import { Link } from 'react-router-dom'
 import * as THREE from 'three'
-import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js'
 import { ArcballControls } from 'three/examples/jsm/controls/ArcballControls.js'
 import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js'
 import { DRACOLoader } from 'three/examples/jsm/loaders/DRACOLoader.js'
@@ -196,12 +195,22 @@ function ThreatProjectMap({ title, onOpenModel }) {
       return
     }
 
-    const map = L.map(mapContainerRef.current, {
+    const mapContainerEl = mapContainerRef.current
+
+    const map = L.map(mapContainerEl, {
       zoomControl: true,
       scrollWheelZoom: false,
       dragging: true,
       attributionControl: true,
     })
+
+    const fitMexico = () => {
+      map.fitBounds(mexicoBounds, {
+        paddingTopLeft: [14, 14],
+        paddingBottomRight: [14, 14],
+        maxZoom: 5,
+      })
+    }
 
     L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
       maxZoom: 18,
@@ -209,7 +218,7 @@ function ThreatProjectMap({ title, onOpenModel }) {
       attribution: '&copy; OpenStreetMap contributors',
     }).addTo(map)
 
-    map.fitBounds(mexicoBounds)
+    fitMexico()
 
     demoMarkers.forEach((markerData) => {
       const popupHtml = markerData.hasModel
@@ -252,9 +261,28 @@ function ThreatProjectMap({ title, onOpenModel }) {
       }
     })
 
+    const refreshMapView = () => {
+      map.invalidateSize(false)
+      fitMexico()
+    }
+
+    map.whenReady(() => {
+      requestAnimationFrame(refreshMapView)
+    })
+
+    const resizeObserver = new ResizeObserver(() => {
+      refreshMapView()
+    })
+    resizeObserver.observe(mapContainerEl)
+
+    window.addEventListener('resize', refreshMapView)
+
     mapInstanceRef.current = map
 
     return () => {
+      resizeObserver.disconnect()
+      window.removeEventListener('resize', refreshMapView)
+
       if (mapInstanceRef.current) {
         mapInstanceRef.current.remove()
         mapInstanceRef.current = null
@@ -270,25 +298,9 @@ function ThreatProjectMap({ title, onOpenModel }) {
   )
 }
 
-function ThreatModelViewer({
-  sources,
-  onSourceChange,
-  showPivotDebug = true,
-  zRotationDeg = 0,
-  navigationMode = 'orbit',
-}) {
+function ThreatModelViewer({ sources, onSourceChange }) {
   const containerRef = useRef(null)
-  const modelPivotRef = useRef(null)
   const [errorMessage, setErrorMessage] = useState('')
-
-  useEffect(() => {
-    if (!modelPivotRef.current) {
-      return
-    }
-
-    modelPivotRef.current.rotation.z = THREE.MathUtils.degToRad(zRotationDeg)
-    modelPivotRef.current.updateMatrixWorld(true)
-  }, [zRotationDeg])
 
   useEffect(() => {
     if (!containerRef.current || sources.length === 0) {
@@ -300,13 +312,10 @@ function ThreatModelViewer({
     let animationFrameId = null
     let activeModel = null
     const modelPivot = new THREE.Group()
-    const pivotDebugGroup = new THREE.Group()
-    modelPivotRef.current = modelPivot
 
     const scene = new THREE.Scene()
     scene.background = new THREE.Color('#081b46')
     scene.add(modelPivot)
-    scene.add(pivotDebugGroup)
 
     const camera = new THREE.PerspectiveCamera(46, 1, 0.1, 20000)
     camera.position.set(0, 0, 6)
@@ -321,31 +330,22 @@ function ThreatModelViewer({
     container.innerHTML = ''
     container.appendChild(renderer.domElement)
 
-    const controls = navigationMode === 'arcball'
-      ? new ArcballControls(camera, renderer.domElement, scene)
-      : new OrbitControls(camera, renderer.domElement)
-
-    if (navigationMode === 'arcball') {
+    let controls = null
+    try {
+      controls = new ArcballControls(camera, renderer.domElement, scene)
       controls.enableAnimations = true
-      controls.setGizmosVisible(false)
+      if (typeof controls.setGizmosVisible === 'function') {
+        controls.setGizmosVisible(false)
+      }
       controls.enablePan = true
       controls.adjustNearFar = true
       controls.minDistance = 0.3
       controls.maxDistance = 10000
-    } else {
-      controls.enableDamping = true
-      controls.enableRotate = true
-      controls.enablePan = true
-      controls.minDistance = 0.3
-      controls.maxDistance = 10000
-      controls.mouseButtons = {
-        LEFT: THREE.MOUSE.ROTATE,
-        MIDDLE: THREE.MOUSE.DOLLY,
-        RIGHT: THREE.MOUSE.PAN,
-      }
-      controls.touches = {
-        ONE: THREE.TOUCH.ROTATE,
-        TWO: THREE.TOUCH.DOLLY_PAN,
+    } catch {
+      setErrorMessage('No fue posible iniciar el modo Arcball en este navegador.')
+      return () => {
+        renderer.dispose()
+        container.innerHTML = ''
       }
     }
 
@@ -375,24 +375,6 @@ function ThreatModelViewer({
     gltfLoader.setDRACOLoader(dracoLoader)
     gltfLoader.setKTX2Loader(ktx2Loader)
     gltfLoader.setMeshoptDecoder(MeshoptDecoder)
-
-    const disposeDebugObjects = () => {
-      pivotDebugGroup.children.forEach((child) => {
-        if (child.geometry) {
-          child.geometry.dispose()
-        }
-
-        if (child.material) {
-          if (Array.isArray(child.material)) {
-            child.material.forEach((material) => material.dispose())
-          } else {
-            child.material.dispose()
-          }
-        }
-      })
-
-      pivotDebugGroup.clear()
-    }
 
     const getVisibleModelBounds = (rootObject) => {
       const visibleBounds = new THREE.Box3()
@@ -432,34 +414,17 @@ function ThreatModelViewer({
       return visibleBounds
     }
 
-    const updatePivotDebug = (center, referenceSize) => {
-      disposeDebugObjects()
-
-      if (!showPivotDebug) {
-        return
-      }
-
-      const axisLength = Math.max(referenceSize * 0.22, 1)
-      const markerRadius = Math.max(referenceSize * 0.03, 0.2)
-      const axesHelper = new THREE.AxesHelper(axisLength)
-      axesHelper.position.copy(center)
-      pivotDebugGroup.add(axesHelper)
-
-      const marker = new THREE.Mesh(
-        new THREE.SphereGeometry(markerRadius, 24, 24),
-        new THREE.MeshBasicMaterial({ color: 0xff5f8a }),
-      )
-      marker.position.copy(center)
-      pivotDebugGroup.add(marker)
-    }
-
     const fitCameraToBounds = (bounds) => {
       const box = bounds
 
       if (box.isEmpty()) {
         camera.position.set(0, 0, 6)
-        controls.target.set(0, 0, 0)
-        controls.update()
+        if (typeof controls.setTarget === 'function') {
+          controls.setTarget(0, 0, 0)
+        }
+        if (typeof controls.update === 'function') {
+          controls.update()
+        }
         return
       }
 
@@ -478,18 +443,28 @@ function ThreatModelViewer({
       camera.far = distance * 20
       camera.updateProjectionMatrix()
 
-      camera.position.set(center.x, center.y + safeRadius * 0.35, center.z + distance)
+      // Vista inicial tipo frontal-oblicua para que abra similar al encuadre aprobado por el usuario.
+      const initialTarget = new THREE.Vector3(
+        center.x,
+        center.y - safeRadius * 0.08,
+        center.z,
+      )
+      const initialPosition = new THREE.Vector3(
+        center.x - safeRadius * 0.04,
+        center.y - safeRadius * 0.22,
+        center.z + distance * 1.05,
+      )
+
+      camera.position.copy(initialPosition)
       if (typeof controls.setTarget === 'function') {
-        controls.setTarget(center.x, center.y, center.z)
+        controls.setTarget(initialTarget.x, initialTarget.y, initialTarget.z)
       } else if (controls.target) {
-        controls.target.copy(center)
+        controls.target.copy(initialTarget)
       }
 
       if (typeof controls.update === 'function') {
         controls.update()
       }
-
-      updatePivotDebug(center, safeRadius)
     }
 
     const recenterPivotToVisibleModelCenter = () => {
@@ -507,7 +482,6 @@ function ThreatModelViewer({
       )
 
       modelPivot.position.sub(center)
-      modelPivot.rotation.z = THREE.MathUtils.degToRad(zRotationDeg)
       modelPivot.updateMatrixWorld(true)
     }
 
@@ -637,14 +611,12 @@ function ThreatModelViewer({
       if (typeof controls.dispose === 'function') {
         controls.dispose()
       }
-      disposeDebugObjects()
       ktx2Loader.dispose()
       dracoLoader.dispose()
       renderer.dispose()
-      modelPivotRef.current = null
       container.innerHTML = ''
     }
-  }, [sources, onSourceChange, showPivotDebug, zRotationDeg, navigationMode])
+  }, [sources, onSourceChange])
 
   return (
     <div className="amenazas-three-viewer-shell">
@@ -663,9 +635,6 @@ function ThreatModelViewer({
 function Amenazas() {
   const [activeModelMarker, setActiveModelMarker] = useState(null)
   const [modelSourceIndex, setModelSourceIndex] = useState(0)
-  const [showPivotDebug, setShowPivotDebug] = useState(true)
-  const [modelZRotationDeg, setModelZRotationDeg] = useState(0)
-  const [navigationMode, setNavigationMode] = useState('orbit')
 
   useEffect(() => {
     if (!activeModelMarker) {
@@ -677,8 +646,6 @@ function Amenazas() {
 
   const openModelModal = (markerData) => {
     setModelSourceIndex(0)
-    setModelZRotationDeg(0)
-    setNavigationMode('orbit')
     setActiveModelMarker(markerData)
   }
 
@@ -805,35 +772,7 @@ function Amenazas() {
               </button>
             </header>
             <div className="amenazas-model-modal-body">
-              <ThreatModelViewer
-                sources={modelSources}
-                onSourceChange={setModelSourceIndex}
-                showPivotDebug={showPivotDebug}
-                zRotationDeg={modelZRotationDeg}
-                navigationMode={navigationMode}
-              />
-              <label className="amenazas-model-navigation-select">
-                <span>Modo de navegación:</span>
-                <select value={navigationMode} onChange={(event) => setNavigationMode(event.target.value)}>
-                  <option value="orbit">Orbit</option>
-                  <option value="arcball">Arcball</option>
-                </select>
-              </label>
-              <div className="amenazas-model-rotation-controls" aria-label="Controles de rotación sobre eje Z">
-                <span>Giro eje Z:</span>
-                <button type="button" onClick={() => setModelZRotationDeg((prev) => prev - 15)}>-15°</button>
-                <button type="button" onClick={() => setModelZRotationDeg((prev) => prev + 15)}>+15°</button>
-                <button type="button" onClick={() => setModelZRotationDeg(0)}>Reset</button>
-                <strong>{modelZRotationDeg}°</strong>
-              </div>
-              <label className="amenazas-model-debug-toggle">
-                <input
-                  type="checkbox"
-                  checked={showPivotDebug}
-                  onChange={(event) => setShowPivotDebug(event.target.checked)}
-                />
-                Mostrar centro del pivote y ejes XYZ
-              </label>
+              <ThreatModelViewer sources={modelSources} onSourceChange={setModelSourceIndex} />
               <p className="amenazas-model-source-note">
                 Fuente del modelo: {modelSourceIndex >= 0 ? modelSourceIndex + 1 : 'ninguna'} de {modelSources.length}
               </p>

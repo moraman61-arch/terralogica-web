@@ -1886,60 +1886,6 @@
   text-align: right;
 }
 
-.amenazas-model-debug-toggle {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.45rem;
-  margin: 0.55rem 0 0;
-  color: #d7e6ff;
-  font-size: 0.79rem;
-  user-select: none;
-}
-
-.amenazas-model-debug-toggle input {
-  accent-color: #7fb2ff;
-}
-
-.amenazas-model-rotation-controls {
-  margin: 0.55rem 0 0;
-  display: flex;
-  align-items: center;
-  flex-wrap: wrap;
-  gap: 0.45rem;
-  color: #d7e6ff;
-  font-size: 0.79rem;
-}
-
-.amenazas-model-rotation-controls button {
-  border: 1px solid rgba(146, 198, 255, 0.35);
-  background: rgba(10, 32, 82, 0.9);
-  color: #ecf3ff;
-  border-radius: 0.45rem;
-  padding: 0.2rem 0.55rem;
-  cursor: pointer;
-}
-
-.amenazas-model-rotation-controls button:hover {
-  background: rgba(15, 44, 107, 0.95);
-}
-
-.amenazas-model-navigation-select {
-  margin: 0.55rem 0 0;
-  display: inline-flex;
-  align-items: center;
-  gap: 0.45rem;
-  color: #d7e6ff;
-  font-size: 0.79rem;
-}
-
-.amenazas-model-navigation-select select {
-  border: 1px solid rgba(146, 198, 255, 0.35);
-  background: rgba(10, 32, 82, 0.92);
-  color: #ecf3ff;
-  border-radius: 0.45rem;
-  padding: 0.2rem 0.45rem;
-}
-
 @keyframes amenazas-kenburns {
   0% {
     transform: scale(1.02) translate3d(0, 0, 0);
