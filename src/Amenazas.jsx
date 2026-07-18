@@ -1,5 +1,11 @@
 import { useEffect, useRef, useState } from 'react'
 import { Link } from 'react-router-dom'
+import * as THREE from 'three'
+import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js'
+import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js'
+import { DRACOLoader } from 'three/examples/jsm/loaders/DRACOLoader.js'
+import { KTX2Loader } from 'three/examples/jsm/loaders/KTX2Loader.js'
+import { MeshoptDecoder } from 'three/examples/jsm/libs/meshopt_decoder.module.js'
 import L from 'leaflet'
 import 'leaflet/dist/leaflet.css'
 import './App.css'
@@ -263,9 +269,179 @@ function ThreatProjectMap({ title, onOpenModel }) {
   )
 }
 
+function ThreatModelViewer({ sources, onSourceChange }) {
+  const containerRef = useRef(null)
+  const [errorMessage, setErrorMessage] = useState('')
+
+  useEffect(() => {
+    if (!containerRef.current || sources.length === 0) {
+      return
+    }
+
+    const container = containerRef.current
+    let disposed = false
+    let animationFrameId = null
+    let activeModel = null
+
+    const scene = new THREE.Scene()
+    scene.background = new THREE.Color('#081b46')
+
+    const camera = new THREE.PerspectiveCamera(46, 1, 0.1, 20000)
+    camera.position.set(0, 0, 6)
+
+    const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: false })
+    renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2))
+    renderer.outputColorSpace = THREE.SRGBColorSpace
+
+    container.innerHTML = ''
+    container.appendChild(renderer.domElement)
+
+    const controls = new OrbitControls(camera, renderer.domElement)
+    controls.enableDamping = true
+    controls.enablePan = true
+    controls.minDistance = 0.3
+    controls.maxDistance = 10000
+
+    scene.add(new THREE.AmbientLight(0xffffff, 0.9))
+    const keyLight = new THREE.DirectionalLight(0xffffff, 1.1)
+    keyLight.position.set(6, 12, 8)
+    scene.add(keyLight)
+
+    const backLight = new THREE.DirectionalLight(0x9fc2ff, 0.45)
+    backLight.position.set(-10, 8, -10)
+    scene.add(backLight)
+
+    const dracoLoader = new DRACOLoader()
+    dracoLoader.setDecoderPath('https://www.gstatic.com/draco/versioned/decoders/1.5.7/')
+
+    const ktx2Loader = new KTX2Loader()
+    ktx2Loader.setTranscoderPath('https://unpkg.com/three@0.181.1/examples/jsm/libs/basis/')
+    ktx2Loader.detectSupport(renderer)
+
+    const gltfLoader = new GLTFLoader()
+    gltfLoader.setDRACOLoader(dracoLoader)
+    gltfLoader.setKTX2Loader(ktx2Loader)
+    gltfLoader.setMeshoptDecoder(MeshoptDecoder)
+
+    const fitCameraToObject = (object3D) => {
+      const box = new THREE.Box3().setFromObject(object3D)
+
+      if (box.isEmpty()) {
+        camera.position.set(0, 0, 6)
+        controls.target.set(0, 0, 0)
+        controls.update()
+        return
+      }
+
+      const size = box.getSize(new THREE.Vector3())
+      const center = box.getCenter(new THREE.Vector3())
+      const radius = Math.max(size.x, size.y, size.z) * 0.5
+      const safeRadius = Math.max(radius, 1)
+      const fov = THREE.MathUtils.degToRad(camera.fov)
+      const distance = (safeRadius / Math.tan(fov / 2)) * 1.25
+
+      camera.near = Math.max(distance / 1000, 0.01)
+      camera.far = distance * 20
+      camera.updateProjectionMatrix()
+
+      camera.position.set(center.x, center.y + safeRadius * 0.35, center.z + distance)
+      controls.target.copy(center)
+      controls.update()
+    }
+
+    const resize = () => {
+      if (disposed) {
+        return
+      }
+
+      const width = Math.max(container.clientWidth, 1)
+      const height = Math.max(container.clientHeight, 1)
+      renderer.setSize(width, height, false)
+      camera.aspect = width / height
+      camera.updateProjectionMatrix()
+    }
+
+    resize()
+    const resizeObserver = new ResizeObserver(resize)
+    resizeObserver.observe(container)
+
+    const animate = () => {
+      if (disposed) {
+        return
+      }
+
+      controls.update()
+      renderer.render(scene, camera)
+      animationFrameId = requestAnimationFrame(animate)
+    }
+
+    const tryLoadSource = (sourceIndex) => {
+      if (disposed) {
+        return
+      }
+
+      if (sourceIndex >= sources.length) {
+        setErrorMessage('No fue posible renderizar el modelo 3D en este navegador.')
+        onSourceChange?.(-1)
+        return
+      }
+
+      setErrorMessage('')
+      onSourceChange?.(sourceIndex)
+
+      gltfLoader.load(
+        sources[sourceIndex],
+        (gltf) => {
+          if (disposed) {
+            return
+          }
+
+          if (activeModel) {
+            scene.remove(activeModel)
+          }
+
+          activeModel = gltf.scene
+          scene.add(activeModel)
+          fitCameraToObject(activeModel)
+        },
+        undefined,
+        () => {
+          tryLoadSource(sourceIndex + 1)
+        },
+      )
+    }
+
+    tryLoadSource(0)
+    animate()
+
+    return () => {
+      disposed = true
+
+      if (animationFrameId) {
+        cancelAnimationFrame(animationFrameId)
+      }
+
+      resizeObserver.disconnect()
+      controls.dispose()
+      ktx2Loader.dispose()
+      dracoLoader.dispose()
+      renderer.dispose()
+      container.innerHTML = ''
+    }
+  }, [sources, onSourceChange])
+
+  return (
+    <div className="amenazas-three-viewer-shell">
+      <div ref={containerRef} className="amenazas-three-canvas" />
+      {errorMessage ? (
+        <p className="amenazas-model-loading">{errorMessage}</p>
+      ) : null}
+    </div>
+  )
+}
+
 function Amenazas() {
   const [activeModelMarker, setActiveModelMarker] = useState(null)
-  const [isModelViewerReady, setIsModelViewerReady] = useState(false)
   const [modelSourceIndex, setModelSourceIndex] = useState(0)
 
   useEffect(() => {
@@ -274,46 +450,11 @@ function Amenazas() {
     }
 
     setModelSourceIndex(0)
-
-    const modelViewerTag = window.customElements?.get('model-viewer')
-
-    if (modelViewerTag) {
-      setIsModelViewerReady(true)
-      return
-    }
-
-    let isMounted = true
-
-    import('@google/model-viewer/dist/model-viewer.min.js')
-      .then(() => {
-        if (isMounted) {
-          setIsModelViewerReady(true)
-        }
-      })
-      .catch(() => {
-        if (isMounted) {
-          setIsModelViewerReady(false)
-        }
-      })
-
-    return () => {
-      isMounted = false
-    }
   }, [activeModelMarker])
 
   const openModelModal = (markerData) => {
     setModelSourceIndex(0)
     setActiveModelMarker(markerData)
-  }
-
-  const handleModelViewerError = () => {
-    setModelSourceIndex((current) => {
-      if (current < modelSources.length - 1) {
-        return current + 1
-      }
-
-      return current
-    })
   }
 
   useEffect(() => {
@@ -439,25 +580,10 @@ function Amenazas() {
               </button>
             </header>
             <div className="amenazas-model-modal-body">
-              {isModelViewerReady ? (
-                <>
-                  <model-viewer
-                    src={modelSources[modelSourceIndex]}
-                    camera-controls
-                    touch-action="pan-y"
-                    ar
-                    loading="eager"
-                    reveal="interaction"
-                    onError={handleModelViewerError}
-                    style={{ width: '100%', height: '56vh', minHeight: '360px', borderRadius: '12px', background: '#081b46' }}
-                  ></model-viewer>
-                  <p className="amenazas-model-source-note">
-                    Fuente del modelo: {modelSourceIndex + 1} de {modelSources.length}
-                  </p>
-                </>
-              ) : (
-                <div className="amenazas-model-loading">Cargando visor 3D...</div>
-              )}
+              <ThreatModelViewer sources={modelSources} onSourceChange={setModelSourceIndex} />
+              <p className="amenazas-model-source-note">
+                Fuente del modelo: {modelSourceIndex >= 0 ? modelSourceIndex + 1 : 'ninguna'} de {modelSources.length}
+              </p>
             </div>
           </section>
         </div>

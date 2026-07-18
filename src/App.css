@@ -1840,6 +1840,18 @@
   overflow: hidden;
 }
 
+.amenazas-three-viewer-shell {
+  border-radius: 0.9rem;
+  overflow: hidden;
+  background: #081b46;
+}
+
+.amenazas-three-canvas {
+  width: 100%;
+  height: 56vh;
+  min-height: 360px;
+}
+
 .amenazas-model-loading {
   min-height: 360px;
   height: 56vh;
