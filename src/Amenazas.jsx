@@ -14,14 +14,14 @@ import './App.css'
 const amenazasProjectTypes = [
   {
     slug: 'geologicas',
-    title: 'Geológicas',
+    title: 'Amenazas Geológicas',
     image: '/proyectos/proyecto-gestion-riesgos-proteccion-civil.png',
     imageAlt: 'Vista ilustrativa para amenazas geológicas',
     mediaLabel: 'Imagen animada | monitoreo geológico continuo',
     description:
       'Analizamos amenazas asociadas a procesos geológicos como deslizamientos, fallamientos y fenómenos de inestabilidad del terreno.',
     sectionIntro:
-      'Consolidamos información de campo, antecedentes y análisis espacial para identificar zonas críticas y definir prioridades de intervención.',
+      'Integramos información de campo, antecedentes y análisis geológico - geomorfológico para identificar zonas críticas y definir prioridades de intervención.',
     solutions: [
       {
         title: 'Estudios de deslizamientos de tierra',
