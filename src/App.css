@@ -1752,8 +1752,15 @@
   color: #eef4ff;
 }
 
+.amenazas-mini-map .leaflet-popup-content {
+  margin: 0.7rem 0.8rem;
+  width: clamp(240px, 34vw, 420px) !important;
+  max-width: 420px;
+}
+
 .amenazas-popup-content {
-  width: min(360px, 74vw);
+  width: 100%;
+  max-width: 100%;
 }
 
 .amenazas-popup-content h5 {
@@ -1761,6 +1768,9 @@
   color: #e7f0ff;
   font-size: 0.95rem;
   line-height: 1.3;
+  white-space: normal;
+  overflow-wrap: anywhere;
+  word-break: break-word;
 }
 
 .amenazas-popup-content p {
@@ -1768,6 +1778,9 @@
   color: #d2e0ff;
   font-size: 0.83rem;
   line-height: 1.35;
+  white-space: normal;
+  overflow-wrap: anywhere;
+  word-break: break-word;
 }
 
 .amenazas-popup-open-btn {
@@ -1884,6 +1897,34 @@
   color: #c8d9ff;
   font-size: 0.72rem;
   text-align: right;
+}
+
+.amenazas-model-relief-controls {
+  margin: 0.55rem 0 0;
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 0.45rem;
+  color: #d7e6ff;
+  font-size: 0.79rem;
+}
+
+.amenazas-model-relief-controls button {
+  border: 1px solid rgba(146, 198, 255, 0.35);
+  background: rgba(10, 32, 82, 0.9);
+  color: #ecf3ff;
+  border-radius: 0.45rem;
+  padding: 0.2rem 0.55rem;
+  cursor: pointer;
+}
+
+.amenazas-model-relief-controls button:hover {
+  background: rgba(15, 44, 107, 0.95);
+}
+
+.amenazas-model-relief-controls button.is-active {
+  border-color: rgba(127, 178, 255, 0.95);
+  background: rgba(27, 72, 156, 0.95);
 }
 
 @keyframes amenazas-kenburns {

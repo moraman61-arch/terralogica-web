@@ -147,10 +147,14 @@ const mexicoBounds = [
   [33.2, -86.2],
 ]
 
+const mexicoCenter = [23.6345, -102.5528]
+const mexicoOverviewZoom = 3
+
 const modelAssetBase = import.meta.env.BASE_URL || '/'
 
 const modelSources = [
   `${modelAssetBase}amenazas/modelo-teposcolula-3d.centered.glb`,
+  `${modelAssetBase}amenazas/modelo-teposcolula-3d.ktx2.4096.glb`,
   `${modelAssetBase}amenazas/modelo-teposcolula-3d.ktx2.centered.glb`,
   `${modelAssetBase}amenazas/modelo-teposcolula-3d.ktx2.glb`,
 ]
@@ -206,15 +210,17 @@ function ThreatProjectMap({ title, onOpenModel }) {
 
     const fitMexico = () => {
       map.fitBounds(mexicoBounds, {
-        paddingTopLeft: [14, 14],
-        paddingBottomRight: [14, 14],
-        maxZoom: 5,
+        paddingTopLeft: [22, 22],
+        paddingBottomRight: [22, 22],
+        maxZoom: mexicoOverviewZoom,
+        animate: false,
       })
+      map.setView(mexicoCenter, mexicoOverviewZoom, { animate: false })
     }
 
     L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
       maxZoom: 18,
-      minZoom: 4,
+      minZoom: 3,
       attribution: '&copy; OpenStreetMap contributors',
     }).addTo(map)
 
@@ -244,7 +250,13 @@ function ThreatProjectMap({ title, onOpenModel }) {
         fillOpacity: 0.95,
       })
         .addTo(map)
-        .bindPopup(popupHtml, { maxWidth: 420 })
+        .bindPopup(popupHtml, {
+          className: 'amenazas-leaflet-popup',
+          maxWidth: 440,
+          minWidth: 240,
+          autoPanPaddingTopLeft: [20, 20],
+          autoPanPaddingBottomRight: [20, 20],
+        })
 
       if (markerData.hasModel) {
         mapMarker.on('popupopen', (event) => {
@@ -262,12 +274,14 @@ function ThreatProjectMap({ title, onOpenModel }) {
     })
 
     const refreshMapView = () => {
-      map.invalidateSize(false)
+      map.invalidateSize({ pan: false, debounceMoveend: true })
       fitMexico()
     }
 
     map.whenReady(() => {
       requestAnimationFrame(refreshMapView)
+      setTimeout(refreshMapView, 220)
+      setTimeout(refreshMapView, 700)
     })
 
     const resizeObserver = new ResizeObserver(() => {
@@ -275,13 +289,43 @@ function ThreatProjectMap({ title, onOpenModel }) {
     })
     resizeObserver.observe(mapContainerEl)
 
+    const intersectionObserver = new IntersectionObserver(
+      (entries) => {
+        entries.forEach((entry) => {
+          if (entry.isIntersecting) {
+            requestAnimationFrame(refreshMapView)
+          }
+        })
+      },
+      { root: null, threshold: 0.15 },
+    )
+    intersectionObserver.observe(mapContainerEl)
+
     window.addEventListener('resize', refreshMapView)
+
+    const enableWheelZoom = () => {
+      map.scrollWheelZoom.enable()
+    }
+
+    const disableWheelZoom = () => {
+      map.scrollWheelZoom.disable()
+    }
+
+    mapContainerEl.addEventListener('mouseenter', enableWheelZoom)
+    mapContainerEl.addEventListener('mouseleave', disableWheelZoom)
+    mapContainerEl.addEventListener('focusin', enableWheelZoom)
+    mapContainerEl.addEventListener('focusout', disableWheelZoom)
 
     mapInstanceRef.current = map
 
     return () => {
       resizeObserver.disconnect()
+      intersectionObserver.disconnect()
       window.removeEventListener('resize', refreshMapView)
+      mapContainerEl.removeEventListener('mouseenter', enableWheelZoom)
+      mapContainerEl.removeEventListener('mouseleave', disableWheelZoom)
+      mapContainerEl.removeEventListener('focusin', enableWheelZoom)
+      mapContainerEl.removeEventListener('focusout', disableWheelZoom)
 
       if (mapInstanceRef.current) {
         mapInstanceRef.current.remove()
@@ -298,9 +342,21 @@ function ThreatProjectMap({ title, onOpenModel }) {
   )
 }
 
-function ThreatModelViewer({ sources, onSourceChange }) {
+function ThreatModelViewer({ sources, onSourceChange, verticalExaggeration = 1.5 }) {
   const containerRef = useRef(null)
+  const activeModelRef = useRef(null)
   const [errorMessage, setErrorMessage] = useState('')
+  const initialLeftRotationDeg = -90
+  const lockRotationToZAxis = false
+
+  useEffect(() => {
+    if (!activeModelRef.current) {
+      return
+    }
+
+    activeModelRef.current.scale.z = verticalExaggeration
+    activeModelRef.current.updateMatrixWorld(true)
+  }, [verticalExaggeration])
 
   useEffect(() => {
     if (!containerRef.current || sources.length === 0) {
@@ -325,7 +381,7 @@ function ThreatModelViewer({ sources, onSourceChange }) {
     renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2))
     renderer.outputColorSpace = THREE.SRGBColorSpace
     renderer.toneMapping = THREE.ACESFilmicToneMapping
-    renderer.toneMappingExposure = 1.12
+    renderer.toneMappingExposure = 1.22
 
     container.innerHTML = ''
     container.appendChild(renderer.domElement)
@@ -341,6 +397,14 @@ function ThreatModelViewer({ sources, onSourceChange }) {
       controls.adjustNearFar = true
       controls.minDistance = 0.3
       controls.maxDistance = 10000
+
+      // Mapeo explícito: botón derecho desplaza (pan) y botón izquierdo rota.
+      if (typeof controls.unsetMouseAction === 'function' && typeof controls.setMouseAction === 'function') {
+        controls.unsetMouseAction(2)
+        controls.unsetMouseAction(0)
+        controls.setMouseAction('PAN', 2)
+        controls.setMouseAction('ROTATE', 0)
+      }
     } catch {
       setErrorMessage('No fue posible iniciar el modo Arcball en este navegador.')
       return () => {
@@ -349,18 +413,18 @@ function ThreatModelViewer({ sources, onSourceChange }) {
       }
     }
 
-    scene.add(new THREE.AmbientLight(0xffffff, 0.9))
-    const hemiLight = new THREE.HemisphereLight(0xdbe8ff, 0x2e3f66, 1.1)
+    scene.add(new THREE.AmbientLight(0xffffff, 1.0))
+    const hemiLight = new THREE.HemisphereLight(0xdbe8ff, 0x2e3f66, 1.15)
     scene.add(hemiLight)
-    const keyLight = new THREE.DirectionalLight(0xffffff, 1.1)
+    const keyLight = new THREE.DirectionalLight(0xffffff, 1.25)
     keyLight.position.set(6, 12, 8)
     scene.add(keyLight)
 
-    const backLight = new THREE.DirectionalLight(0x9fc2ff, 0.45)
+    const backLight = new THREE.DirectionalLight(0x9fc2ff, 0.55)
     backLight.position.set(-10, 8, -10)
     scene.add(backLight)
 
-    const cameraLight = new THREE.PointLight(0xffffff, 1.25, 0, 2)
+    const cameraLight = new THREE.PointLight(0xffffff, 1.4, 0, 2)
     cameraLight.position.set(0, 0, 0)
     camera.add(cameraLight)
 
@@ -375,6 +439,59 @@ function ThreatModelViewer({ sources, onSourceChange }) {
     gltfLoader.setDRACOLoader(dracoLoader)
     gltfLoader.setKTX2Loader(ktx2Loader)
     gltfLoader.setMeshoptDecoder(MeshoptDecoder)
+    let zAxisPitchRatio = 0
+
+    const getControlsTarget = () => {
+      const target = new THREE.Vector3()
+
+      if (typeof controls.getTarget === 'function') {
+        controls.getTarget(target)
+      } else if (controls.target) {
+        target.copy(controls.target)
+      } else if (controls._gizmos?.position) {
+        target.copy(controls._gizmos.position)
+      }
+
+      return target
+    }
+
+    const setControlsTarget = (target) => {
+      if (typeof controls.setTarget === 'function') {
+        controls.setTarget(target.x, target.y, target.z)
+      } else if (controls.target) {
+        controls.target.copy(target)
+      } else if (controls._gizmos?.position) {
+        controls._gizmos.position.copy(target)
+      }
+    }
+
+    const captureZAxisPitchRatio = () => {
+      const target = getControlsTarget()
+      const offset = camera.position.clone().sub(target)
+      const distance = Math.max(offset.length(), 1e-6)
+      zAxisPitchRatio = THREE.MathUtils.clamp(offset.z / distance, -0.95, 0.95)
+    }
+
+    const enforceZAxisOnlyRotation = () => {
+      if (!lockRotationToZAxis) {
+        return
+      }
+
+      const target = getControlsTarget()
+      const offset = camera.position.clone().sub(target)
+      const distance = Math.max(offset.length(), 1e-4)
+      const azimuth = Math.atan2(offset.y, offset.x)
+      const zOffset = distance * zAxisPitchRatio
+      const planarRadius = Math.sqrt(Math.max(distance * distance - zOffset * zOffset, 1e-6))
+
+      camera.position.set(
+        target.x + Math.cos(azimuth) * planarRadius,
+        target.y + Math.sin(azimuth) * planarRadius,
+        target.z + zOffset,
+      )
+      camera.up.set(0, 0, 1)
+      camera.lookAt(target)
+    }
 
     const getVisibleModelBounds = (rootObject) => {
       const visibleBounds = new THREE.Box3()
@@ -419,9 +536,7 @@ function ThreatModelViewer({ sources, onSourceChange }) {
 
       if (box.isEmpty()) {
         camera.position.set(0, 0, 6)
-        if (typeof controls.setTarget === 'function') {
-          controls.setTarget(0, 0, 0)
-        }
+        setControlsTarget(new THREE.Vector3(0, 0, 0))
         if (typeof controls.update === 'function') {
           controls.update()
         }
@@ -444,8 +559,9 @@ function ThreatModelViewer({ sources, onSourceChange }) {
       camera.updateProjectionMatrix()
 
       // Vista inicial tipo frontal-oblicua para que abra similar al encuadre aprobado por el usuario.
+      const initialFrameShiftX = safeRadius * 0.33
       const initialTarget = new THREE.Vector3(
-        center.x,
+        center.x + initialFrameShiftX,
         center.y - safeRadius * 0.08,
         center.z,
       )
@@ -456,15 +572,13 @@ function ThreatModelViewer({ sources, onSourceChange }) {
       )
 
       camera.position.copy(initialPosition)
-      if (typeof controls.setTarget === 'function') {
-        controls.setTarget(initialTarget.x, initialTarget.y, initialTarget.z)
-      } else if (controls.target) {
-        controls.target.copy(initialTarget)
-      }
+      setControlsTarget(initialTarget)
 
       if (typeof controls.update === 'function') {
         controls.update()
       }
+
+      captureZAxisPitchRatio()
     }
 
     const recenterPivotToVisibleModelCenter = () => {
@@ -509,6 +623,9 @@ function ThreatModelViewer({ sources, onSourceChange }) {
       if (typeof controls.update === 'function') {
         controls.update()
       }
+
+      enforceZAxisOnlyRotation()
+
       renderer.render(scene, camera)
       animationFrameId = requestAnimationFrame(animate)
     }
@@ -539,6 +656,9 @@ function ThreatModelViewer({ sources, onSourceChange }) {
           }
 
           activeModel = gltf.scene
+          // Exageración vertical del relieve para realzar el detalle topográfico.
+          activeModel.scale.z = verticalExaggeration
+          activeModelRef.current = activeModel
           activeModel.traverse((node) => {
             if (!node.isMesh) {
               return
@@ -554,6 +674,11 @@ function ThreatModelViewer({ sources, onSourceChange }) {
               if (material.map) {
                 material.map.colorSpace = THREE.SRGBColorSpace
                 material.map.needsUpdate = true
+
+                if (material.color) {
+                  // Algunos glb llegan con baseColorFactor muy oscuro y apagan la textura.
+                  material.color.setRGB(1, 1, 1)
+                }
               }
 
               if ('envMapIntensity' in material) {
@@ -561,7 +686,7 @@ function ThreatModelViewer({ sources, onSourceChange }) {
               }
 
               if ('emissiveIntensity' in material) {
-                material.emissiveIntensity = Math.max(material.emissiveIntensity || 0, 0.2)
+                material.emissiveIntensity = Math.max(material.emissiveIntensity || 0, 0.08)
               }
 
               if ('roughness' in material) {
@@ -586,6 +711,8 @@ function ThreatModelViewer({ sources, onSourceChange }) {
 
           modelPivot.add(activeModel)
           recenterPivotToVisibleModelCenter()
+          modelPivot.rotation.z = THREE.MathUtils.degToRad(initialLeftRotationDeg)
+          modelPivot.updateMatrixWorld(true)
 
           const visibleBounds = getVisibleModelBounds(modelPivot) || new THREE.Box3().setFromObject(modelPivot)
           fitCameraToBounds(visibleBounds)
@@ -614,9 +741,10 @@ function ThreatModelViewer({ sources, onSourceChange }) {
       ktx2Loader.dispose()
       dracoLoader.dispose()
       renderer.dispose()
+      activeModelRef.current = null
       container.innerHTML = ''
     }
-  }, [sources, onSourceChange])
+  }, [sources, onSourceChange, verticalExaggeration])
 
   return (
     <div className="amenazas-three-viewer-shell">
@@ -635,6 +763,7 @@ function ThreatModelViewer({ sources, onSourceChange }) {
 function Amenazas() {
   const [activeModelMarker, setActiveModelMarker] = useState(null)
   const [modelSourceIndex, setModelSourceIndex] = useState(0)
+  const [verticalExaggeration, setVerticalExaggeration] = useState(1.5)
 
   useEffect(() => {
     if (!activeModelMarker) {
@@ -772,7 +901,35 @@ function Amenazas() {
               </button>
             </header>
             <div className="amenazas-model-modal-body">
-              <ThreatModelViewer sources={modelSources} onSourceChange={setModelSourceIndex} />
+              <ThreatModelViewer
+                sources={modelSources}
+                onSourceChange={setModelSourceIndex}
+                verticalExaggeration={verticalExaggeration}
+              />
+              <div className="amenazas-model-relief-controls" aria-label="Control de exageración vertical del relieve">
+                <span>Relieve:</span>
+                <button
+                  type="button"
+                  className={verticalExaggeration === 1 ? 'is-active' : ''}
+                  onClick={() => setVerticalExaggeration(1)}
+                >
+                  1x
+                </button>
+                <button
+                  type="button"
+                  className={verticalExaggeration === 1.5 ? 'is-active' : ''}
+                  onClick={() => setVerticalExaggeration(1.5)}
+                >
+                  1.5x
+                </button>
+                <button
+                  type="button"
+                  className={verticalExaggeration === 2 ? 'is-active' : ''}
+                  onClick={() => setVerticalExaggeration(2)}
+                >
+                  2x
+                </button>
+              </div>
               <p className="amenazas-model-source-note">
                 Fuente del modelo: {modelSourceIndex >= 0 ? modelSourceIndex + 1 : 'ninguna'} de {modelSources.length}
               </p>
