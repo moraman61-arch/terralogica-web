@@ -1,7 +1,8 @@
-import { useEffect, useRef, useState } from 'react'
+import { Suspense, useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { Link } from 'react-router-dom'
 import * as THREE from 'three'
-import { ArcballControls } from 'three/examples/jsm/controls/ArcballControls.js'
+import { Canvas, useLoader, useThree } from '@react-three/fiber'
+import { Html, OrbitControls } from '@react-three/drei'
 import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js'
 import { DRACOLoader } from 'three/examples/jsm/loaders/DRACOLoader.js'
 import { KTX2Loader } from 'three/examples/jsm/loaders/KTX2Loader.js'
@@ -201,6 +202,8 @@ function ThreatProjectMap({ title, onOpenModel }) {
 
     const mapContainerEl = mapContainerRef.current
     let activePopup = null
+    let isDisposed = false
+    const pendingTimeouts = []
 
     const map = L.map(mapContainerEl, {
       zoomControl: false,
@@ -320,9 +323,19 @@ function ThreatProjectMap({ title, onOpenModel }) {
           }
         })
       }
+
     })
 
     const refreshMapView = () => {
+      if (isDisposed || mapInstanceRef.current !== map) {
+        return
+      }
+
+      const container = map.getContainer()
+      if (!container || !map._mapPane) {
+        return
+      }
+
       map.invalidateSize({ pan: false, debounceMoveend: true })
       fitMexico()
       recenterActivePopup()
@@ -334,8 +347,8 @@ function ThreatProjectMap({ title, onOpenModel }) {
 
     map.whenReady(() => {
       requestAnimationFrame(refreshMapView)
-      setTimeout(refreshMapView, 220)
-      setTimeout(refreshMapView, 700)
+      pendingTimeouts.push(setTimeout(refreshMapView, 220))
+      pendingTimeouts.push(setTimeout(refreshMapView, 700))
     })
 
     const resizeObserver = new ResizeObserver(() => {
@@ -373,6 +386,9 @@ function ThreatProjectMap({ title, onOpenModel }) {
     mapInstanceRef.current = map
 
     return () => {
+      isDisposed = true
+      pendingTimeouts.forEach((timeoutId) => clearTimeout(timeoutId))
+
       resizeObserver.disconnect()
       intersectionObserver.disconnect()
       window.removeEventListener('resize', refreshMapView)
@@ -386,7 +402,7 @@ function ThreatProjectMap({ title, onOpenModel }) {
         mapInstanceRef.current = null
       }
     }
-  }, [])
+  }, [onOpenModel])
 
   return (
     <figure className="amenazas-mini-map" aria-label={`Mapa de proyectos para ${title}`}>
@@ -396,638 +412,176 @@ function ThreatProjectMap({ title, onOpenModel }) {
   )
 }
 
-function ThreatModelViewer({ sources, onSourceChange, verticalExaggeration = 1.5 }) {
-  const containerRef = useRef(null)
-  const pivotDotRef = useRef(null)
-  const activeModelRef = useRef(null)
-  const [errorMessage, setErrorMessage] = useState('')
-  const initialLeftRotationDeg = -90
-  const lockRotationToZAxis = false
+function ThreatModelScene({ modelUrl, verticalExaggeration }) {
+  const modelRootRef = useRef(null)
+  const controlsRef = useRef(null)
+  const { camera, gl, size } = useThree()
 
-  useEffect(() => {
-    if (!activeModelRef.current) {
-      return
-    }
-
-    activeModelRef.current.scale.z = verticalExaggeration
-    activeModelRef.current.updateMatrixWorld(true)
-  }, [verticalExaggeration])
-
-  useEffect(() => {
-    if (!containerRef.current || sources.length === 0) {
-      return
-    }
-
-    const container = containerRef.current
-    let disposed = false
-    let animationFrameId = null
-    let activeModel = null
-    let pivotIndicatorGroup = null
-    const pivotWorld = new THREE.Vector3(0, 0, 0)
-    const initialPivotWorld = new THREE.Vector3(0, 0, 0)
-    let lockInitialCentering = true
-    let isRightMousePanning = false
-    const modelPivot = new THREE.Group()
-
-    const scene = new THREE.Scene()
-    scene.background = new THREE.Color('#081b46')
-    scene.add(modelPivot)
-
-    const camera = new THREE.PerspectiveCamera(46, 1, 0.1, 20000)
-    camera.position.set(0, 0, 6)
-    scene.add(camera)
-
-    const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: false })
-    renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2))
-    renderer.outputColorSpace = THREE.SRGBColorSpace
-    renderer.toneMapping = THREE.ACESFilmicToneMapping
-    renderer.toneMappingExposure = 1.22
-
-    container.innerHTML = ''
-    container.appendChild(renderer.domElement)
-
-    let controls = null
-    try {
-      controls = new ArcballControls(camera, renderer.domElement, scene)
-      controls.enabled = false
-      controls.enableAnimations = true
-      if (typeof controls.setGizmosVisible === 'function') {
-        controls.setGizmosVisible(false)
-      }
-      controls.enablePan = true
-      controls.adjustNearFar = true
-      controls.minDistance = 0.3
-      controls.maxDistance = 10000
-
-      // Mapeo explícito: botón derecho desplaza (pan) y botón izquierdo rota.
-      if (typeof controls.unsetMouseAction === 'function' && typeof controls.setMouseAction === 'function') {
-        controls.unsetMouseAction(2)
-        controls.unsetMouseAction(0)
-        controls.setMouseAction('PAN', 2)
-        controls.setMouseAction('ROTATE', 0)
-      }
-    } catch {
-      setErrorMessage('No fue posible iniciar el modo Arcball en este navegador.')
-      return () => {
-        renderer.dispose()
-        container.innerHTML = ''
-      }
-    }
-
-    scene.add(new THREE.AmbientLight(0xffffff, 1.0))
-    const hemiLight = new THREE.HemisphereLight(0xdbe8ff, 0x2e3f66, 1.15)
-    scene.add(hemiLight)
-    const keyLight = new THREE.DirectionalLight(0xffffff, 1.25)
-    keyLight.position.set(6, 12, 8)
-    scene.add(keyLight)
-
-    const backLight = new THREE.DirectionalLight(0x9fc2ff, 0.55)
-    backLight.position.set(-10, 8, -10)
-    scene.add(backLight)
-
-    const cameraLight = new THREE.PointLight(0xffffff, 1.4, 0, 2)
-    cameraLight.position.set(0, 0, 0)
-    camera.add(cameraLight)
-
+  const gltf = useLoader(GLTFLoader, modelUrl, (loader) => {
     const dracoLoader = new DRACOLoader()
     dracoLoader.setDecoderPath('https://www.gstatic.com/draco/versioned/decoders/1.5.7/')
 
     const ktx2Loader = new KTX2Loader()
     ktx2Loader.setTranscoderPath('https://unpkg.com/three@0.185.1/examples/jsm/libs/basis/')
-    ktx2Loader.detectSupport(renderer)
+    ktx2Loader.detectSupport(gl)
 
-    const gltfLoader = new GLTFLoader()
-    gltfLoader.setDRACOLoader(dracoLoader)
-    gltfLoader.setKTX2Loader(ktx2Loader)
-    gltfLoader.setMeshoptDecoder(MeshoptDecoder)
-    let zAxisPitchRatio = 0
+    loader.setDRACOLoader(dracoLoader)
+    loader.setKTX2Loader(ktx2Loader)
+    loader.setMeshoptDecoder(MeshoptDecoder)
+  })
 
-    const getControlsTarget = () => {
-      const target = new THREE.Vector3()
+  const modelScene = useMemo(() => gltf.scene.clone(true), [gltf.scene])
 
-      if (typeof controls.getTarget === 'function') {
-        controls.getTarget(target)
-      } else if (controls.target) {
-        target.copy(controls.target)
-      } else if (controls._gizmos?.position) {
-        target.copy(controls._gizmos.position)
-      }
-
-      return target
-    }
-
-    const setControlsTarget = (target) => {
-      if (typeof controls.setTarget === 'function') {
-        controls.setTarget(target.x, target.y, target.z)
-      } else if (controls.target) {
-        controls.target.copy(target)
-      } else if (controls._gizmos?.position) {
-        controls._gizmos.position.copy(target)
-      }
-    }
-
-    const setPivotWorldAndControlsTarget = (target) => {
-      pivotWorld.copy(target)
-      setControlsTarget(pivotWorld)
-    }
-
-    const enforceInitialCentering = () => {
-      if (!lockInitialCentering) {
+  useEffect(() => {
+    modelScene.traverse((node) => {
+      if (!node.isMesh || !node.material) {
         return
       }
 
-      // Centrado en coordenadas de pantalla: mover cámara para que el pivote
-      // proyecte exactamente al centro del canvas/modal.
-      const pivotScreen = initialPivotWorld.clone().project(camera)
-      const desiredScreen = new THREE.Vector3(0, 0, pivotScreen.z)
-      const worldAtDesiredScreen = desiredScreen.unproject(camera)
-      const cameraTranslation = initialPivotWorld.clone().sub(worldAtDesiredScreen)
+      const materials = Array.isArray(node.material) ? node.material : [node.material]
 
-      if (cameraTranslation.lengthSq() > 1e-12) {
-        camera.position.add(cameraTranslation)
-      }
-
-      setControlsTarget(initialPivotWorld)
-      camera.lookAt(initialPivotWorld)
-      pivotWorld.copy(initialPivotWorld)
-    }
-
-    const captureZAxisPitchRatio = () => {
-      const target = getControlsTarget()
-      const offset = camera.position.clone().sub(target)
-      const distance = Math.max(offset.length(), 1e-6)
-      zAxisPitchRatio = THREE.MathUtils.clamp(offset.z / distance, -0.95, 0.95)
-    }
-
-    const enforceZAxisOnlyRotation = () => {
-      if (!lockRotationToZAxis) {
-        return
-      }
-
-      const target = getControlsTarget()
-      const offset = camera.position.clone().sub(target)
-      const distance = Math.max(offset.length(), 1e-4)
-      const azimuth = Math.atan2(offset.y, offset.x)
-      const zOffset = distance * zAxisPitchRatio
-      const planarRadius = Math.sqrt(Math.max(distance * distance - zOffset * zOffset, 1e-6))
-
-      camera.position.set(
-        target.x + Math.cos(azimuth) * planarRadius,
-        target.y + Math.sin(azimuth) * planarRadius,
-        target.z + zOffset,
-      )
-      camera.up.set(0, 0, 1)
-      camera.lookAt(target)
-    }
-
-    const getVisibleModelBounds = (rootObject) => {
-      const visibleBounds = new THREE.Box3()
-      let hasVisibleMesh = false
-
-      rootObject.updateWorldMatrix(true, true)
-
-      rootObject.traverse((node) => {
-        if (!node.isMesh || !node.visible || !node.geometry) {
+      materials.forEach((material) => {
+        if (!material) {
           return
         }
 
-        if (!node.geometry.boundingBox) {
-          node.geometry.computeBoundingBox()
+        if (material.map) {
+          material.map.colorSpace = THREE.SRGBColorSpace
+          material.map.needsUpdate = true
         }
 
-        if (!node.geometry.boundingBox) {
-          return
+        if (material.color) {
+          material.color.setRGB(1, 1, 1)
         }
 
-        const meshBounds = node.geometry.boundingBox.clone()
-        meshBounds.applyMatrix4(node.matrixWorld)
-
-        if (!hasVisibleMesh) {
-          visibleBounds.copy(meshBounds)
-          hasVisibleMesh = true
-          return
+        if ('envMapIntensity' in material) {
+          material.envMapIntensity = Math.max(material.envMapIntensity || 0, 1.15)
         }
 
-        visibleBounds.union(meshBounds)
+        if ('roughness' in material) {
+          material.roughness = Math.min(material.roughness ?? 1, 0.9)
+        }
+
+        if ('metalness' in material) {
+          material.metalness = Math.min(material.metalness ?? 0, 0.08)
+        }
+
+        material.needsUpdate = true
       })
+    })
+  }, [modelScene])
 
-      if (!hasVisibleMesh) {
-        return null
-      }
-
-      return visibleBounds
+  useEffect(() => {
+    if (!modelRootRef.current || !controlsRef.current) {
+      return
     }
 
-    const fitCameraToBounds = (bounds) => {
-      const box = bounds
-
-      if (box.isEmpty()) {
-        camera.position.set(0, 0, 6)
-        setPivotWorldAndControlsTarget(new THREE.Vector3(0, 0, 0))
-        if (typeof controls.update === 'function') {
-          controls.update()
-        }
-        return
-      }
-
-      const size = box.getSize(new THREE.Vector3())
-      const center = new THREE.Vector3(
-        box.min.x + size.x * 0.5,
-        box.min.y + size.y * 0.5,
-        box.min.z + size.z * 0.5,
-      )
-      const radius = Math.max(size.x, size.y, size.z) * 0.5
-      const safeRadius = Math.max(radius, 1)
-      const fov = THREE.MathUtils.degToRad(camera.fov)
-      const distance = (safeRadius / Math.tan(fov / 2)) * 1.25
-
-      camera.near = Math.max(distance / 1000, 0.01)
-      camera.far = distance * 20
-      camera.updateProjectionMatrix()
-
-      // El target debe coincidir con el pivote visual para que el giro sea coherente.
-      const initialTarget = center.clone()
-      const initialPosition = new THREE.Vector3(
-        center.x,
-        center.y,
-        center.z + distance * 1.08,
-      )
-
-      camera.position.copy(initialPosition)
-      initialPivotWorld.copy(initialTarget)
-      lockInitialCentering = true
-      setPivotWorldAndControlsTarget(initialTarget)
-      camera.lookAt(initialTarget)
-
-      if (typeof controls.update === 'function') {
-        controls.update()
-      }
-
-      captureZAxisPitchRatio()
+    const box = new THREE.Box3().setFromObject(modelRootRef.current)
+    if (box.isEmpty()) {
+      return
     }
 
-    const recenterPivotToVisibleModelCenter = () => {
-      const visibleBounds = getVisibleModelBounds(modelPivot)
+    const center = box.getCenter(new THREE.Vector3())
+    const modelSize = box.getSize(new THREE.Vector3())
+    const halfHeight = modelSize.z * 0.5
+    const halfWidth = modelSize.x * 0.5
+    const aspect = Math.max(size.width / Math.max(size.height, 1), 1e-3)
+    const halfVerticalFov = THREE.MathUtils.degToRad(camera.fov * 0.5)
 
-      if (!visibleBounds || visibleBounds.isEmpty()) {
-        return
-      }
+    // El terreno queda sobre el plano XZ; por eso el encuadre debe ajustarse
+    // usando ancho=X y alto=Z, con cámara inicial desde +Y.
+    const fitByHeight = halfHeight / Math.tan(halfVerticalFov)
+    const fitByWidth = (halfWidth / aspect) / Math.tan(halfVerticalFov)
+    const distance = Math.max(fitByHeight, fitByWidth) * 1.02
 
-      const size = visibleBounds.getSize(new THREE.Vector3())
-      const center = new THREE.Vector3(
-        visibleBounds.min.x + size.x * 0.5,
-        visibleBounds.min.y + size.y * 0.5,
-        visibleBounds.min.z + size.z * 0.5,
-      )
+    camera.position.set(center.x, center.y + distance, center.z)
+    camera.up.set(0, 0, 1)
+    camera.near = Math.max(distance / 1500, 0.01)
+    camera.far = distance * 35
+    camera.lookAt(center)
+    camera.updateProjectionMatrix()
 
-      modelPivot.position.sub(center)
-      modelPivot.updateMatrixWorld(true)
-    }
+    controlsRef.current.target.copy(center)
+    controlsRef.current.update()
+  }, [camera, size.width, size.height, verticalExaggeration, modelScene])
 
-    const disposePivotIndicator = () => {
-      if (!pivotIndicatorGroup) {
-        return
-      }
+  return (
+    <>
+      <ambientLight intensity={1.15} />
+      <hemisphereLight args={[0xe6f0ff, 0x30456f, 1.2]} />
+      <directionalLight position={[6, 12, 8]} intensity={1.3} />
+      <directionalLight position={[-10, 7, -10]} intensity={0.65} color={0xbad7ff} />
+      <pointLight position={[0, 0, 10]} intensity={0.55} />
 
-      if (pivotIndicatorGroup.parent) {
-        pivotIndicatorGroup.parent.remove(pivotIndicatorGroup)
-      }
-      pivotIndicatorGroup.traverse((node) => {
-        if (node.geometry) {
-          node.geometry.dispose()
-        }
+      <group
+        ref={modelRootRef}
+        scale={[1, 1, verticalExaggeration]}
+        rotation={[0, 0, THREE.MathUtils.degToRad(90)]}
+      >
+        <primitive object={modelScene} />
+      </group>
 
-        if (Array.isArray(node.material)) {
-          node.material.forEach((material) => material?.dispose?.())
-          return
-        }
+      <OrbitControls
+        ref={controlsRef}
+        makeDefault
+        enableDamping
+        dampingFactor={0.06}
+        minPolarAngle={0.01}
+        maxPolarAngle={Math.PI / 2.1}
+        mouseButtons={{
+          LEFT: THREE.MOUSE.ROTATE,
+          MIDDLE: THREE.MOUSE.DOLLY,
+          RIGHT: THREE.MOUSE.PAN,
+        }}
+      />
+    </>
+  )
+}
 
-        node.material?.dispose?.()
-      })
-      pivotIndicatorGroup = null
-    }
-
-    const updatePivotIndicator = (bounds) => {
-      disposePivotIndicator()
-
-      const size = bounds.getSize(new THREE.Vector3())
-      const maxSpan = Math.max(size.x, size.y, size.z, 1)
-      const sphereRadius = THREE.MathUtils.clamp(maxSpan * 0.06, 0.08, 2.2)
-      const axesSize = sphereRadius * 6.5
-
-      const indicator = new THREE.Group()
-
-      const pivotSphere = new THREE.Mesh(
-        new THREE.SphereGeometry(sphereRadius, 24, 16),
-        new THREE.MeshBasicMaterial({
-          color: 0x77d6ff,
-          transparent: true,
-          opacity: 0.28,
-          depthTest: false,
-          depthWrite: false,
-        }),
-      )
-
-      const pivotCore = new THREE.Mesh(
-        new THREE.SphereGeometry(sphereRadius * 0.22, 16, 12),
-        new THREE.MeshBasicMaterial({
-          color: 0xffe17a,
-          transparent: true,
-          opacity: 0.95,
-          depthTest: false,
-          depthWrite: false,
-        }),
-      )
-
-      const pivotWire = new THREE.LineSegments(
-        new THREE.EdgesGeometry(new THREE.SphereGeometry(sphereRadius, 12, 8)),
-        new THREE.LineBasicMaterial({
-          color: 0xd8f2ff,
-          transparent: true,
-          opacity: 0.9,
-          depthTest: false,
-          depthWrite: false,
-        }),
-      )
-
-      const axesHelper = new THREE.AxesHelper(axesSize)
-      axesHelper.material.depthTest = false
-      axesHelper.material.depthWrite = false
-      axesHelper.renderOrder = 3
-      pivotSphere.renderOrder = 1
-      pivotCore.renderOrder = 2
-      pivotWire.renderOrder = 3
-
-      indicator.add(pivotSphere)
-      indicator.add(pivotCore)
-      indicator.add(pivotWire)
-      indicator.add(axesHelper)
-
-      scene.add(indicator)
-      pivotIndicatorGroup = indicator
-    }
-
-    const syncPivotIndicatorToPivot = () => {
-      if (!pivotIndicatorGroup) {
-        return
-      }
-
-      pivotIndicatorGroup.position.copy(pivotWorld)
-      pivotIndicatorGroup.updateMatrixWorld(true)
-    }
-
-    const updatePivotDotPosition = () => {
-      const pivotDotEl = pivotDotRef.current
-      if (!pivotDotEl) {
-        return
-      }
-
-      const ndc = pivotWorld.clone().project(camera)
-      const canvasWidth = Math.max(renderer.domElement.clientWidth, 1)
-      const canvasHeight = Math.max(renderer.domElement.clientHeight, 1)
-      const x = (ndc.x * 0.5 + 0.5) * canvasWidth
-      const y = (-ndc.y * 0.5 + 0.5) * canvasHeight
-      const isVisible = ndc.z >= -1 && ndc.z <= 1
-
-      pivotDotEl.style.transform = `translate(${x}px, ${y}px) translate(-50%, -50%)`
-      pivotDotEl.style.opacity = isVisible ? '1' : '0'
-    }
-
-    const resize = () => {
-      if (disposed) {
-        return
-      }
-
-      const width = Math.max(container.clientWidth, 1)
-      const height = Math.max(container.clientHeight, 1)
-      renderer.setSize(width, height, false)
-      camera.aspect = width / height
-      camera.updateProjectionMatrix()
-    }
-
-    resize()
-    const resizeObserver = new ResizeObserver(resize)
-    resizeObserver.observe(container)
-
-    const onPointerDown = (event) => {
-      lockInitialCentering = false
-      if (controls) {
-        controls.enabled = true
-      }
-      if (event.button === 2) {
-        isRightMousePanning = true
-      }
-    }
-
-    const onPointerUp = (event) => {
-      if (event.button === 2) {
-        isRightMousePanning = false
-      }
-    }
-
-    const onContextMenu = (event) => {
-      event.preventDefault()
-    }
-
-    renderer.domElement.addEventListener('pointerdown', onPointerDown)
-    renderer.domElement.addEventListener('pointerup', onPointerUp)
-    renderer.domElement.addEventListener('pointercancel', onPointerUp)
-    renderer.domElement.addEventListener('contextmenu', onContextMenu)
-
-    const animate = () => {
-      if (disposed) {
-        return
-      }
-
-      const cameraPositionBefore = camera.position.clone()
-      const targetBefore = getControlsTarget()
-
-      if (!lockInitialCentering && typeof controls.update === 'function') {
-        controls.update()
-      }
-
-      enforceInitialCentering()
-
-      // Si hay pan y Arcball no desplazó el target, lo trasladamos con el mismo delta de cámara.
-      if (isRightMousePanning) {
-        const targetAfter = getControlsTarget()
-        const targetDelta = targetAfter.clone().sub(targetBefore)
-        const cameraDelta = camera.position.clone().sub(cameraPositionBefore)
-
-        if (targetDelta.lengthSq() <= 1e-10 && cameraDelta.lengthSq() > 1e-10) {
-          targetAfter.add(cameraDelta)
-          setControlsTarget(targetAfter)
-        }
-      }
-
-      pivotWorld.copy(getControlsTarget())
-      syncPivotIndicatorToPivot()
-
-      enforceZAxisOnlyRotation()
-      updatePivotDotPosition()
-
-      renderer.render(scene, camera)
-      animationFrameId = requestAnimationFrame(animate)
-    }
-
-    const tryLoadSource = (sourceIndex) => {
-      if (disposed) {
-        return
-      }
-
-      if (sourceIndex >= sources.length) {
-        setErrorMessage('No fue posible renderizar el modelo 3D en este navegador.')
-        onSourceChange?.(-1)
-        return
-      }
-
-      setErrorMessage('')
-      onSourceChange?.(sourceIndex)
-
-      gltfLoader.load(
-        sources[sourceIndex],
-        (gltf) => {
-          if (disposed) {
-            return
-          }
-
-          if (activeModel) {
-            modelPivot.remove(activeModel)
-          }
-
-          activeModel = gltf.scene
-          // Exageración vertical del relieve para realzar el detalle topográfico.
-          activeModel.scale.z = verticalExaggeration
-          activeModelRef.current = activeModel
-          activeModel.traverse((node) => {
-            if (!node.isMesh) {
-              return
-            }
-
-            const meshMaterials = Array.isArray(node.material) ? node.material : [node.material]
-
-            meshMaterials.forEach((material) => {
-              if (!material) {
-                return
-              }
-
-              if (material.map) {
-                material.map.colorSpace = THREE.SRGBColorSpace
-                material.map.needsUpdate = true
-
-                if (material.color) {
-                  // Algunos glb llegan con baseColorFactor muy oscuro y apagan la textura.
-                  material.color.setRGB(1, 1, 1)
-                }
-              }
-
-              if ('envMapIntensity' in material) {
-                material.envMapIntensity = Math.max(material.envMapIntensity || 0, 1.15)
-              }
-
-              if ('emissiveIntensity' in material) {
-                material.emissiveIntensity = Math.max(material.emissiveIntensity || 0, 0.08)
-              }
-
-              if ('roughness' in material) {
-                material.roughness = Math.min(material.roughness ?? 1, 0.95)
-              }
-
-              if ('metalness' in material) {
-                material.metalness = Math.min(material.metalness ?? 0, 0.08)
-              }
-
-              if ('side' in material) {
-                material.side = THREE.DoubleSide
-              }
-
-              if (!material.map && material.color && material.color.r < 0.08 && material.color.g < 0.08 && material.color.b < 0.08) {
-                material.color.setRGB(0.7, 0.74, 0.8)
-              }
-
-              material.needsUpdate = true
-            })
-          })
-
-          modelPivot.add(activeModel)
-          recenterPivotToVisibleModelCenter()
-          modelPivot.rotation.z = THREE.MathUtils.degToRad(initialLeftRotationDeg)
-          modelPivot.updateMatrixWorld(true)
-
-          const visibleBounds = getVisibleModelBounds(modelPivot) || new THREE.Box3().setFromObject(modelPivot)
-          updatePivotIndicator(visibleBounds)
-          fitCameraToBounds(visibleBounds)
-          syncPivotIndicatorToPivot()
-          updatePivotDotPosition()
-        },
-        undefined,
-        () => {
-          tryLoadSource(sourceIndex + 1)
-        },
-      )
-    }
-
-    tryLoadSource(0)
-    animate()
-
-    return () => {
-      disposed = true
-
-      if (animationFrameId) {
-        cancelAnimationFrame(animationFrameId)
-      }
-
-      resizeObserver.disconnect()
-      renderer.domElement.removeEventListener('pointerdown', onPointerDown)
-      renderer.domElement.removeEventListener('pointerup', onPointerUp)
-      renderer.domElement.removeEventListener('pointercancel', onPointerUp)
-      renderer.domElement.removeEventListener('contextmenu', onContextMenu)
-      if (typeof controls.dispose === 'function') {
-        controls.dispose()
-      }
-      ktx2Loader.dispose()
-      dracoLoader.dispose()
-      disposePivotIndicator()
-      renderer.dispose()
-      activeModelRef.current = null
-      container.innerHTML = ''
-    }
-  }, [sources, onSourceChange, verticalExaggeration])
-
+function ThreatModelViewer({ modelUrl, verticalExaggeration }) {
   return (
     <div className="amenazas-three-viewer-shell">
       <div className="amenazas-three-canvas-wrap">
-        <div ref={containerRef} className="amenazas-three-canvas" />
-        <div ref={pivotDotRef} className="amenazas-pivot-dot" aria-hidden="true" />
+        <Canvas
+          className="amenazas-three-canvas"
+          dpr={[1, 2]}
+          camera={{ fov: 36, near: 0.1, far: 20000 }}
+          onCreated={({ gl: renderer }) => {
+            renderer.outputColorSpace = THREE.SRGBColorSpace
+            renderer.toneMapping = THREE.ACESFilmicToneMapping
+            renderer.toneMappingExposure = 1.35
+          }}
+        >
+          <color attach="background" args={['#081b46']} />
+          <Suspense
+            fallback={(
+              <Html center>
+                <p className="amenazas-model-loading-inline">Cargando modelo 3D...</p>
+              </Html>
+            )}
+          >
+            <ThreatModelScene modelUrl={modelUrl} verticalExaggeration={verticalExaggeration} />
+          </Suspense>
+        </Canvas>
       </div>
       <div className="amenazas-three-help" aria-label="Indicaciones de navegación del modelo 3D">
         <p><strong>Cómo navegar:</strong> arrastra para rotar, rueda para acercar/alejar y clic derecho para desplazar.</p>
         <p><strong>En touch:</strong> 1 dedo rota, 2 dedos hacen zoom y paneo.</p>
       </div>
-      {errorMessage ? (
-        <p className="amenazas-model-loading">{errorMessage}</p>
-      ) : null}
     </div>
   )
 }
 
 function Amenazas() {
   const [activeModelMarker, setActiveModelMarker] = useState(null)
-  const [modelSourceIndex, setModelSourceIndex] = useState(0)
   const [verticalExaggeration, setVerticalExaggeration] = useState(1.5)
+  const [modelSourceIndex, setModelSourceIndex] = useState(0)
 
-  useEffect(() => {
-    if (!activeModelMarker) {
-      return
-    }
-
+  const openModelModal = useCallback((markerData) => {
     setModelSourceIndex(0)
-  }, [activeModelMarker])
-
-  const openModelModal = (markerData) => {
-    setModelSourceIndex(0)
+    setVerticalExaggeration(1.5)
     setActiveModelMarker(markerData)
-  }
+  }, [])
 
   useEffect(() => {
     if (!activeModelMarker) {
@@ -1151,36 +705,34 @@ function Amenazas() {
                 Cerrar
               </button>
             </header>
+
             <div className="amenazas-model-modal-body">
-              <ThreatModelViewer
-                sources={modelSources}
-                onSourceChange={setModelSourceIndex}
-                verticalExaggeration={verticalExaggeration}
-              />
-              <div className="amenazas-model-relief-controls" aria-label="Control de exageración vertical del relieve">
-                <span>Relieve:</span>
-                <button
-                  type="button"
-                  className={verticalExaggeration === 1 ? 'is-active' : ''}
-                  onClick={() => setVerticalExaggeration(1)}
-                >
-                  1x
-                </button>
-                <button
-                  type="button"
-                  className={verticalExaggeration === 1.5 ? 'is-active' : ''}
-                  onClick={() => setVerticalExaggeration(1.5)}
-                >
-                  1.5x
-                </button>
-                <button
-                  type="button"
-                  className={verticalExaggeration === 2 ? 'is-active' : ''}
-                  onClick={() => setVerticalExaggeration(2)}
-                >
-                  2x
-                </button>
-              </div>
+              <ThreatModelViewer modelUrl={modelSources[modelSourceIndex]} verticalExaggeration={verticalExaggeration} />
+            </div>
+
+            <div className="amenazas-model-relief-controls" aria-label="Control de exageración vertical del relieve">
+              <span>Relieve:</span>
+              <button
+                type="button"
+                className={verticalExaggeration === 1 ? 'is-active' : ''}
+                onClick={() => setVerticalExaggeration(1)}
+              >
+                1x
+              </button>
+              <button
+                type="button"
+                className={verticalExaggeration === 1.5 ? 'is-active' : ''}
+                onClick={() => setVerticalExaggeration(1.5)}
+              >
+                1.5x
+              </button>
+              <button
+                type="button"
+                className={verticalExaggeration === 2 ? 'is-active' : ''}
+                onClick={() => setVerticalExaggeration(2)}
+              >
+                2x
+              </button>
             </div>
           </section>
         </div>
