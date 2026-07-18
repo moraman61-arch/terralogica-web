@@ -1,4 +1,4 @@
-import { useEffect, useRef } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { Link } from 'react-router-dom'
 import L from 'leaflet'
 import 'leaflet/dist/leaflet.css'
@@ -19,7 +19,7 @@ const amenazasProjectTypes = [
       {
         title: 'Estudios de deslizamientos de tierra',
         description:
-          'Caracterizamos laderas, detonantes y patrones de ocurrencia para delimitar zonas de amenaza por movimientos en masa.',
+          'Caracterizamos laderas, factores detonantes y patrones de ocurrencia para delimitar zonas de amenaza por movimientos en masa.',
         points: [
           { name: 'Ladera Oriente - Monterrey', x: 24, y: 33 },
           { name: 'Corredor serrano - Hidalgo', x: 49, y: 26 },
@@ -141,54 +141,46 @@ const mexicoBounds = [
   [33.2, -86.2],
 ]
 
+const modelAssetBase = import.meta.env.BASE_URL || '/'
+
+const modelSources = [
+  `${modelAssetBase}amenazas/modelo-teposcolula-3d.ktx2.centered.glb`,
+  `${modelAssetBase}amenazas/modelo-teposcolula-3d.centered.glb`,
+  `${modelAssetBase}amenazas/modelo-teposcolula-3d.ktx2.glb`,
+]
+
 const demoMarkers = [
   {
     id: 'oaxaca',
     name: 'Oaxaca',
     lat: 17.07,
     lng: -97.68,
-    popupHtml: `
-      <div class="amenazas-popup-content">
-        <h5>Deslizamiento en la Carretera a San Juan Teposcolula, Oax.</h5>
-        <model-viewer
-          src="/amenazas/modelo-teposcolula-3d.webopt.glb"
-          camera-controls
-          touch-action="pan-y"
-          ar
-          loading="lazy"
-          reveal="interaction"
-          style="width: 100%; height: 220px; border-radius: 8px; background: #081b46;"
-        ></model-viewer>
-      </div>
-    `,
+    popupTitle: 'Deslizamiento en la Carretera a San Juan Teposcolula, Oax.',
+    popupBody:
+      'Proyecto de referencia para análisis geológico de laderas con enfoque de riesgo en infraestructura carretera.',
+    hasModel: true,
   },
   {
     id: 'guerrero',
     name: 'Guerrero',
     lat: 17.44,
     lng: -99.52,
-    popupHtml: `
-      <div class="amenazas-popup-content">
-        <h5>Punto ficticio de proyecto en Guerrero</h5>
-        <p>Ubicación de demostración para futuras fichas de proyectos geológicos.</p>
-      </div>
-    `,
+    popupTitle: 'Punto ficticio de proyecto en Guerrero',
+    popupBody: 'Ubicación de demostración para futuras fichas de proyectos geológicos.',
+    hasModel: false,
   },
   {
     id: 'michoacan',
     name: 'Michoacán',
     lat: 19.70,
     lng: -101.18,
-    popupHtml: `
-      <div class="amenazas-popup-content">
-        <h5>Punto ficticio de proyecto en Michoacán</h5>
-        <p>Ubicación de demostración para futuras fichas de proyectos geológicos.</p>
-      </div>
-    `,
+    popupTitle: 'Punto ficticio de proyecto en Michoacán',
+    popupBody: 'Ubicación de demostración para futuras fichas de proyectos geológicos.',
+    hasModel: false,
   },
 ]
 
-function ThreatProjectMap({ title }) {
+function ThreatProjectMap({ title, onOpenModel }) {
   const mapContainerRef = useRef(null)
   const mapInstanceRef = useRef(null)
 
@@ -213,7 +205,22 @@ function ThreatProjectMap({ title }) {
     map.fitBounds(mexicoBounds)
 
     demoMarkers.forEach((markerData) => {
-      L.circleMarker([markerData.lat, markerData.lng], {
+      const popupHtml = markerData.hasModel
+        ? `
+          <div class="amenazas-popup-content">
+            <h5>${markerData.popupTitle}</h5>
+            <p>${markerData.popupBody}</p>
+            <button type="button" class="amenazas-popup-open-btn" data-model-marker-id="${markerData.id}">Ver modelo 3D</button>
+          </div>
+        `
+        : `
+          <div class="amenazas-popup-content">
+            <h5>${markerData.popupTitle}</h5>
+            <p>${markerData.popupBody}</p>
+          </div>
+        `
+
+      const mapMarker = L.circleMarker([markerData.lat, markerData.lng], {
         radius: 7,
         color: '#07193f',
         weight: 1.5,
@@ -221,7 +228,21 @@ function ThreatProjectMap({ title }) {
         fillOpacity: 0.95,
       })
         .addTo(map)
-        .bindPopup(markerData.popupHtml, { maxWidth: 420 })
+        .bindPopup(popupHtml, { maxWidth: 420 })
+
+      if (markerData.hasModel) {
+        mapMarker.on('popupopen', (event) => {
+          const popupEl = event.popup.getElement()
+          const trigger = popupEl?.querySelector(`[data-model-marker-id="${markerData.id}"]`)
+
+          if (trigger) {
+            trigger.addEventListener('click', () => {
+              onOpenModel(markerData)
+              map.closePopup()
+            }, { once: true })
+          }
+        })
+      }
     })
 
     mapInstanceRef.current = map
@@ -243,23 +264,75 @@ function ThreatProjectMap({ title }) {
 }
 
 function Amenazas() {
-  useEffect(() => {
-    const existingScript = document.querySelector('script[data-model-viewer="true"]')
+  const [activeModelMarker, setActiveModelMarker] = useState(null)
+  const [isModelViewerReady, setIsModelViewerReady] = useState(false)
+  const [modelSourceIndex, setModelSourceIndex] = useState(0)
 
-    if (existingScript) {
+  useEffect(() => {
+    if (!activeModelMarker) {
       return
     }
 
-    const script = document.createElement('script')
-    script.type = 'module'
-    script.src = 'https://unpkg.com/@google/model-viewer/dist/model-viewer.min.js'
-    script.setAttribute('data-model-viewer', 'true')
-    document.head.appendChild(script)
+    setModelSourceIndex(0)
+
+    const modelViewerTag = window.customElements?.get('model-viewer')
+
+    if (modelViewerTag) {
+      setIsModelViewerReady(true)
+      return
+    }
+
+    let isMounted = true
+
+    import('@google/model-viewer/dist/model-viewer.min.js')
+      .then(() => {
+        if (isMounted) {
+          setIsModelViewerReady(true)
+        }
+      })
+      .catch(() => {
+        if (isMounted) {
+          setIsModelViewerReady(false)
+        }
+      })
 
     return () => {
-      script.remove()
+      isMounted = false
     }
-  }, [])
+  }, [activeModelMarker])
+
+  const openModelModal = (markerData) => {
+    setModelSourceIndex(0)
+    setActiveModelMarker(markerData)
+  }
+
+  const handleModelViewerError = () => {
+    setModelSourceIndex((current) => {
+      if (current < modelSources.length - 1) {
+        return current + 1
+      }
+
+      return current
+    })
+  }
+
+  useEffect(() => {
+    if (!activeModelMarker) {
+      return
+    }
+
+    const onKeyDown = (event) => {
+      if (event.key === 'Escape') {
+        setActiveModelMarker(null)
+      }
+    }
+
+    window.addEventListener('keydown', onKeyDown)
+
+    return () => {
+      window.removeEventListener('keydown', onKeyDown)
+    }
+  }, [activeModelMarker])
 
   return (
     <main className="page-shell subpage-shell">
@@ -336,7 +409,7 @@ function Amenazas() {
                   <article key={solution.title} className="amenaza-solution-card">
                     <h4>{solution.title}</h4>
                     <p>{solution.description}</p>
-                    <ThreatProjectMap title={solution.title} />
+                    <ThreatProjectMap title={solution.title} onOpenModel={openModelModal} />
                   </article>
                 ))}
               </div>
@@ -344,6 +417,51 @@ function Amenazas() {
           ))}
         </div>
       </section>
+
+      {activeModelMarker ? (
+        <div className="amenazas-modal-backdrop" role="presentation" onClick={() => setActiveModelMarker(null)}>
+          <section
+            className="amenazas-model-modal"
+            role="dialog"
+            aria-modal="true"
+            aria-label={activeModelMarker.popupTitle}
+            onClick={(event) => event.stopPropagation()}
+          >
+            <header className="amenazas-model-modal-header">
+              <h4>{activeModelMarker.popupTitle}</h4>
+              <button
+                type="button"
+                className="amenazas-model-modal-close"
+                onClick={() => setActiveModelMarker(null)}
+                aria-label="Cerrar ventana de modelo 3D"
+              >
+                Cerrar
+              </button>
+            </header>
+            <div className="amenazas-model-modal-body">
+              {isModelViewerReady ? (
+                <>
+                  <model-viewer
+                    src={modelSources[modelSourceIndex]}
+                    camera-controls
+                    touch-action="pan-y"
+                    ar
+                    loading="eager"
+                    reveal="interaction"
+                    onError={handleModelViewerError}
+                    style={{ width: '100%', height: '56vh', minHeight: '360px', borderRadius: '12px', background: '#081b46' }}
+                  ></model-viewer>
+                  <p className="amenazas-model-source-note">
+                    Fuente del modelo: {modelSourceIndex + 1} de {modelSources.length}
+                  </p>
+                </>
+              ) : (
+                <div className="amenazas-model-loading">Cargando visor 3D...</div>
+              )}
+            </div>
+          </section>
+        </div>
+      ) : null}
     </main>
   )
 }
