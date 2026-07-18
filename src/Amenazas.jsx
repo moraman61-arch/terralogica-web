@@ -150,8 +150,8 @@ const mexicoBounds = [
 const modelAssetBase = import.meta.env.BASE_URL || '/'
 
 const modelSources = [
-  `${modelAssetBase}amenazas/modelo-teposcolula-3d.ktx2.centered.glb`,
   `${modelAssetBase}amenazas/modelo-teposcolula-3d.centered.glb`,
+  `${modelAssetBase}amenazas/modelo-teposcolula-3d.ktx2.centered.glb`,
   `${modelAssetBase}amenazas/modelo-teposcolula-3d.ktx2.glb`,
 ]
 
@@ -292,6 +292,8 @@ function ThreatModelViewer({ sources, onSourceChange }) {
     const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: false })
     renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2))
     renderer.outputColorSpace = THREE.SRGBColorSpace
+    renderer.toneMapping = THREE.ACESFilmicToneMapping
+    renderer.toneMappingExposure = 1.12
 
     container.innerHTML = ''
     container.appendChild(renderer.domElement)
@@ -303,6 +305,8 @@ function ThreatModelViewer({ sources, onSourceChange }) {
     controls.maxDistance = 10000
 
     scene.add(new THREE.AmbientLight(0xffffff, 0.9))
+    const hemiLight = new THREE.HemisphereLight(0xdbe8ff, 0x2e3f66, 1.1)
+    scene.add(hemiLight)
     const keyLight = new THREE.DirectionalLight(0xffffff, 1.1)
     keyLight.position.set(6, 12, 8)
     scene.add(keyLight)
@@ -315,7 +319,7 @@ function ThreatModelViewer({ sources, onSourceChange }) {
     dracoLoader.setDecoderPath('https://www.gstatic.com/draco/versioned/decoders/1.5.7/')
 
     const ktx2Loader = new KTX2Loader()
-    ktx2Loader.setTranscoderPath('https://unpkg.com/three@0.181.1/examples/jsm/libs/basis/')
+    ktx2Loader.setTranscoderPath('https://unpkg.com/three@0.185.1/examples/jsm/libs/basis/')
     ktx2Loader.detectSupport(renderer)
 
     const gltfLoader = new GLTFLoader()
@@ -347,6 +351,18 @@ function ThreatModelViewer({ sources, onSourceChange }) {
       camera.position.set(center.x, center.y + safeRadius * 0.35, center.z + distance)
       controls.target.copy(center)
       controls.update()
+    }
+
+    const recenterModelAtWorldOrigin = (object3D) => {
+      const box = new THREE.Box3().setFromObject(object3D)
+
+      if (box.isEmpty()) {
+        return
+      }
+
+      const center = box.getCenter(new THREE.Vector3())
+      object3D.position.sub(center)
+      object3D.updateMatrixWorld(true)
     }
 
     const resize = () => {
@@ -401,8 +417,53 @@ function ThreatModelViewer({ sources, onSourceChange }) {
           }
 
           activeModel = gltf.scene
+          recenterModelAtWorldOrigin(activeModel)
+          activeModel.traverse((node) => {
+            if (!node.isMesh) {
+              return
+            }
+
+            const meshMaterials = Array.isArray(node.material) ? node.material : [node.material]
+
+            meshMaterials.forEach((material) => {
+              if (!material) {
+                return
+              }
+
+              if (material.map) {
+                material.map.colorSpace = THREE.SRGBColorSpace
+                material.map.needsUpdate = true
+              }
+
+              if ('envMapIntensity' in material) {
+                material.envMapIntensity = Math.max(material.envMapIntensity || 0, 1.15)
+              }
+
+              if ('emissiveIntensity' in material) {
+                material.emissiveIntensity = Math.max(material.emissiveIntensity || 0, 0.2)
+              }
+
+              if ('roughness' in material) {
+                material.roughness = Math.min(material.roughness ?? 1, 0.95)
+              }
+
+              if (!material.map && material.color && material.color.r < 0.08 && material.color.g < 0.08 && material.color.b < 0.08) {
+                material.color.setRGB(0.7, 0.74, 0.8)
+              }
+
+              material.needsUpdate = true
+            })
+          })
+
           scene.add(activeModel)
           fitCameraToObject(activeModel)
+
+          const recenteredBox = new THREE.Box3().setFromObject(activeModel)
+          if (!recenteredBox.isEmpty()) {
+            const recenteredCenter = recenteredBox.getCenter(new THREE.Vector3())
+            controls.target.copy(recenteredCenter)
+            controls.update()
+          }
         },
         undefined,
         () => {
@@ -433,6 +494,10 @@ function ThreatModelViewer({ sources, onSourceChange }) {
   return (
     <div className="amenazas-three-viewer-shell">
       <div ref={containerRef} className="amenazas-three-canvas" />
+      <div className="amenazas-three-help" aria-label="Indicaciones de navegación del modelo 3D">
+        <p><strong>Cómo navegar:</strong> arrastra para rotar, rueda para acercar/alejar y clic derecho para desplazar.</p>
+        <p><strong>En touch:</strong> 1 dedo rota, 2 dedos hacen zoom y paneo.</p>
+      </div>
       {errorMessage ? (
         <p className="amenazas-model-loading">{errorMessage}</p>
       ) : null}

@@ -1852,6 +1852,23 @@
   min-height: 360px;
 }
 
+.amenazas-three-help {
+  padding: 0.65rem 0.8rem;
+  background: linear-gradient(180deg, rgba(8, 27, 70, 0.98), rgba(6, 20, 52, 0.98));
+  border-top: 1px solid rgba(146, 198, 255, 0.28);
+}
+
+.amenazas-three-help p {
+  margin: 0;
+  color: #dce8ff;
+  font-size: 0.8rem;
+  line-height: 1.35;
+}
+
+.amenazas-three-help p + p {
+  margin-top: 0.25rem;
+}
+
 .amenazas-model-loading {
   min-height: 360px;
   height: 56vh;
