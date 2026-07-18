@@ -167,7 +167,7 @@ const demoMarkers = [
     lng: -97.68,
     popupTitle: 'Deslizamiento en la Carretera a San Juan Teposcolula, Oax.',
     popupBody:
-      'Proyecto de referencia para análisis geológico de laderas con enfoque de riesgo en infraestructura carretera.',
+      'Proyecto de referencia para análisis geomorfológico de laderas con enfoque de riesgo en infraestructura carretera.',
     hasModel: true,
   },
   {
@@ -200,9 +200,10 @@ function ThreatProjectMap({ title, onOpenModel }) {
     }
 
     const mapContainerEl = mapContainerRef.current
+    let activePopup = null
 
     const map = L.map(mapContainerEl, {
-      zoomControl: true,
+      zoomControl: false,
       scrollWheelZoom: false,
       dragging: true,
       attributionControl: true,
@@ -223,6 +224,49 @@ function ThreatProjectMap({ title, onOpenModel }) {
       minZoom: 3,
       attribution: '&copy; OpenStreetMap contributors',
     }).addTo(map)
+
+    const centerPopupInMap = (popup) => {
+      const popupEl = popup.getElement()
+
+      if (!popupEl) {
+        return
+      }
+
+      const mapRect = map.getContainer().getBoundingClientRect()
+      const popupRect = popupEl.getBoundingClientRect()
+
+      // Centrado geométrico exacto: esquina superior izquierda del popup
+      // en (esquina superior izquierda del mapa + mitad de diferencias).
+      const targetLeft = mapRect.left + (mapRect.width - popupRect.width) / 2
+      const targetTop = mapRect.top + (mapRect.height - popupRect.height) / 2
+      const deltaX = targetLeft - popupRect.left
+      const deltaY = targetTop - popupRect.top
+
+      if (Math.abs(deltaX) <= 0.5 && Math.abs(deltaY) <= 0.5) {
+        return
+      }
+
+      const currentPos = L.DomUtil.getPosition(popupEl) || L.point(0, 0)
+      L.DomUtil.setPosition(popupEl, L.point(currentPos.x + deltaX, currentPos.y + deltaY))
+    }
+
+    const centerPopupAfterOpen = (popup) => {
+      requestAnimationFrame(() => {
+        centerPopupInMap(popup)
+
+        setTimeout(() => {
+          centerPopupInMap(popup)
+        }, 160)
+      })
+    }
+
+    const recenterActivePopup = () => {
+      if (!activePopup?.isOpen()) {
+        return
+      }
+
+      centerPopupAfterOpen(activePopup)
+    }
 
     fitMexico()
 
@@ -252,10 +296,15 @@ function ThreatProjectMap({ title, onOpenModel }) {
         .addTo(map)
         .bindPopup(popupHtml, {
           className: 'amenazas-leaflet-popup',
-          maxWidth: 440,
-          minWidth: 240,
-          autoPanPaddingTopLeft: [20, 20],
-          autoPanPaddingBottomRight: [20, 20],
+          maxWidth: 260,
+          minWidth: 180,
+          autoPan: false,
+          keepInView: false,
+        })
+
+        mapMarker.on('popupopen', (event) => {
+          activePopup = event.popup
+          centerPopupAfterOpen(event.popup)
         })
 
       if (markerData.hasModel) {
@@ -276,7 +325,12 @@ function ThreatProjectMap({ title, onOpenModel }) {
     const refreshMapView = () => {
       map.invalidateSize({ pan: false, debounceMoveend: true })
       fitMexico()
+      recenterActivePopup()
     }
+
+    map.on('popupclose', () => {
+      activePopup = null
+    })
 
     map.whenReady(() => {
       requestAnimationFrame(refreshMapView)
@@ -344,6 +398,7 @@ function ThreatProjectMap({ title, onOpenModel }) {
 
 function ThreatModelViewer({ sources, onSourceChange, verticalExaggeration = 1.5 }) {
   const containerRef = useRef(null)
+  const pivotDotRef = useRef(null)
   const activeModelRef = useRef(null)
   const [errorMessage, setErrorMessage] = useState('')
   const initialLeftRotationDeg = -90
@@ -367,6 +422,11 @@ function ThreatModelViewer({ sources, onSourceChange, verticalExaggeration = 1.5
     let disposed = false
     let animationFrameId = null
     let activeModel = null
+    let pivotIndicatorGroup = null
+    const pivotWorld = new THREE.Vector3(0, 0, 0)
+    const initialPivotWorld = new THREE.Vector3(0, 0, 0)
+    let lockInitialCentering = true
+    let isRightMousePanning = false
     const modelPivot = new THREE.Group()
 
     const scene = new THREE.Scene()
@@ -389,6 +449,7 @@ function ThreatModelViewer({ sources, onSourceChange, verticalExaggeration = 1.5
     let controls = null
     try {
       controls = new ArcballControls(camera, renderer.domElement, scene)
+      controls.enabled = false
       controls.enableAnimations = true
       if (typeof controls.setGizmosVisible === 'function') {
         controls.setGizmosVisible(false)
@@ -465,6 +526,32 @@ function ThreatModelViewer({ sources, onSourceChange, verticalExaggeration = 1.5
       }
     }
 
+    const setPivotWorldAndControlsTarget = (target) => {
+      pivotWorld.copy(target)
+      setControlsTarget(pivotWorld)
+    }
+
+    const enforceInitialCentering = () => {
+      if (!lockInitialCentering) {
+        return
+      }
+
+      // Centrado en coordenadas de pantalla: mover cámara para que el pivote
+      // proyecte exactamente al centro del canvas/modal.
+      const pivotScreen = initialPivotWorld.clone().project(camera)
+      const desiredScreen = new THREE.Vector3(0, 0, pivotScreen.z)
+      const worldAtDesiredScreen = desiredScreen.unproject(camera)
+      const cameraTranslation = initialPivotWorld.clone().sub(worldAtDesiredScreen)
+
+      if (cameraTranslation.lengthSq() > 1e-12) {
+        camera.position.add(cameraTranslation)
+      }
+
+      setControlsTarget(initialPivotWorld)
+      camera.lookAt(initialPivotWorld)
+      pivotWorld.copy(initialPivotWorld)
+    }
+
     const captureZAxisPitchRatio = () => {
       const target = getControlsTarget()
       const offset = camera.position.clone().sub(target)
@@ -536,7 +623,7 @@ function ThreatModelViewer({ sources, onSourceChange, verticalExaggeration = 1.5
 
       if (box.isEmpty()) {
         camera.position.set(0, 0, 6)
-        setControlsTarget(new THREE.Vector3(0, 0, 0))
+        setPivotWorldAndControlsTarget(new THREE.Vector3(0, 0, 0))
         if (typeof controls.update === 'function') {
           controls.update()
         }
@@ -558,21 +645,19 @@ function ThreatModelViewer({ sources, onSourceChange, verticalExaggeration = 1.5
       camera.far = distance * 20
       camera.updateProjectionMatrix()
 
-      // Vista inicial tipo frontal-oblicua para que abra similar al encuadre aprobado por el usuario.
-      const initialFrameShiftX = safeRadius * 0.33
-      const initialTarget = new THREE.Vector3(
-        center.x + initialFrameShiftX,
-        center.y - safeRadius * 0.08,
-        center.z,
-      )
+      // El target debe coincidir con el pivote visual para que el giro sea coherente.
+      const initialTarget = center.clone()
       const initialPosition = new THREE.Vector3(
-        center.x - safeRadius * 0.04,
-        center.y - safeRadius * 0.22,
-        center.z + distance * 1.05,
+        center.x,
+        center.y,
+        center.z + distance * 1.08,
       )
 
       camera.position.copy(initialPosition)
-      setControlsTarget(initialTarget)
+      initialPivotWorld.copy(initialTarget)
+      lockInitialCentering = true
+      setPivotWorldAndControlsTarget(initialTarget)
+      camera.lookAt(initialTarget)
 
       if (typeof controls.update === 'function') {
         controls.update()
@@ -599,6 +684,115 @@ function ThreatModelViewer({ sources, onSourceChange, verticalExaggeration = 1.5
       modelPivot.updateMatrixWorld(true)
     }
 
+    const disposePivotIndicator = () => {
+      if (!pivotIndicatorGroup) {
+        return
+      }
+
+      if (pivotIndicatorGroup.parent) {
+        pivotIndicatorGroup.parent.remove(pivotIndicatorGroup)
+      }
+      pivotIndicatorGroup.traverse((node) => {
+        if (node.geometry) {
+          node.geometry.dispose()
+        }
+
+        if (Array.isArray(node.material)) {
+          node.material.forEach((material) => material?.dispose?.())
+          return
+        }
+
+        node.material?.dispose?.()
+      })
+      pivotIndicatorGroup = null
+    }
+
+    const updatePivotIndicator = (bounds) => {
+      disposePivotIndicator()
+
+      const size = bounds.getSize(new THREE.Vector3())
+      const maxSpan = Math.max(size.x, size.y, size.z, 1)
+      const sphereRadius = THREE.MathUtils.clamp(maxSpan * 0.06, 0.08, 2.2)
+      const axesSize = sphereRadius * 6.5
+
+      const indicator = new THREE.Group()
+
+      const pivotSphere = new THREE.Mesh(
+        new THREE.SphereGeometry(sphereRadius, 24, 16),
+        new THREE.MeshBasicMaterial({
+          color: 0x77d6ff,
+          transparent: true,
+          opacity: 0.28,
+          depthTest: false,
+          depthWrite: false,
+        }),
+      )
+
+      const pivotCore = new THREE.Mesh(
+        new THREE.SphereGeometry(sphereRadius * 0.22, 16, 12),
+        new THREE.MeshBasicMaterial({
+          color: 0xffe17a,
+          transparent: true,
+          opacity: 0.95,
+          depthTest: false,
+          depthWrite: false,
+        }),
+      )
+
+      const pivotWire = new THREE.LineSegments(
+        new THREE.EdgesGeometry(new THREE.SphereGeometry(sphereRadius, 12, 8)),
+        new THREE.LineBasicMaterial({
+          color: 0xd8f2ff,
+          transparent: true,
+          opacity: 0.9,
+          depthTest: false,
+          depthWrite: false,
+        }),
+      )
+
+      const axesHelper = new THREE.AxesHelper(axesSize)
+      axesHelper.material.depthTest = false
+      axesHelper.material.depthWrite = false
+      axesHelper.renderOrder = 3
+      pivotSphere.renderOrder = 1
+      pivotCore.renderOrder = 2
+      pivotWire.renderOrder = 3
+
+      indicator.add(pivotSphere)
+      indicator.add(pivotCore)
+      indicator.add(pivotWire)
+      indicator.add(axesHelper)
+
+      scene.add(indicator)
+      pivotIndicatorGroup = indicator
+    }
+
+    const syncPivotIndicatorToPivot = () => {
+      if (!pivotIndicatorGroup) {
+        return
+      }
+
+      pivotIndicatorGroup.position.copy(pivotWorld)
+      pivotIndicatorGroup.updateMatrixWorld(true)
+    }
+
+    const updatePivotDotPosition = () => {
+      const pivotDotEl = pivotDotRef.current
+      if (!pivotDotEl) {
+        return
+      }
+
+      const ndc = pivotWorld.clone().project(camera)
+      const canvasWidth = Math.max(renderer.domElement.clientWidth, 1)
+      const canvasHeight = Math.max(renderer.domElement.clientHeight, 1)
+      const x = (ndc.x * 0.5 + 0.5) * canvasWidth
+      const y = (-ndc.y * 0.5 + 0.5) * canvasHeight
+      const isVisible = ndc.z >= -1 && ndc.z <= 1
+
+      pivotDotEl.style.transform = `translate(${x}px, ${y}px) translate(-50%, -50%)`
+      pivotDotEl.style.opacity = isVisible ? '1' : '0'
+    }
+
     const resize = () => {
       if (disposed) {
         return
@@ -615,16 +809,62 @@ function ThreatModelViewer({ sources, onSourceChange, verticalExaggeration = 1.5
     const resizeObserver = new ResizeObserver(resize)
     resizeObserver.observe(container)
 
+    const onPointerDown = (event) => {
+      lockInitialCentering = false
+      if (controls) {
+        controls.enabled = true
+      }
+      if (event.button === 2) {
+        isRightMousePanning = true
+      }
+    }
+
+    const onPointerUp = (event) => {
+      if (event.button === 2) {
+        isRightMousePanning = false
+      }
+    }
+
+    const onContextMenu = (event) => {
+      event.preventDefault()
+    }
+
+    renderer.domElement.addEventListener('pointerdown', onPointerDown)
+    renderer.domElement.addEventListener('pointerup', onPointerUp)
+    renderer.domElement.addEventListener('pointercancel', onPointerUp)
+    renderer.domElement.addEventListener('contextmenu', onContextMenu)
+
     const animate = () => {
       if (disposed) {
         return
       }
 
-      if (typeof controls.update === 'function') {
+      const cameraPositionBefore = camera.position.clone()
+      const targetBefore = getControlsTarget()
+
+      if (!lockInitialCentering && typeof controls.update === 'function') {
         controls.update()
       }
 
+      enforceInitialCentering()
+
+      // Si hay pan y Arcball no desplazó el target, lo trasladamos con el mismo delta de cámara.
+      if (isRightMousePanning) {
+        const targetAfter = getControlsTarget()
+        const targetDelta = targetAfter.clone().sub(targetBefore)
+        const cameraDelta = camera.position.clone().sub(cameraPositionBefore)
+
+        if (targetDelta.lengthSq() <= 1e-10 && cameraDelta.lengthSq() > 1e-10) {
+          targetAfter.add(cameraDelta)
+          setControlsTarget(targetAfter)
+        }
+      }
+
+      pivotWorld.copy(getControlsTarget())
+      syncPivotIndicatorToPivot()
+
       enforceZAxisOnlyRotation()
+      updatePivotDotPosition()
 
       renderer.render(scene, camera)
       animationFrameId = requestAnimationFrame(animate)
@@ -715,7 +955,10 @@ function ThreatModelViewer({ sources, onSourceChange, verticalExaggeration = 1.5
           modelPivot.updateMatrixWorld(true)
 
           const visibleBounds = getVisibleModelBounds(modelPivot) || new THREE.Box3().setFromObject(modelPivot)
+          updatePivotIndicator(visibleBounds)
           fitCameraToBounds(visibleBounds)
+          syncPivotIndicatorToPivot()
+          updatePivotDotPosition()
         },
         undefined,
         () => {
@@ -735,11 +978,16 @@ function ThreatModelViewer({ sources, onSourceChange, verticalExaggeration = 1.5
       }
 
       resizeObserver.disconnect()
+      renderer.domElement.removeEventListener('pointerdown', onPointerDown)
+      renderer.domElement.removeEventListener('pointerup', onPointerUp)
+      renderer.domElement.removeEventListener('pointercancel', onPointerUp)
+      renderer.domElement.removeEventListener('contextmenu', onContextMenu)
       if (typeof controls.dispose === 'function') {
         controls.dispose()
       }
       ktx2Loader.dispose()
       dracoLoader.dispose()
+      disposePivotIndicator()
       renderer.dispose()
       activeModelRef.current = null
       container.innerHTML = ''
@@ -748,7 +996,10 @@ function ThreatModelViewer({ sources, onSourceChange, verticalExaggeration = 1.5
 
   return (
     <div className="amenazas-three-viewer-shell">
-      <div ref={containerRef} className="amenazas-three-canvas" />
+      <div className="amenazas-three-canvas-wrap">
+        <div ref={containerRef} className="amenazas-three-canvas" />
+        <div ref={pivotDotRef} className="amenazas-pivot-dot" aria-hidden="true" />
+      </div>
       <div className="amenazas-three-help" aria-label="Indicaciones de navegación del modelo 3D">
         <p><strong>Cómo navegar:</strong> arrastra para rotar, rueda para acercar/alejar y clic derecho para desplazar.</p>
         <p><strong>En touch:</strong> 1 dedo rota, 2 dedos hacen zoom y paneo.</p>
@@ -930,9 +1181,6 @@ function Amenazas() {
                   2x
                 </button>
               </div>
-              <p className="amenazas-model-source-note">
-                Fuente del modelo: {modelSourceIndex >= 0 ? modelSourceIndex + 1 : 'ninguna'} de {modelSources.length}
-              </p>
             </div>
           </section>
         </div>
