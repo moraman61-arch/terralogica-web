@@ -7,6 +7,7 @@ const riskProjectTypes = [
     image: '/proyectos/proyecto-gestion-riesgos-proteccion-civil.png',
     imageAlt: 'Vista ilustrativa para análisis de amenazas',
     linkTo: '/servicios/proyectos/gestion-riesgos-proteccion-civil/amenazas',
+    linkLabel: 'Amenazas',
     description:
       'Evaluamos amenazas naturales y antrópicas para identificar su distribución espacial, intensidad y posibles afectaciones sobre el territorio.',
   },
@@ -14,6 +15,8 @@ const riskProjectTypes = [
     title: 'Análisis de Vulnerabilidad',
     image: '/proyectos/proyecto-gestion-riesgos-proteccion-civil.png',
     imageAlt: 'Vista ilustrativa para análisis de vulnerabilidad',
+    linkTo: '/servicios/proyectos/gestion-riesgos-proteccion-civil/vulnerabilidad',
+    linkLabel: 'Vulnerabilidad',
     description:
       'Estudiamos exposición, fragilidad y capacidades de respuesta para reconocer qué sectores, poblaciones e infraestructuras presentan mayor vulnerabilidad.',
   },
@@ -21,6 +24,8 @@ const riskProjectTypes = [
     title: 'Gestión Integral de Riesgos',
     image: '/proyectos/proyecto-gestion-riesgos-proteccion-civil.png',
     imageAlt: 'Vista ilustrativa para gestión integral de riesgos',
+    linkTo: '/servicios/proyectos/gestion-riesgos-proteccion-civil/riesgos',
+    linkLabel: 'Riesgos',
     description:
       'Diseñamos proyectos que articulan prevención, preparación, mitigación y respuesta con base en evidencia geoespacial para fortalecer la protección civil.',
   },
@@ -58,16 +63,26 @@ function GestionRiesgosProteccionCivil() {
         <div className="service-grid projects-grid planeacion-projects-grid">
           {riskProjectTypes.map((projectType) => (
             <article key={projectType.title} className="service-card project-card planeacion-project-card">
-              <img
-                className="planeacion-project-image"
-                src={projectType.image}
-                alt={projectType.imageAlt}
-              />
+              {projectType.linkTo ? (
+                <Link className="planeacion-project-image-link" to={projectType.linkTo} aria-label={`Abrir ${projectType.title}`}>
+                  <img
+                    className="planeacion-project-image"
+                    src={projectType.image}
+                    alt={projectType.imageAlt}
+                  />
+                </Link>
+              ) : (
+                <img
+                  className="planeacion-project-image"
+                  src={projectType.image}
+                  alt={projectType.imageAlt}
+                />
+              )}
               <h3>{projectType.title}</h3>
               <p>{projectType.description}</p>
               {projectType.linkTo ? (
                 <Link className="service-card-cta project-panel-link" to={projectType.linkTo}>
-                  Amenazas
+                  {projectType.linkLabel}
                 </Link>
               ) : null}
             </article>

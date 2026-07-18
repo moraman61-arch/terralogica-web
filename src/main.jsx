@@ -9,6 +9,8 @@ import Proyectos from './Proyectos.jsx'
 import PlaneacionOrdenamiento from './PlaneacionOrdenamiento.jsx'
 import GestionRiesgosProteccionCivil from './GestionRiesgosProteccionCivil.jsx'
 import Amenazas from './Amenazas.jsx'
+import Vulnerabilidad from './Vulnerabilidad.jsx'
+import Riesgos from './Riesgos.jsx'
 import InventreesProyectos from './InventreesProyectos.jsx'
 import Capacitacion from './Capacitacion.jsx'
 import Software from './Software.jsx'
@@ -26,6 +28,8 @@ createRoot(document.getElementById('root')).render(
         <Route path="/servicios/proyectos/planeacion-ordenamiento" element={<PlaneacionOrdenamiento />} />
         <Route path="/servicios/proyectos/gestion-riesgos-proteccion-civil" element={<GestionRiesgosProteccionCivil />} />
         <Route path="/servicios/proyectos/gestion-riesgos-proteccion-civil/amenazas" element={<Amenazas />} />
+        <Route path="/servicios/proyectos/gestion-riesgos-proteccion-civil/vulnerabilidad" element={<Vulnerabilidad />} />
+        <Route path="/servicios/proyectos/gestion-riesgos-proteccion-civil/riesgos" element={<Riesgos />} />
         <Route path="/servicios/proyectos/inventrees-proyectos" element={<InventreesProyectos />} />
         <Route path="/servicios/capacitacion" element={<Capacitacion />} />
         <Route path="/servicios/software" element={<Software />} />

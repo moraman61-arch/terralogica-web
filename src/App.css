@@ -1596,6 +1596,206 @@
     linear-gradient(180deg, rgba(8, 20, 45, 0.94), rgba(6, 16, 38, 0.97));
 }
 
+.amenazas-detail-stack {
+  display: flex;
+  flex-direction: column;
+  gap: 1.6rem;
+}
+
+.amenazas-sections-grid {
+  display: grid;
+  gap: 1.4rem;
+}
+
+.amenaza-section-card {
+  border-radius: 1.3rem;
+  border: 1px solid var(--border);
+  background:
+    radial-gradient(circle at 8% 10%, rgba(80, 140, 255, 0.16), transparent 28%),
+    linear-gradient(180deg, rgba(255, 255, 255, 0.035), rgba(255, 255, 255, 0.012));
+  padding: 1.1rem;
+  scroll-margin-top: 1.2rem;
+}
+
+.amenaza-section-header {
+  display: grid;
+  grid-template-columns: minmax(280px, 0.95fr) minmax(0, 1.05fr);
+  gap: 1.1rem;
+  align-items: stretch;
+}
+
+.amenazas-media-shell {
+  position: relative;
+  overflow: hidden;
+  border-radius: 1rem;
+  border: 1px solid rgba(146, 198, 255, 0.32);
+  min-height: 220px;
+  background: rgba(5, 18, 49, 0.9);
+}
+
+.amenazas-media-image {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  filter: saturate(1.15) contrast(1.06);
+  transform-origin: center;
+  animation: amenazas-kenburns 14s ease-in-out infinite alternate;
+}
+
+.amenazas-media-overlay {
+  position: absolute;
+  inset: 0;
+  background:
+    linear-gradient(130deg, rgba(7, 21, 58, 0.08), rgba(7, 21, 58, 0.7)),
+    repeating-linear-gradient(120deg, rgba(58, 134, 255, 0.1) 0 2px, transparent 2px 14px);
+  animation: amenazas-shimmer 10s linear infinite;
+}
+
+.amenazas-media-kicker {
+  position: absolute;
+  left: 0.75rem;
+  right: 0.75rem;
+  bottom: 0.75rem;
+  margin: 0;
+  padding: 0.5rem 0.7rem;
+  border-radius: 0.65rem;
+  font-size: 0.82rem;
+  letter-spacing: 0.03em;
+  color: #f2f7ff;
+  background: rgba(4, 12, 34, 0.72);
+  border: 1px solid rgba(146, 198, 255, 0.3);
+}
+
+.amenaza-section-copy {
+  display: flex;
+  flex-direction: column;
+  gap: 0.65rem;
+  justify-content: center;
+}
+
+.amenaza-section-copy h3 {
+  margin: 0;
+  color: var(--heading);
+  font-family: var(--display);
+  font-size: clamp(1.28rem, 2vw, 1.65rem);
+}
+
+.amenaza-section-copy p {
+  margin: 0;
+}
+
+.amenaza-solutions-grid {
+  margin-top: 1rem;
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 0.9rem;
+}
+
+.amenaza-solution-card {
+  display: flex;
+  flex-direction: column;
+  gap: 0.65rem;
+  border-radius: 0.95rem;
+  padding: 0.95rem;
+  border: 1px solid rgba(146, 198, 255, 0.22);
+  background: rgba(8, 25, 66, 0.72);
+}
+
+.amenaza-solution-card h4 {
+  margin: 0;
+  color: #eef4ff;
+  font-size: 1rem;
+}
+
+.amenaza-solution-card p {
+  margin: 0;
+  font-size: 0.95rem;
+}
+
+.amenazas-mini-map {
+  margin: 0;
+  padding: 0.55rem;
+  border-radius: 0.72rem;
+  border: 1px solid rgba(146, 198, 255, 0.24);
+  background: rgba(4, 14, 39, 0.85);
+}
+
+.amenazas-leaflet-map {
+  width: 100%;
+  height: 210px;
+  border-radius: 0.6rem;
+  overflow: hidden;
+}
+
+.amenazas-mini-map figcaption {
+  margin-top: 0.45rem;
+  color: #d8e4ff;
+  font-size: 0.76rem;
+  line-height: 1.35;
+}
+
+.amenazas-mini-map .leaflet-control-attribution {
+  font-size: 0.6rem;
+  background: rgba(6, 16, 42, 0.7);
+  color: #d8e4ff;
+}
+
+.amenazas-mini-map .leaflet-control-attribution a {
+  color: #d8e4ff;
+}
+
+.amenazas-mini-map .leaflet-popup-content-wrapper,
+.amenazas-mini-map .leaflet-popup-tip {
+  background: #0b245b;
+  color: #eef4ff;
+}
+
+.amenazas-popup-content {
+  width: min(360px, 74vw);
+}
+
+.amenazas-popup-content h5 {
+  margin: 0 0 0.45rem;
+  color: #e7f0ff;
+  font-size: 0.95rem;
+  line-height: 1.3;
+}
+
+.amenazas-popup-content p {
+  margin: 0;
+  color: #d2e0ff;
+  font-size: 0.83rem;
+  line-height: 1.35;
+}
+
+@keyframes amenazas-kenburns {
+  0% {
+    transform: scale(1.02) translate3d(0, 0, 0);
+  }
+
+  100% {
+    transform: scale(1.12) translate3d(-2%, -1.5%, 0);
+  }
+}
+
+@keyframes amenazas-shimmer {
+  0% {
+    opacity: 0.34;
+    transform: translateX(-6%);
+  }
+
+  50% {
+    opacity: 0.5;
+  }
+
+  100% {
+    opacity: 0.34;
+    transform: translateX(6%);
+  }
+}
+
 @media (max-width: 960px) {
   .topbar,
   .hero-grid,
@@ -1664,6 +1864,14 @@
 
   .inventory-intro-video {
     aspect-ratio: 4 / 3;
+  }
+
+  .amenaza-section-header {
+    grid-template-columns: 1fr;
+  }
+
+  .amenaza-solutions-grid {
+    grid-template-columns: 1fr;
   }
 }
 
