@@ -282,12 +282,15 @@ function ThreatModelViewer({ sources, onSourceChange }) {
     let disposed = false
     let animationFrameId = null
     let activeModel = null
+    const modelPivot = new THREE.Group()
 
     const scene = new THREE.Scene()
     scene.background = new THREE.Color('#081b46')
+    scene.add(modelPivot)
 
     const camera = new THREE.PerspectiveCamera(46, 1, 0.1, 20000)
     camera.position.set(0, 0, 6)
+    scene.add(camera)
 
     const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: false })
     renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2))
@@ -315,6 +318,10 @@ function ThreatModelViewer({ sources, onSourceChange }) {
     backLight.position.set(-10, 8, -10)
     scene.add(backLight)
 
+    const cameraLight = new THREE.PointLight(0xffffff, 1.25, 0, 2)
+    cameraLight.position.set(0, 0, 0)
+    camera.add(cameraLight)
+
     const dracoLoader = new DRACOLoader()
     dracoLoader.setDecoderPath('https://www.gstatic.com/draco/versioned/decoders/1.5.7/')
 
@@ -338,7 +345,11 @@ function ThreatModelViewer({ sources, onSourceChange }) {
       }
 
       const size = box.getSize(new THREE.Vector3())
-      const center = box.getCenter(new THREE.Vector3())
+      const center = new THREE.Vector3(
+        box.min.x + size.x * 0.5,
+        box.min.y + size.y * 0.5,
+        box.min.z + size.z * 0.5,
+      )
       const radius = Math.max(size.x, size.y, size.z) * 0.5
       const safeRadius = Math.max(radius, 1)
       const fov = THREE.MathUtils.degToRad(camera.fov)
@@ -351,18 +362,6 @@ function ThreatModelViewer({ sources, onSourceChange }) {
       camera.position.set(center.x, center.y + safeRadius * 0.35, center.z + distance)
       controls.target.copy(center)
       controls.update()
-    }
-
-    const recenterModelAtWorldOrigin = (object3D) => {
-      const box = new THREE.Box3().setFromObject(object3D)
-
-      if (box.isEmpty()) {
-        return
-      }
-
-      const center = box.getCenter(new THREE.Vector3())
-      object3D.position.sub(center)
-      object3D.updateMatrixWorld(true)
     }
 
     const resize = () => {
@@ -413,11 +412,10 @@ function ThreatModelViewer({ sources, onSourceChange }) {
           }
 
           if (activeModel) {
-            scene.remove(activeModel)
+            modelPivot.remove(activeModel)
           }
 
           activeModel = gltf.scene
-          recenterModelAtWorldOrigin(activeModel)
           activeModel.traverse((node) => {
             if (!node.isMesh) {
               return
@@ -447,6 +445,14 @@ function ThreatModelViewer({ sources, onSourceChange }) {
                 material.roughness = Math.min(material.roughness ?? 1, 0.95)
               }
 
+              if ('metalness' in material) {
+                material.metalness = Math.min(material.metalness ?? 0, 0.08)
+              }
+
+              if ('side' in material) {
+                material.side = THREE.DoubleSide
+              }
+
               if (!material.map && material.color && material.color.r < 0.08 && material.color.g < 0.08 && material.color.b < 0.08) {
                 material.color.setRGB(0.7, 0.74, 0.8)
               }
@@ -455,15 +461,8 @@ function ThreatModelViewer({ sources, onSourceChange }) {
             })
           })
 
-          scene.add(activeModel)
+          modelPivot.add(activeModel)
           fitCameraToObject(activeModel)
-
-          const recenteredBox = new THREE.Box3().setFromObject(activeModel)
-          if (!recenteredBox.isEmpty()) {
-            const recenteredCenter = recenteredBox.getCenter(new THREE.Vector3())
-            controls.target.copy(recenteredCenter)
-            controls.update()
-          }
         },
         undefined,
         () => {
