@@ -17,9 +17,9 @@ const amenazasProjectTypes = [
     title: 'Amenazas Geológicas',
     image: '/proyectos/proyecto-gestion-riesgos-proteccion-civil.png',
     imageAlt: 'Vista ilustrativa para amenazas geológicas',
-    mediaLabel: 'Imagen animada | monitoreo geológico continuo',
+    mediaLabel: 'Deslizamientos de Morelia, MICH.',
     description:
-      'Analizamos amenazas asociadas a procesos geológicos como deslizamientos, fallamientos y fenómenos de inestabilidad del terreno.',
+      'Analizamos amenazas asociadas a procesos geológico - geomorfológico como deslizamientos, fallamientos y fenómenos de inestabilidad del terreno.',
     sectionIntro:
       'Integramos información de campo, antecedentes y análisis geológico - geomorfológico para identificar zonas críticas y definir prioridades de intervención.',
     solutions: [
@@ -34,9 +34,9 @@ const amenazasProjectTypes = [
         ],
       },
       {
-        title: 'Detección y análisis de fallas geológicas',
+        title: 'Detección y análisis de fallas',
         description:
-          'Integramos cartografía geológica y fotointerpretación para localizar estructuras activas y evaluar su posible influencia territorial.',
+          'Integramos cartografía geológica, datos de campo, paleogeomorfología e información topográfica de detalle para localizar estructuras activas y evaluar su impacto.',
         points: [
           { name: 'Franja estructural - Sonora', x: 20, y: 52 },
           { name: 'Sistema de fallas - Querétaro', x: 54, y: 48 },
@@ -44,9 +44,9 @@ const amenazasProjectTypes = [
         ],
       },
       {
-        title: 'Evaluación de inestabilidad en áreas urbanas',
+        title: 'Evaluación de inestabilidad de taludes',
         description:
-          'Evaluamos taludes urbanos y zonas de expansión para orientar medidas de estabilización y gestión preventiva.',
+          'Evaluamos taludes en vías de comunicación y zonas urbanas para evaluar afectaciones y recomendar medidas de estabilización y de gestión preventiva.',
         points: [
           { name: 'Zona de taludes - Tijuana', x: 14, y: 22 },
           { name: 'Periferia urbana - Guadalajara', x: 44, y: 50 },
@@ -57,19 +57,20 @@ const amenazasProjectTypes = [
   },
   {
     slug: 'hidrometeorologicas',
-    title: 'Hidrometeorológicas',
-    image: '/proyectos/proyecto-gestion-riesgos-proteccion-civil.png',
+    title: 'Amenazas Hidrometeorológicas',
+    image: '/proyectos/peligro-inundacion-subita1.png',
+    panelImage: '/proyectos/peligro-inundacion-subita1.png',
     imageAlt: 'Vista ilustrativa para amenazas hidrometeorológicas',
-    mediaLabel: 'Imagen animada | escenarios de lluvia y escurrimiento',
+    mediaLabel: 'Peligro de inundación súbita, Morelia, MICH.',
     description:
-      'Evaluamos amenazas ligadas a lluvias extremas, inundaciones, ciclones, sequías y otros eventos atmosféricos con impacto territorial.',
+      'Evaluamos amenazas ligadas a lluvias extremas, inundaciones, erosión, ciclones, sequías y otros eventos atmosféricos con impacto territorial.',
     sectionIntro:
-      'Desarrollamos escenarios por evento y temporada para apoyar decisiones de prevención, protección civil y planificación territorial.',
+      'Desarrollamos escenarios por evento hidrometeorológico, cuenca, corriente de agua, o unidad de gestión territorial para apoyar decisiones de prevención, protección civil y planificación.',
     solutions: [
       {
         title: 'Modelación de inundaciones urbanas',
         description:
-          'Simulamos niveles de agua y zonas anegables para priorizar obras de drenaje, protocolos de alerta y rutas seguras.',
+          'Definimos niveles de agua y zonas anegables, con topografía detallada y datos de campo para priorizar obras de drenaje, protocolos de alerta y rutas seguras.',
         points: [
           { name: 'Cuenca urbana - Villahermosa', x: 76, y: 68 },
           { name: 'Planicie aluvial - Veracruz', x: 72, y: 49 },
@@ -79,7 +80,7 @@ const amenazasProjectTypes = [
       {
         title: 'Análisis de sequía y estrés hídrico',
         description:
-          'Identificamos patrones de déficit de precipitación y disponibilidad de agua para fortalecer la gestión hídrica regional.',
+          'Identificamos patrones de déficit de precipitación y disponibilidad de agua de uso urbano, agrícola y pecuario, para fortalecer la gestión hídrica regional.',
         points: [
           { name: 'Región semidesértica - Coahuila', x: 34, y: 24 },
           { name: 'Zona agrícola - Zacatecas', x: 43, y: 37 },
@@ -89,7 +90,7 @@ const amenazasProjectTypes = [
       {
         title: 'Mapeo de exposición por ciclones',
         description:
-          'Estimamos exposición de población e infraestructura frente a trayectorias ciclónicas para mejorar medidas de preparación.',
+          'Estimamos exposición de población e infraestructura frente a trayectorias ciclónicas para definir medidas de preparación.',
         points: [
           { name: 'Litoral - Quintana Roo', x: 88, y: 58 },
           { name: 'Costa del Golfo - Tamaulipas', x: 67, y: 31 },
@@ -100,19 +101,21 @@ const amenazasProjectTypes = [
   },
   {
     slug: 'biologicas',
-    title: 'Biológicas',
+    title: 'Amenazas Sanitarias',
     image: '/proyectos/proyecto-gestion-riesgos-proteccion-civil.png',
-    imageAlt: 'Vista ilustrativa para amenazas biológicas',
-    mediaLabel: 'Imagen animada | vigilancia territorial de riesgos biológicos',
+    panelImage: '/proyectos/plagas-en-naranja.jpg',
+    sectionImage: '/proyectos/plagas-en-naranja.jpg',
+    imageAlt: 'Vista ilustrativa para amenazas sanitarias',
+    mediaLabel: 'Plaga en cultivo de naranja, Linares , NL.',
     description:
-      'Desarrollamos análisis espaciales para reconocer riesgos de origen biológico y apoyar estrategias de vigilancia, prevención y respuesta.',
+      'Desarrollamos análisis espaciales para reconocer riesgos de origen sanitario y apoyar estrategias de vigilancia, prevención y respuesta.',
     sectionIntro:
-      'Integramos información epidemiológica, ambiental y demográfica para focalizar acciones de salud pública y control sanitario.',
+      'Integramos información epidemiológica, ambiental y demográfica para focalizar acciones de salud pública y detección de plagas agrícolas y forestales.',
     solutions: [
       {
-        title: 'Vigilancia geoespacial de vectores',
+        title: 'Contaminación y salud pública',
         description:
-          'Ubicamos zonas de mayor probabilidad de presencia de vectores para optimizar brigadas y campañas de control.',
+          'Generamos inventarios de emisiones contaminantes, medimos la calidad del aire con sensores móviles y evaluamos su impacto en la salud pública.',
         points: [
           { name: 'Zona periurbana - Mérida', x: 86, y: 54 },
           { name: 'Corredor costero - Chiapas', x: 79, y: 77 },
@@ -120,9 +123,9 @@ const amenazasProjectTypes = [
         ],
       },
       {
-        title: 'Análisis territorial de brotes',
+        title: 'Temperaturas extremas: calor y frío',
         description:
-          'Detectamos patrones espaciales y temporales de brotes para priorizar cercos sanitarios y acciones de contención.',
+          'Detectamos patrones espaciales y temporales de islas de calor urbanas y frío extremo, y evaluamos su impacto en la población.',
         points: [
           { name: 'Núcleo urbano - CDMX', x: 58, y: 52 },
           { name: 'Conurbación - Puebla', x: 67, y: 54 },
@@ -130,9 +133,9 @@ const amenazasProjectTypes = [
         ],
       },
       {
-        title: 'Priorización de intervención sanitaria',
+        title: 'Detección de plagas',
         description:
-          'Combinamos indicadores de riesgo para definir zonas críticas de intervención y seguimiento operativo.',
+          'Empleamos imágenes de satélite y aéreas para identificar y predecir presencia de plagas en cultivos y en comunidades forestales.',
         points: [
           { name: 'Municipio prioritario - Tabasco', x: 78, y: 65 },
           { name: 'Nodo logístico - Jalisco', x: 45, y: 50 },
@@ -627,7 +630,7 @@ function Amenazas() {
       <section className="services-section planeacion-projects-section">
         <div className="section-heading planeacion-projects-heading">
           <p className="eyebrow">Proyectos</p>
-          <h2>Desarrollamos análisis de amenazas geológicas, hidrometeorológicas y biológicas.</h2>
+          <h2>Desarrollamos análisis de amenazas geológicas, hidrometeorológicas y sanitarias.</h2>
         </div>
         <div className="service-grid projects-grid planeacion-projects-grid">
           {amenazasProjectTypes.map((projectType) => (
@@ -635,7 +638,7 @@ function Amenazas() {
               <a className="planeacion-project-image-link" href={`#${projectType.slug}`} aria-label={`Ir a la sección ${projectType.title}`}>
                 <img
                   className="planeacion-project-image"
-                  src={projectType.image}
+                  src={projectType.panelImage ?? projectType.image}
                   alt={projectType.imageAlt}
                 />
               </a>
@@ -660,7 +663,12 @@ function Amenazas() {
             <article key={threatType.slug} id={threatType.slug} className="amenaza-section-card">
               <header className="amenaza-section-header">
                 <div className="amenazas-media-shell" aria-hidden="true">
-                  <img className="amenazas-media-image" src={threatType.image} alt="" loading="lazy" />
+                  <img
+                    className={`amenazas-media-image${threatType.slug === 'hidrometeorologicas' ? ' amenazas-media-image-hidrometeorologicas' : ''}${threatType.slug === 'biologicas' ? ' amenazas-media-image-sanitarias' : ''}`}
+                    src={threatType.sectionImage ?? threatType.image}
+                    alt=""
+                    loading="lazy"
+                  />
                   <div className="amenazas-media-overlay" />
                   <p className="amenazas-media-kicker">{threatType.mediaLabel}</p>
                 </div>

@@ -1644,6 +1644,17 @@
   animation: amenazas-kenburns 14s ease-in-out infinite alternate;
 }
 
+.amenazas-media-image-hidrometeorologicas {
+  transform: scale(1.7);
+  animation: amenazas-kenburns-hidrometeorologicas 16s ease-in-out infinite alternate;
+}
+
+.amenazas-media-image-sanitarias {
+  transform: scale(1.5);
+  transform-origin: left center;
+  animation: amenazas-kenburns-sanitarias 16s ease-in-out infinite alternate;
+}
+
 .amenazas-media-overlay {
   position: absolute;
   inset: 0;
@@ -1656,13 +1667,15 @@
 .amenazas-media-kicker {
   position: absolute;
   left: 0.75rem;
-  right: 0.75rem;
   bottom: 0.75rem;
   margin: 0;
   padding: 0.5rem 0.7rem;
+  width: max-content;
+  max-width: calc(100% - 1.5rem);
   border-radius: 0.65rem;
   font-size: 0.82rem;
   letter-spacing: 0.03em;
+  text-align: left;
   color: #f2f7ff;
   background: rgba(4, 12, 34, 0.72);
   border: 1px solid rgba(146, 198, 255, 0.3);
@@ -1707,6 +1720,18 @@
   margin: 0;
   color: #eef4ff;
   font-size: 1rem;
+}
+
+#geologicas .amenaza-solution-card h4 {
+  text-align: center;
+}
+
+#hidrometeorologicas .amenaza-solution-card h4 {
+  text-align: center;
+}
+
+#biologicas .amenaza-solution-card h4 {
+  text-align: center;
 }
 
 .amenaza-solution-card p {
@@ -1957,6 +1982,26 @@
 
   100% {
     transform: scale(1.12) translate3d(-2%, -1.5%, 0);
+  }
+}
+
+@keyframes amenazas-kenburns-hidrometeorologicas {
+  0% {
+    transform: scale(1.7) translate3d(0, 0, 0);
+  }
+
+  100% {
+    transform: scale(2.38) translate3d(-1.5%, -1%, 0);
+  }
+}
+
+@keyframes amenazas-kenburns-sanitarias {
+  0% {
+    transform: scale(1.5) translate3d(0, 0, 0);
+  }
+
+  100% {
+    transform: scale(3) translate3d(-1.5%, -1%, 0);
   }
 }
 
