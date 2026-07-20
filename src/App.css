@@ -1463,9 +1463,18 @@
   background: rgba(7, 23, 63, 0.75);
 }
 
+.planeacion-project-image-vulnerabilidad {
+  width: calc(100% + 20px);
+  max-width: none;
+  margin: -10px 0 0 -10px;
+  object-position: top center;
+}
+
 .planeacion-project-image-link {
   display: block;
   line-height: 0;
+  overflow: hidden;
+  border-radius: 0.9rem;
 }
 
 .planeacion-project-image-link:hover .planeacion-project-image,

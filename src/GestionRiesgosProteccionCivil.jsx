@@ -7,25 +7,26 @@ const riskProjectTypes = [
     image: '/proyectos/proyecto-gestion-riesgos-proteccion-civil.png',
     imageAlt: 'Vista ilustrativa para análisis de amenazas',
     linkTo: '/servicios/proyectos/gestion-riesgos-proteccion-civil/amenazas',
-    linkLabel: 'Amenazas',
+    linkLabel: 'Oferta de Proyectos',
     description:
-      'Evaluamos amenazas naturales y antrópicas para identificar su distribución espacial, intensidad y posibles afectaciones sobre el territorio.',
+      'Evaluamos amenazas naturales y de origen humano para identificar su distribución espacial, intensidad, factores detonantes y posibles afectaciones sobre el territorio.',
   },
   {
     title: 'Análisis de Vulnerabilidad',
-    image: '/proyectos/proyecto-gestion-riesgos-proteccion-civil.png',
+    image: '/proyectos/VULNELOCMOR.png',
+    imageClass: 'planeacion-project-image-vulnerabilidad',
     imageAlt: 'Vista ilustrativa para análisis de vulnerabilidad',
     linkTo: '/servicios/proyectos/gestion-riesgos-proteccion-civil/vulnerabilidad',
-    linkLabel: 'Vulnerabilidad',
+    linkLabel: 'Oferta de Proyectos',
     description:
       'Estudiamos exposición, fragilidad y capacidades de respuesta para reconocer qué sectores, poblaciones e infraestructuras presentan mayor vulnerabilidad.',
   },
   {
-    title: 'Gestión Integral de Riesgos',
-    image: '/proyectos/proyecto-gestion-riesgos-proteccion-civil.png',
+    title: 'Gestión Integral del Riesgo',
+    image: '/proyectos/Captura.JPG',
     imageAlt: 'Vista ilustrativa para gestión integral de riesgos',
     linkTo: '/servicios/proyectos/gestion-riesgos-proteccion-civil/riesgos',
-    linkLabel: 'Riesgos',
+    linkLabel: 'Oferta de Proyectos',
     description:
       'Diseñamos proyectos que articulan prevención, preparación, mitigación y respuesta con base en evidencia geoespacial para fortalecer la protección civil.',
   },
@@ -47,10 +48,10 @@ function GestionRiesgosProteccionCivil() {
         </header>
 
         <div className="hero-copy subpage-intro planeacion-intro">
-          <h1>Gestión de Riesgos y Protección Civil.</h1>
+          <h1>Gestión de Riesgos y Protección Civil</h1>
           <p className="hero-text">
-            Esta sección reúne proyectos para analizar amenazas, vulnerabilidad y riesgo, con el fin de fortalecer la prevención,
-            la preparación y la toma de decisiones territoriales.
+            Conozca nuestra oferta deproyectos para analizar amenazas, vulnerabilidad y riesgo.
+            .
           </p>
         </div>
       </section>
@@ -58,7 +59,7 @@ function GestionRiesgosProteccionCivil() {
       <section className="services-section planeacion-projects-section">
         <div className="section-heading planeacion-projects-heading">
           <p className="eyebrow">Proyectos</p>
-          <h2>Desarrollamos soluciones para la gestión de riesgos y la protección civil.</h2>
+          <h2>Desarrollamos soluciones para la gestión de riesgos y la protección civil</h2>
         </div>
         <div className="service-grid projects-grid planeacion-projects-grid">
           {riskProjectTypes.map((projectType) => (
@@ -66,14 +67,14 @@ function GestionRiesgosProteccionCivil() {
               {projectType.linkTo ? (
                 <Link className="planeacion-project-image-link" to={projectType.linkTo} aria-label={`Abrir ${projectType.title}`}>
                   <img
-                    className="planeacion-project-image"
+                    className={`planeacion-project-image${projectType.imageClass ? ` ${projectType.imageClass}` : ''}`}
                     src={projectType.image}
                     alt={projectType.imageAlt}
                   />
                 </Link>
               ) : (
                 <img
-                  className="planeacion-project-image"
+                  className={`planeacion-project-image${projectType.imageClass ? ` ${projectType.imageClass}` : ''}`}
                   src={projectType.image}
                   alt={projectType.imageAlt}
                 />
