@@ -410,7 +410,7 @@ function ThreatProjectMap({ title, onOpenModel }) {
   return (
     <figure className="amenazas-mini-map" aria-label={`Mapa de proyectos para ${title}`}>
       <div ref={mapContainerRef} className="amenazas-leaflet-map" />
-      <figcaption>Extensión inicial: México | Puntos ficticios: Oaxaca, Guerrero y Michoacán.</figcaption>
+      <figcaption>Proyectos realizados. Rueda del ratón para acercar/alejar. Clic en los marcadores para más información.</figcaption>
     </figure>
   )
 }
@@ -568,8 +568,8 @@ function ThreatModelViewer({ modelUrl, verticalExaggeration }) {
         </Canvas>
       </div>
       <div className="amenazas-three-help" aria-label="Indicaciones de navegación del modelo 3D">
-        <p><strong>Cómo navegar:</strong> arrastra para rotar, rueda para acercar/alejar y clic derecho para desplazar.</p>
-        <p><strong>En touch:</strong> 1 dedo rota, 2 dedos hacen zoom y paneo.</p>
+        <p><strong>Cómo navegar:</strong> clic izquierdo y arrastra para rotar, rueda para acercar/alejar y clic derecho para desplazar.</p>
+        <p><strong>En touch:</strong> click izquierdo y 1 dedo rota, 2 dedos hacen zoom y click derecho y 1 dedo para paneo.</p>
       </div>
     </div>
   )
@@ -620,17 +620,17 @@ function Amenazas() {
         </header>
 
         <div className="hero-copy subpage-intro planeacion-intro">
-          <h1>Amenazas.</h1>
+          <h1>Amenazas</h1>
           <p className="hero-text">
-            Esta sección concentra proyectos para analizar distintos tipos de amenazas y generar evidencia que fortalezca la gestión del riesgo.
+            Conozca nuestra oferta de proyectos para analizar distintos tipos de amenazas y generar evidencia que fortalezca la gestión del riesgo.
           </p>
         </div>
       </section>
 
       <section className="services-section planeacion-projects-section">
         <div className="section-heading planeacion-projects-heading">
-          <p className="eyebrow">Proyectos</p>
-          <h2>Desarrollamos análisis de amenazas geológicas, hidrometeorológicas y sanitarias.</h2>
+          <p className="eyebrow">Proyectos: Análisis de amenazas</p>
+          <h2>Realizamos análisis de amenazas geológicas, hidrometeorológicas y sanitarias</h2>
         </div>
         <div className="service-grid projects-grid planeacion-projects-grid">
           {amenazasProjectTypes.map((projectType) => (
@@ -653,10 +653,7 @@ function Amenazas() {
       </section>
 
       <section className="services-section amenazas-detail-stack">
-        <div className="section-heading planeacion-projects-heading">
-          <p className="eyebrow">Soluciones que ofrecemos</p>
-          <h2>Cada línea de amenaza integra análisis técnico, evidencia territorial y experiencia en campo.</h2>
-        </div>
+  
 
         <div className="amenazas-sections-grid">
           {amenazasProjectTypes.map((threatType) => (
