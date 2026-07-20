@@ -1,5 +1,6 @@
 import { defineConfig } from 'vite'
 import react from '@vitejs/plugin-react'
+import legacy from '@vitejs/plugin-legacy'
 
 // https://vite.dev/config/
 export default defineConfig(() => {
@@ -7,7 +8,12 @@ export default defineConfig(() => {
 
   return {
     base: isGitHubPages ? '/terralogica-web/' : '/',
-    plugins: [react()],
+    plugins: [
+      react(),
+      legacy({
+        targets: ['defaults', 'safari >= 12', 'ios >= 12'],
+      }),
+    ],
     server: {
       host: '127.0.0.1',
       port: 5173,

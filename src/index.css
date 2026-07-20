@@ -65,3 +65,13 @@ p {
   margin: 0 auto;
   min-height: 100vh;
 }
+
+.route-loading {
+  min-height: 100vh;
+  display: grid;
+  place-items: center;
+  padding: 2rem;
+  color: var(--muted-strong);
+  font-family: var(--display);
+  letter-spacing: 0.02em;
+}
