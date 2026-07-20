@@ -23,7 +23,7 @@ const riskProjectTypes = [
   },
   {
     title: 'Gestión Integral del Riesgo',
-    image: '/proyectos/Captura.JPG',
+    image: '/proyectos/GestionIntegralRiesgo02.png',
     imageAlt: 'Vista ilustrativa para gestión integral de riesgos',
     linkTo: '/servicios/proyectos/gestion-riesgos-proteccion-civil/riesgos',
     linkLabel: 'Oferta de Proyectos',
@@ -50,8 +50,7 @@ function GestionRiesgosProteccionCivil() {
         <div className="hero-copy subpage-intro planeacion-intro">
           <h1>Gestión de Riesgos y Protección Civil</h1>
           <p className="hero-text">
-            Conozca nuestra oferta deproyectos para analizar amenazas, vulnerabilidad y riesgo.
-            .
+            Conozca nuestra oferta de proyectos para analizar amenazas, vulnerabilidad y riesgo.
           </p>
         </div>
       </section>
