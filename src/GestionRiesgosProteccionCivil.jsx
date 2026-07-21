@@ -13,7 +13,7 @@ const riskProjectTypes = [
   },
   {
     title: 'Análisis de Vulnerabilidad',
-    image: '/proyectos/VULNELOCMOR.png',
+    image: '/proyectos/VULNELOCMOR.png?v=20260720',
     imageClass: 'planeacion-project-image-vulnerabilidad',
     imageAlt: 'Vista ilustrativa para análisis de vulnerabilidad',
     linkTo: '/servicios/proyectos/gestion-riesgos-proteccion-civil/vulnerabilidad',
@@ -23,7 +23,7 @@ const riskProjectTypes = [
   },
   {
     title: 'Gestión Integral del Riesgo',
-    image: '/proyectos/GestionIntegralRiesgo02.png',
+    image: '/proyectos/GestionIntegralRiesgo02.png?v=20260720',
     imageAlt: 'Vista ilustrativa para gestión integral de riesgos',
     linkTo: '/servicios/proyectos/gestion-riesgos-proteccion-civil/riesgos',
     linkLabel: 'Oferta de Proyectos',
