@@ -1,10 +1,11 @@
 import { Link } from 'react-router-dom'
 import './App.css'
+import { assetPath } from './assetPath'
 
 const riskProjectTypes = [
   {
     title: 'Análisis de Amenazas',
-    image: '/proyectos/proyecto-gestion-riesgos-proteccion-civil.png',
+    image: assetPath('/proyectos/proyecto-gestion-riesgos-proteccion-civil.png'),
     imageAlt: 'Vista ilustrativa para análisis de amenazas',
     linkTo: '/servicios/proyectos/gestion-riesgos-proteccion-civil/amenazas',
     linkLabel: 'Oferta de Proyectos',
@@ -13,7 +14,7 @@ const riskProjectTypes = [
   },
   {
     title: 'Análisis de Vulnerabilidad',
-    image: '/proyectos/VULNELOCMOR.png?v=20260720',
+    image: assetPath('/proyectos/VULNELOCMOR.png?v=20260720'),
     imageClass: 'planeacion-project-image-vulnerabilidad',
     imageAlt: 'Vista ilustrativa para análisis de vulnerabilidad',
     linkTo: '/servicios/proyectos/gestion-riesgos-proteccion-civil/vulnerabilidad',
@@ -23,7 +24,7 @@ const riskProjectTypes = [
   },
   {
     title: 'Gestión Integral del Riesgo',
-    image: '/proyectos/GestionIntegralRiesgo02.png?v=20260720',
+    image: assetPath('/proyectos/GestionIntegralRiesgo02.png?v=20260720'),
     imageAlt: 'Vista ilustrativa para gestión integral de riesgos',
     linkTo: '/servicios/proyectos/gestion-riesgos-proteccion-civil/riesgos',
     linkLabel: 'Oferta de Proyectos',
@@ -38,7 +39,7 @@ function GestionRiesgosProteccionCivil() {
       <section className="hero-section subpage-hero">
         <header className="topbar">
           <Link className="brand" to="/" aria-label="Volver al inicio de Terralógica">
-            <img className="brand-logo" src="/terralogics-imago.png" alt="Imago de Terralógica" />
+            <img className="brand-logo" src={assetPath('/terralogics-imago.png')} alt="Imago de Terralógica" />
             <span className="brand-text">Terralógica</span>
           </Link>
           <nav className="topnav" aria-label="Navegación secundaria">

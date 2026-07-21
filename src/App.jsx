@@ -2,6 +2,7 @@ import './App.css'
 import { Link } from 'react-router-dom'
 import { useEffect, useRef, useState } from 'react'
 import Hls from 'hls.js'
+import { assetPath } from './assetPath'
 
 
 
@@ -50,19 +51,19 @@ const roadmap = [
 const heroBannerParts = [
   {
     text: 'Ciencia de Frontera',
-    image: '/banners/ciencia-frontera-real.png',
+    image: assetPath('/banners/ciencia-frontera-real.png'),
   },
   {
     text: 'Técnica Avanzada',
-    image: '/banners/tecnica-avanzada-real.png?v=2',
+    image: assetPath('/banners/tecnica-avanzada-real.png?v=2'),
   },
   {
     text: 'Tecnología de Vanguardia',
-    image: '/banners/tecnologia-punta-real.png',
+    image: assetPath('/banners/tecnologia-punta-real.png'),
   },
   {
     text: '... esto es Terralógica ...',
-    image: '/banners/terralogics-ai.jpg',
+    image: assetPath('/banners/terralogics-ai.jpg'),
     videoHls:
       'https://customer-kywq3a5r9m82v8jr.cloudflarestream.com/c6e07bb41ae37e52b6c2ef6b76fe39a2/manifest/video.m3u8',
   },
@@ -132,7 +133,7 @@ function App() {
       <section className="hero-section">
         <header className="topbar">
           <a className="brand" href="#inicio" aria-label="Ir al inicio de Terralógica">
-            <img className="brand-logo" src="/terralogics-imago.png" alt="Imago de Terralógica" />
+            <img className="brand-logo" src={assetPath('/terralogics-imago.png')} alt="Imago de Terralógica" />
             <span className="brand-text">Terralógica</span>
           </a>
           <nav className="topnav" aria-label="Secciones principales">

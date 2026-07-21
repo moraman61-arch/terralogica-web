@@ -1,10 +1,11 @@
 import { Link } from 'react-router-dom'
 import './App.css'
+import { assetPath } from './assetPath'
 
 const planeacionProjectTypes = [
   {
     title: 'Inventarios de Arbolado, Señalización y Luminarias',
-    image: '/planeacion/inventario-puebla-01.png',
+    image: assetPath('/planeacion/inventario-puebla-01.png'),
     imageAlt: 'Vista ilustrativa para inventarios urbanos',
     linkTo: '/servicios/proyectos/inventrees-proyectos',
     description:
@@ -12,35 +13,35 @@ const planeacionProjectTypes = [
   },
   {
     title: 'Geoportales de información urbana',
-    image: '/planeacion/inventario-guadalajara-01.png',
+    image: assetPath('/planeacion/inventario-guadalajara-01.png'),
     imageAlt: 'Vista ilustrativa para geoportales de información urbana',
     description:
       'Construimos plataformas geoespaciales para consultar, compartir y analizar información urbana de manera clara y accesible.',
   },
   {
     title: 'Uso y Zonificación del Suelo',
-    image: '/planeacion/uso-del-suelo-cd-salud.png',
+    image: assetPath('/planeacion/uso-del-suelo-cd-salud.png'),
     imageAlt: 'Vista ilustrativa para uso y zonificación del suelo',
     description:
       'Generamos insumos cartográficos y normativos para definir usos del suelo y orientar el crecimiento urbano con mayor orden.',
   },
   {
     title: 'Vivienda y Equipamiento Urbano',
-    image: '/planeacion/conavi.png',
+    image: assetPath('/planeacion/conavi.png'),
     imageAlt: 'Vista ilustrativa para vivienda y equipamiento urbano',
     description:
       'Analizamos cobertura, distribución y necesidades de vivienda y servicios urbanos para apoyar decisiones de inversión y planeación.',
   },
   {
     title: 'Ordenamiento Territorial',
-    image: '/banners/ciencia-frontera-real.png',
+    image: assetPath('/banners/ciencia-frontera-real.png'),
     imageAlt: 'Vista ilustrativa para ordenamiento territorial',
     description:
       'Diseñamos proyectos para armonizar ocupación del territorio, vocaciones del suelo y dinámicas sociales, económicas y ambientales.',
   },
   {
     title: 'Seguridad y Bienestar Social',
-    image: '/planeacion/iluminacion-campus.png',
+    image: assetPath('/planeacion/iluminacion-campus.png'),
     imageAlt: 'Vista ilustrativa para seguridad y bienestar social',
     description:
       'Aplicamos análisis territorial para identificar patrones espaciales que fortalezcan prevención, seguridad y bienestar comunitario.',
@@ -53,7 +54,7 @@ function PlaneacionOrdenamiento() {
       <section className="hero-section subpage-hero">
         <header className="topbar">
           <Link className="brand" to="/" aria-label="Volver al inicio de Terralógica">
-            <img className="brand-logo" src="/terralogics-imago.png" alt="Imago de Terralógica" />
+            <img className="brand-logo" src={assetPath('/terralogics-imago.png')} alt="Imago de Terralógica" />
             <span className="brand-text">Terralógica</span>
           </Link>
           <nav className="topnav" aria-label="Navegación secundaria">

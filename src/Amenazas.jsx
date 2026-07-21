@@ -10,12 +10,13 @@ import { MeshoptDecoder } from 'three/examples/jsm/libs/meshopt_decoder.module.j
 import L from 'leaflet'
 import 'leaflet/dist/leaflet.css'
 import './App.css'
+import { assetPath } from './assetPath'
 
 const amenazasProjectTypes = [
   {
     slug: 'geologicas',
     title: 'Amenazas Geológicas',
-    image: '/proyectos/proyecto-gestion-riesgos-proteccion-civil.png',
+    image: assetPath('/proyectos/proyecto-gestion-riesgos-proteccion-civil.png'),
     imageAlt: 'Vista ilustrativa para amenazas geológicas',
     mediaLabel: 'Deslizamientos de Morelia, MICH.',
     description:
@@ -58,8 +59,8 @@ const amenazasProjectTypes = [
   {
     slug: 'hidrometeorologicas',
     title: 'Amenazas Hidrometeorológicas',
-    image: '/proyectos/peligro-inundacion-subita1.png?v=20260720',
-    panelImage: '/proyectos/peligro-inundacion-subita1.png?v=20260720',
+    image: assetPath('/proyectos/peligro-inundacion-subita1.png?v=20260720'),
+    panelImage: assetPath('/proyectos/peligro-inundacion-subita1.png?v=20260720'),
     imageAlt: 'Vista ilustrativa para amenazas hidrometeorológicas',
     mediaLabel: 'Peligro de inundación súbita, Morelia, MICH.',
     description:
@@ -102,9 +103,9 @@ const amenazasProjectTypes = [
   {
     slug: 'biologicas',
     title: 'Amenazas Sanitarias',
-    image: '/proyectos/proyecto-gestion-riesgos-proteccion-civil.png',
-    panelImage: '/proyectos/plagas-en-naranja.jpg?v=20260720',
-    sectionImage: '/proyectos/plagas-en-naranja.jpg?v=20260720',
+    image: assetPath('/proyectos/proyecto-gestion-riesgos-proteccion-civil.png'),
+    panelImage: assetPath('/proyectos/plagas-en-naranja.jpg?v=20260720'),
+    sectionImage: assetPath('/proyectos/plagas-en-naranja.jpg?v=20260720'),
     imageAlt: 'Vista ilustrativa para amenazas sanitarias',
     mediaLabel: 'Plaga en cultivo de naranja, Linares , NL.',
     description:

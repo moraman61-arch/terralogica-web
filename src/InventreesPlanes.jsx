@@ -4,6 +4,7 @@ import Hls from 'hls.js'
 import shp from 'shpjs'
 import { kml as kmlToGeoJSON } from '@tmcw/togeojson'
 import './App.css'
+import { assetPath } from './assetPath'
 
 const polygonStorageKey = 'inventrees-polygon-registration'
 
@@ -169,7 +170,7 @@ const contactEmail = 'moraman61@gmail.com'
 const introVideos = [
   {
     label: 'Geolocalizador',
-    src: '/inventrees/Geolocalizador-90-segundos.mp4?v=20260720',
+    src: assetPath('/inventrees/Geolocalizador-90-segundos.mp4?v=20260720'),
     format: 'mp4',
   },
   {

@@ -1,24 +1,25 @@
 import { Link } from 'react-router-dom'
 import './App.css'
+import { assetPath } from './assetPath'
 
 const vulnerabilidadProjectTypes = [
   {
     title: 'Exposición Territorial',
-    image: '/proyectos/proyecto-gestion-riesgos-proteccion-civil.png',
+    image: assetPath('/proyectos/proyecto-gestion-riesgos-proteccion-civil.png'),
     imageAlt: 'Vista ilustrativa para exposición territorial',
     description:
       'Identificamos población, infraestructura y activos estratégicos expuestos ante distintos escenarios de amenaza en el territorio.',
   },
   {
     title: 'Fragilidad de Sistemas',
-    image: '/proyectos/proyecto-gestion-riesgos-proteccion-civil.png',
+    image: assetPath('/proyectos/proyecto-gestion-riesgos-proteccion-civil.png'),
     imageAlt: 'Vista ilustrativa para fragilidad de sistemas',
     description:
       'Evaluamos condiciones físicas, sociales y funcionales que incrementan la susceptibilidad de daño frente a eventos adversos.',
   },
   {
     title: 'Capacidad de Respuesta',
-    image: '/proyectos/proyecto-gestion-riesgos-proteccion-civil.png',
+    image: assetPath('/proyectos/proyecto-gestion-riesgos-proteccion-civil.png'),
     imageAlt: 'Vista ilustrativa para capacidad de respuesta',
     description:
       'Analizamos recursos institucionales y comunitarios para reducir vulnerabilidad y mejorar la preparación y recuperación.',
@@ -31,7 +32,7 @@ function Vulnerabilidad() {
       <section className="hero-section subpage-hero">
         <header className="topbar">
           <Link className="brand" to="/" aria-label="Volver al inicio de Terralógica">
-            <img className="brand-logo" src="/terralogics-imago.png" alt="Imago de Terralógica" />
+            <img className="brand-logo" src={assetPath('/terralogics-imago.png')} alt="Imago de Terralógica" />
             <span className="brand-text">Terralógica</span>
           </Link>
           <nav className="topnav" aria-label="Navegación secundaria">

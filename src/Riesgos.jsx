@@ -1,24 +1,25 @@
 import { Link } from 'react-router-dom'
 import './App.css'
+import { assetPath } from './assetPath'
 
 const riesgosProjectTypes = [
   {
     title: 'Identificación de Riesgos',
-    image: '/proyectos/proyecto-gestion-riesgos-proteccion-civil.png',
+    image: assetPath('/proyectos/proyecto-gestion-riesgos-proteccion-civil.png'),
     imageAlt: 'Vista ilustrativa para identificación de riesgos',
     description:
       'Delimitamos escenarios de riesgo mediante la integración espacial de amenazas, exposición y vulnerabilidad en distintos contextos territoriales.',
   },
   {
     title: 'Evaluación y Priorización',
-    image: '/proyectos/proyecto-gestion-riesgos-proteccion-civil.png',
+    image: assetPath('/proyectos/proyecto-gestion-riesgos-proteccion-civil.png'),
     imageAlt: 'Vista ilustrativa para evaluación y priorización de riesgos',
     description:
       'Valoramos impactos potenciales para priorizar zonas, sectores e infraestructuras que requieren acciones preventivas inmediatas.',
   },
   {
     title: 'Mitigación y Gestión',
-    image: '/proyectos/proyecto-gestion-riesgos-proteccion-civil.png',
+    image: assetPath('/proyectos/proyecto-gestion-riesgos-proteccion-civil.png'),
     imageAlt: 'Vista ilustrativa para mitigación y gestión de riesgos',
     description:
       'Diseñamos estrategias de mitigación, preparación y seguimiento para reducir pérdidas y fortalecer la resiliencia territorial.',
@@ -31,7 +32,7 @@ function Riesgos() {
       <section className="hero-section subpage-hero">
         <header className="topbar">
           <Link className="brand" to="/" aria-label="Volver al inicio de Terralógica">
-            <img className="brand-logo" src="/terralogics-imago.png" alt="Imago de Terralógica" />
+            <img className="brand-logo" src={assetPath('/terralogics-imago.png')} alt="Imago de Terralógica" />
             <span className="brand-text">Terralógica</span>
           </Link>
           <nav className="topnav" aria-label="Navegación secundaria">
