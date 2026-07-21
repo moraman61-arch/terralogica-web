@@ -169,7 +169,7 @@ const contactEmail = 'moraman61@gmail.com'
 const introVideos = [
   {
     label: 'Geolocalizador',
-    src: '/inventrees/Geolocalizador-90-segundos.mp4',
+    src: '/inventrees/Geolocalizador-90-segundos.mp4?v=20260720',
     format: 'mp4',
   },
   {
