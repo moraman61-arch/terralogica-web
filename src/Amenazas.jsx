@@ -108,7 +108,7 @@ const amenazasProjectTypes = [
     imageAlt: 'Vista ilustrativa para amenazas sanitarias',
     mediaLabel: 'Plaga en cultivo de naranja, Linares , NL.',
     description:
-      'Desarrollamos análisis espaciales para reconocer riesgos de origen sanitario y apoyar estrategias de vigilancia, prevención y respuesta.',
+      'Desarrollamos análisis espaciales para reconocer amenazas de origen sanitario y apoyar estrategias de vigilancia, prevención y respuesta.',
     sectionIntro:
       'Integramos información epidemiológica, ambiental y demográfica para focalizar acciones de salud pública y detección de plagas agrícolas y forestales.',
     solutions: [
@@ -569,7 +569,9 @@ function ThreatModelViewer({ modelUrl, verticalExaggeration }) {
       </div>
       <div className="amenazas-three-help" aria-label="Indicaciones de navegación del modelo 3D">
         <p><strong>Cómo navegar:</strong> clic izquierdo y arrastra para rotar, rueda para acercar/alejar y clic derecho para desplazar.</p>
-        <p><strong>En touch:</strong> click izquierdo y 1 dedo rota, 2 dedos hacen zoom y click derecho y 1 dedo para paneo.</p>
+        <p><strong>En touch (Windows):</strong> click izquierdo y 1 dedo rota, 2 dedos hacen zoom y click derecho y 1 dedo para paneo.</p>
+        <p><strong>En touch (MacOS):</strong> click izquierdo y 1 dedo rota, abrir con 2 dedos hacen zoom, presionar con 2 dedos y arrastrar para paneo.</p>
+        <p><strong>En touch (Ipad):</strong> arrastrar con 1 dedo rota, abrir con 2 dedos hacen zoom, arrastrar con 2 dedos para paneo.</p>
       </div>
     </div>
   )

@@ -169,15 +169,18 @@ const contactEmail = 'moraman61@gmail.com'
 const introVideos = [
   {
     label: 'Geolocalizador',
-    src: 'https://customer-kywq3a5r9m82v8jr.cloudflarestream.com/7a612d900ce0f73a0090525603f4235c/manifest/video.m3u8',
+    src: '/inventrees/Geolocalizador-90-segundos.mp4',
+    format: 'mp4',
   },
   {
     label: 'Medidor',
     src: 'https://customer-kywq3a5r9m82v8jr.cloudflarestream.com/5e33222f0d842e505fbbde0cd1c5a43e/manifest/video.m3u8',
+    format: 'hls',
   },
   {
     label: 'Caracterizador',
     src: 'https://customer-kywq3a5r9m82v8jr.cloudflarestream.com/1c000c5fad5fd0d9a7dcb04adcce4907/manifest/video.m3u8',
+    format: 'hls',
   },
 ]
 
@@ -192,7 +195,6 @@ const moduleFeaturePanels = [
       'Precisión 30 cm @ 5 m, 70 cm @ 10 m',
       'Definición de cercas limitantes',
       'Trazo de guías auxiliares',
-      'Corrección por elevación',
     ],
   },
   {
@@ -212,7 +214,6 @@ const moduleFeaturePanels = [
     features: [
       'Incluye Geolocalizador',
       'Identificación de especie con IA',
-      'Especies frecuentes',
       'Estructura del árbol',
       'Indicación de mantenimiento',
       'Indicación de desmoche',
@@ -575,6 +576,13 @@ function getRecommendedLicenseId(km) {
   return 'monthly-medium-large'
 }
 
+function formatMonthlyQuoteLabel(monthlyAmount, months) {
+  const normalizedMonths = Number.isFinite(Number(months)) && Number(months) >= 1 ? Math.floor(Number(months)) : 1
+  const totalAmount = monthlyAmount * normalizedMonths
+  const monthsLabel = normalizedMonths === 1 ? '1 mes' : `${normalizedMonths} meses`
+  return `${currencyFormatter.format(monthlyAmount)} / mes | ${currencyFormatter.format(totalAmount)} por ${monthsLabel}`
+}
+
 function calculateQuote(plan, km, months = 1) {
   if (!Number.isFinite(km) || km <= 0) {
     return {
@@ -612,7 +620,7 @@ function calculateQuote(plan, km, months = 1) {
 
     return {
       status: 'valid',
-      amountLabel: `${currencyFormatter.format(discountedAmount)} / mes`,
+      amountLabel: formatMonthlyQuoteLabel(discountedAmount, normalizedMonths),
       detail:
         normalizedMonths >= 2
           ? `Escala mensual entre ${currencyFormatter.format(plan.minAmount)} y ${currencyFormatter.format(plan.maxAmount)} según km. Incluye descuento de ${discountPercent.toFixed(0)}% por contratar ${normalizedMonths} meses desde el inicio.`
@@ -623,7 +631,7 @@ function calculateQuote(plan, km, months = 1) {
   if (plan.mode === 'flat-monthly') {
     return {
       status: 'valid',
-      amountLabel: `${currencyFormatter.format(plan.flatAmount)} / mes`,
+      amountLabel: formatMonthlyQuoteLabel(plan.flatAmount, normalizedMonths),
       detail: 'Pago mensual estimado para la modalidad seleccionada.',
     }
   }
@@ -634,7 +642,7 @@ function calculateQuote(plan, km, months = 1) {
 
   return {
     status: 'valid',
-    amountLabel: plan.billing === 'monthly' ? `${currencyFormatter.format(total)} / mes` : currencyFormatter.format(total),
+    amountLabel: plan.billing === 'monthly' ? formatMonthlyQuoteLabel(total, normalizedMonths) : currencyFormatter.format(total),
     detail:
       plan.billing === 'monthly'
         ? `Pago mensual estimado con ${formatKmLimit(km)} km de vialidad a ${currencyFormatter.format(plan.rate)} por km.`
@@ -862,13 +870,18 @@ function InventreesPlanes() {
     }
 
     let hlsInstance = null
+    const isHlsSource = currentIntroVideo.format === 'hls'
 
-    if (videoElement.canPlayType('application/vnd.apple.mpegurl')) {
-      videoElement.src = currentIntroVideo.src
-    } else if (Hls.isSupported()) {
-      hlsInstance = new Hls()
-      hlsInstance.loadSource(currentIntroVideo.src)
-      hlsInstance.attachMedia(videoElement)
+    if (isHlsSource) {
+      if (videoElement.canPlayType('application/vnd.apple.mpegurl')) {
+        videoElement.src = currentIntroVideo.src
+      } else if (Hls.isSupported()) {
+        hlsInstance = new Hls()
+        hlsInstance.loadSource(currentIntroVideo.src)
+        hlsInstance.attachMedia(videoElement)
+      } else {
+        videoElement.src = currentIntroVideo.src
+      }
     } else {
       videoElement.src = currentIntroVideo.src
     }
