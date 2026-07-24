@@ -1398,6 +1398,10 @@
   margin-bottom: 0.9rem;
 }
 
+.project-card-image-drones {
+  object-position: center 70%;
+}
+
 .projects-grid .project-card::before {
   content: '';
   position: absolute;

@@ -73,6 +73,7 @@ const projectServices = [
     description:
       'Realizamos campañas de captura en campo con drones y sensores móviles para generar información geoespacial precisa, actualizada y lista para análisis territorial.',
     image: assetPath('/proyectos/img_0372.png'),
+    imageClass: 'project-card-image-drones',
     imageAlt: 'Imagen de referencia para levantamiento de informacion con drones y sensores moviles',
   },
   {
@@ -124,7 +125,7 @@ function Proyectos() {
               {item.linkTo ? (
                 <Link className="planeacion-project-image-link" to={item.linkTo} aria-label={`Abrir ${item.title}`}>
                   <img
-                    className="project-card-image"
+                    className={`project-card-image${item.imageClass ? ` ${item.imageClass}` : ''}`}
                     src={item.image}
                     alt={item.imageAlt}
                     loading="lazy"
@@ -132,9 +133,9 @@ function Proyectos() {
                 </Link>
               ) : (
                 <img
-                  className="project-card-image"
+                  className={`project-card-image${item.imageClass ? ` ${item.imageClass}` : ''}`}
                   src={item.image}
-                  alt={item.imageAlt}
+                    alt={item.imageAlt}
                   loading="lazy"
                 />
               )}
