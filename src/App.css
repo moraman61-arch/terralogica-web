@@ -1402,6 +1402,10 @@
   object-position: center 30%;
 }
 
+.project-card-image-contaminacion {
+  object-position: center 50%;
+}
+
 .projects-grid .project-card::before {
   content: '';
   position: absolute;

@@ -44,14 +44,15 @@ const projectServices = [
     title: 'Contaminación Ambiental y Salud Pública',
     description:
       'Implementamos proyectos para identificar fuentes de contaminación, evaluar impactos y priorizar acciones de mitigación con enfoque de salud pública.',
-    image: assetPath('/proyectos/proyecto-contaminacion-salud-publica.png'),
+    image: assetPath('/proyectos/unnamed-15.jpg'),
+    imageClass: 'project-card-image-contaminacion',
     imageAlt: 'Imagen de referencia para proyectos de contaminacion ambiental y salud publica',
   },
   {
     title: 'Infraestructura, Movilidad y Transporte',
     description:
       'Estructuramos proyectos para optimizar redes de infraestructura y transporte, mejorando conectividad, seguridad y eficiencia operativa.',
-    image: assetPath('/proyectos/proyecto-infraestructura-movilidad-transporte.png'),
+    image: assetPath('/proyectos/Mapa.png'),
     imageAlt: 'Imagen de referencia para proyectos de infraestructura movilidad y transporte',
   },
   {
