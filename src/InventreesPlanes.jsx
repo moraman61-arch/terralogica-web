@@ -170,8 +170,8 @@ const contactEmail = 'moraman61@gmail.com'
 const introVideos = [
   {
     label: 'Geolocalizador',
-    src: assetPath('/inventrees/Geolocalizador-90-segundos.mp4?v=20260720'),
-    format: 'mp4',
+    src: 'https://customer-kywq3a5r9m82v8jr.cloudflarestream.com/82ad27576523db4d5a7269924168ac22/manifest/video.m3u8',
+    format: 'hls',
   },
   {
     label: 'Medidor',
