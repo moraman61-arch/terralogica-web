@@ -37,7 +37,7 @@ const projectServices = [
     title: 'Gobernanza Territorial y Participación Ciudadana',
     description:
       'Diseñamos procesos participativos y proyectos colaborativos para mejorar la toma de decisiones territoriales entre actores públicos y sociales.',
-    image: assetPath('/proyectos/proyecto-gobernanza-participacion.png'),
+    image: assetPath('/proyectos/campesinos.png'),
     imageAlt: 'Imagen de referencia para proyectos de gobernanza territorial y participacion ciudadana',
   },
   {
