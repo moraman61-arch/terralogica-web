@@ -1497,7 +1497,9 @@
 }
 
 .planeacion-project-image-link:hover .planeacion-project-image,
-.planeacion-project-image-link:focus-visible .planeacion-project-image {
+.planeacion-project-image-link:focus-visible .planeacion-project-image,
+.planeacion-project-image-link:hover .inventrees-panel-image,
+.planeacion-project-image-link:focus-visible .inventrees-panel-image {
   outline: 2px solid rgba(146, 198, 255, 0.5);
   outline-offset: 2px;
 }
@@ -1732,6 +1734,25 @@
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
   gap: 0.9rem;
+}
+
+.inventrees-section-video-block {
+  margin-top: 1rem;
+  padding: 0.75rem;
+  border-radius: 1rem;
+  border: 1px solid rgba(146, 198, 255, 0.24);
+  background:
+    radial-gradient(circle at top right, rgba(56, 144, 245, 0.13), transparent 52%),
+    linear-gradient(180deg, rgba(255, 255, 255, 0.03), rgba(255, 255, 255, 0.01));
+}
+
+.inventrees-section-video {
+  width: 100%;
+  aspect-ratio: 16 / 9;
+  display: block;
+  border-radius: 0.8rem;
+  border: 1px solid rgba(146, 198, 255, 0.25);
+  background: #07173f;
 }
 
 .amenaza-solution-card {

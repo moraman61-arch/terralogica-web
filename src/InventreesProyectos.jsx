@@ -6,17 +6,18 @@ const inventreesProjectTypes = [
     slug: 'arbolado-publico',
     title: 'Arbolado público',
     image: '/inventrees/inventario-arbolado-publico.png',
+    videoSrc: 'https://customer-kywq3a5r9m82v8jr.cloudflarestream.com/ddfc59de0af6f73381bd7eeaf489ea0b/manifest/video.m3u8',
     imageAlt: 'Imagen de referencia para inventario de arbolado publico',
     mediaLabel: 'Inventario y gestión de arbolado urbano.',
     description:
       'Levantamiento y organización del arbolado urbano que se encuentra en los espacios públicos de la ciudad. El inventario registra la geolocalización, medición y caracterización de cada árbol, así como la generación de reportes y mapas por unidad administrativa / funcional de la ciudad para la gestión del arbolado urbano.',
     sectionIntro:
-      'Integramos captura en campo, control espacial y criterios de manejo para construir inventarios de arbolado útiles para mantenimiento, diagnóstico de riesgo y planeación operativa.',
+      'Integramos geolocalización, medición y caracterización del arbolado en los espacios públicos para construir inventarios de arbolado útiles para mantenimiento, diagnóstico de riesgo y planeación operativa.',
     solutions: [
       {
         title: 'Registro georreferenciado de ejemplares',
         description:
-          'Ubicamos cada árbol en campo y consolidamos una base espacial para consulta, actualización y seguimiento por colonia, vialidad o parque.',
+          'Ubicamos cada árbol en imágenes de nivel de calle y consolidamos una base espacial para consulta, actualización y seguimiento por colonia, vialidad o parque.',
       },
       {
         title: 'Medición y caracterización del arbolado',
@@ -127,14 +128,19 @@ function InventreesProyectos() {
         <div className="identity-grid inventrees-panels-grid">
           {inventreesProjectTypes.map((projectType) => (
             <article key={projectType.slug} className="identity-card">
-              <img
-                className="inventrees-panel-image"
-                src={projectType.image}
-                alt={projectType.imageAlt}
-                loading="lazy"
-              />
+              <a className="planeacion-project-image-link" href={`#${projectType.slug}`} aria-label={`Ir a la sección ${projectType.title}`}>
+                <img
+                  className="inventrees-panel-image"
+                  src={projectType.image}
+                  alt={projectType.imageAlt}
+                  loading="lazy"
+                />
+              </a>
               <h3>{projectType.title}</h3>
               <p>{projectType.description}</p>
+              <a className="service-card-cta project-panel-link" href={`#${projectType.slug}`}>
+                {projectType.title}
+              </a>
             </article>
           ))}
         </div>
@@ -170,6 +176,17 @@ function InventreesProyectos() {
                   </article>
                 ))}
               </div>
+
+              {projectType.videoSrc ? (
+                <div className="inventrees-section-video-block">
+                  <video
+                    className="inventrees-section-video"
+                    src={projectType.videoSrc}
+                    controls
+                    preload="metadata"
+                  />
+                </div>
+              ) : null}
             </article>
           ))}
         </div>
