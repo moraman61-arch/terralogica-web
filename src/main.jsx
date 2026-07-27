@@ -1,6 +1,6 @@
-import { StrictMode, Suspense, lazy } from 'react'
+import { StrictMode, Suspense, lazy, useEffect } from 'react'
 import { createRoot } from 'react-dom/client'
-import { BrowserRouter, Route, Routes } from 'react-router-dom'
+import { BrowserRouter, Route, Routes, useLocation } from 'react-router-dom'
 import './index.css'
 import App from './App.jsx'
 
@@ -19,9 +19,20 @@ const Software = lazy(() => import('./Software.jsx'))
 const InventreesPlanes = lazy(() => import('./InventreesPlanes.jsx'))
 const InventreesPolygon = lazy(() => import('./InventreesPolygon.jsx'))
 
+function ScrollToTop() {
+  const { pathname } = useLocation()
+
+  useEffect(() => {
+    window.scrollTo({ top: 0, left: 0, behavior: 'auto' })
+  }, [pathname])
+
+  return null
+}
+
 createRoot(document.getElementById('root')).render(
   <StrictMode>
     <BrowserRouter basename={import.meta.env.BASE_URL}>
+      <ScrollToTop />
       <Suspense fallback={<div className="route-loading">Cargando contenido...</div>}>
         <Routes>
           <Route path="/" element={<App />} />

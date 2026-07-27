@@ -1755,6 +1755,41 @@
   background: #07173f;
 }
 
+.inventrees-section-followup-text {
+  margin: 1rem 0 0;
+}
+
+.inventrees-featured-projects-block {
+  margin-top: 1rem;
+}
+
+.inventrees-featured-projects-title {
+  margin: 0 0 0.65rem;
+  color: #ff8c1a;
+  font-family: var(--display);
+  font-size: clamp(1.12rem, 1.8vw, 1.35rem);
+}
+
+.inventrees-featured-projects-note {
+  margin: 0;
+}
+
+.inventrees-featured-projects-note + .inventrees-featured-projects-note {
+  margin-top: 0.7rem;
+}
+
+.inventrees-inline-link {
+  color: inherit;
+  font-weight: 700;
+  text-decoration: underline;
+  text-underline-offset: 0.14em;
+}
+
+.inventrees-inline-link:hover,
+.inventrees-inline-link:focus-visible {
+  color: #ff8c1a;
+}
+
 .amenaza-solution-card {
   display: flex;
   flex-direction: column;
