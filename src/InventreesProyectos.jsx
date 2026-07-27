@@ -6,7 +6,7 @@ const inventreesProjectTypes = [
     slug: 'arbolado-publico',
     title: 'Arbolado público',
     image: '/inventrees/inventario-arbolado-publico.png',
-    videoSrc: 'https://customer-kywq3a5r9m82v8jr.cloudflarestream.com/ddfc59de0af6f73381bd7eeaf489ea0b/manifest/video.m3u8',
+    videoSrc: 'https://customer-kywq3a5r9m82v8jr.cloudflarestream.com/60ef438773ea1d3329bbc2573bcb4541/manifest/video.m3u8',
     postVideoTextBeforeLink:
       'Diseñamos y desarrollamos su proyecto de inventario de arbolado por etapas, según sus necesidades y presupuesto. Para localidades pequeñas recomendamos la ',
     postVideoLinkText: 'compra del software',
@@ -14,9 +14,11 @@ const inventreesProjectTypes = [
     postVideoTextAfterLink:
       ' a un costo muy reducido. Para las ciudades medias y grandes ofrecemos elaborar su inventario en un tiempo de hasta 1 año dependiendo de su extensión.',
     featuredProjectsTitle: 'Proyectos Destacados',
+    featuredProjectsImage: '/inventrees/arbolado-zmg-01.png',
+    featuredProjectsImageAlt: 'Inventario de arbolado público urbano de la Zona Metropolitana de Guadalajara',
     featuredProjectsNotes: [
-      'En 2017 desarrollamos el inventario del arbolado público urbano de la Zona Metropolitana de Guadalajara, que abarcó siete municipios.',
-      'Actualmente estamos iniciando la etapa de geolocalización del inventario de arbolado público urbano de la CDMX, que comprende las 16 alcaldias.',
+      'En 2017, para el Gobierno de jalisco, desarrollamos el inventario del arbolado público urbano de la Zona Metropolitana de Guadalajara, que abarcó siete municipios:',
+      'Actualmente estamos iniciando la Etapa de Geolocalización del proyecto de Inventario de Arbolado Público Urbano de la CDMX, que comprende las 16 alcaldias.',
     ],
     imageAlt: 'Imagen de referencia para inventario de arbolado publico',
     mediaLabel: 'Inventario y gestión de arbolado urbano.',
@@ -216,10 +218,25 @@ function InventreesProyectos() {
               {projectType.featuredProjectsTitle ? (
                 <div className="inventrees-featured-projects-block">
                   <h4 className="inventrees-featured-projects-title">{projectType.featuredProjectsTitle}</h4>
-                  {projectType.featuredProjectsNotes?.map((note) => (
-                    <p key={note} className="inventrees-featured-projects-note">
-                      {note}
-                    </p>
+                  {projectType.featuredProjectsNotes?.map((note, noteIndex) => (
+                    <div key={note}>
+                      <p className="inventrees-featured-projects-note">{note}</p>
+                      {noteIndex === 0 && projectType.featuredProjectsImage ? (
+                        <a
+                          href="https://ciga-unam.maps.arcgis.com/apps/instant/atlas/index.html?appid=98b26ca5a3f8426780b53694250309e4&webmap=8b248dc3cea0495c8c5071c6656d1e35&locale=es"
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          aria-label="Abrir ARBOLADO PUBLICO URBANO DE LA ZONA METROPOLITANA DE GUADALAJARA"
+                        >
+                          <img
+                            className="inventrees-featured-projects-image"
+                            src={projectType.featuredProjectsImage}
+                            alt={projectType.featuredProjectsImageAlt}
+                            loading="lazy"
+                          />
+                        </a>
+                      ) : null}
+                    </div>
                   ))}
                 </div>
               ) : null}

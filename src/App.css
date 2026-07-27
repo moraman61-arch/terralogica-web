@@ -1774,6 +1774,15 @@
   margin: 0;
 }
 
+.inventrees-featured-projects-image {
+  width: 100%;
+  display: block;
+  margin-top: 0.75rem;
+  margin-bottom: 0.75rem;
+  border-radius: 0.9rem;
+  border: 1px solid rgba(146, 198, 255, 0.25);
+}
+
 .inventrees-featured-projects-note + .inventrees-featured-projects-note {
   margin-top: 0.7rem;
 }
