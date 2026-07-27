@@ -97,6 +97,11 @@ function PlaneacionOrdenamiento() {
               )}
               <h3>{projectType.title}</h3>
               <p>{projectType.description}</p>
+              {projectType.linkTo ? (
+                <Link className="service-card-cta project-panel-link" to={projectType.linkTo}>
+                  Proyectos
+                </Link>
+              ) : null}
             </article>
           ))}
         </div>

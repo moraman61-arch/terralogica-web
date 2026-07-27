@@ -108,10 +108,10 @@ function Proyectos() {
         </header>
 
         <div className="hero-copy subpage-intro">
-          <h1>Diseñamos, desarrollamos y ejecutamos proyectos con inteligencia humana y artificial para una mejor gestión territorial
+          <h1>Diseñamos y desarrollamos proyectos con inteligencia humana y artificial para una mejor gestión territorial
             .</h1>
           <p className="hero-text">
-            Desarrollamos soluciones de análisis, modelado y monitoreo para proyectos que requieren una visión integral del territorio.
+            Ofrecemos soluciones de análisis, modelado y monitoreo para proyectos que requieren una visión integral del territorio.
           </p>
         </div>
       </section>
