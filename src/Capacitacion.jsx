@@ -16,7 +16,7 @@ function Capacitacion() {
         </header>
 
         <div className="hero-copy subpage-intro">
-          <h1>Capacitación especializada en SIG, territorios y análisis de datos.</h1>
+          <h1>Capacitación especializada en tecnologías espacialesy análisis territorial.</h1>
           <p className="hero-text">
             Formamos equipos con habilidades prácticas y conceptos estratégicos para gestionar información territorial con eficacia.
           </p>
@@ -26,7 +26,6 @@ function Capacitacion() {
       <section className="services-section">
         <div className="section-heading">
           <p className="eyebrow">Nuestro enfoque</p>
-          <h2>Entrenamos a equipos para operar, interpretar y tomar decisiones con SIG y analítica territorial.</h2>
         </div>
         <div className="service-grid">
           <article className="service-card">
@@ -39,6 +38,12 @@ function Capacitacion() {
             <h3>Desarrollo de capacidades internas</h3>
             <p>
               Acompañamos a organizaciones en la adopción de procesos y metodologías que fortalecen su operación territorial.
+            </p>
+          </article>
+          <article className="service-card">
+            <h3>Talleres para toma de decisiones</h3>
+            <p>
+              Diseñamos talleres orientados a convertir información territorial en criterios accionables para priorizar estrategias y decisiones.
             </p>
           </article>
         </div>

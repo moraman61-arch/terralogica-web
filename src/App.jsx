@@ -34,7 +34,7 @@ const roadmap = [
   {
     step: '01',
     title: 'Datos',
-    description: 'Usamos tecnologías de vanguardia y trabajo de campo para recopilar y generar DATOS precisos y relevantes del territorio de interés.',
+    description: 'Usamos tecnologías de vanguardia y trabajo de campo para recopilar y generar DATOS precisos y confiables del territorio de interés.',
   },
   {
     step: '02',
@@ -203,8 +203,7 @@ function App() {
             </div>
             <p className="hero-text">
               En Terralógica ayudamos al cliente a entender su territorio, ordenar su manejo
-              y detectar oportunidades con analítica aplicada, mapas y tableros listos
-              para usar.
+              y detectar oportunidades, con conocimiento científico, técnica avanzada y tecnologías de vanguardia .
             </p>
             <div className="hero-actions">
               {clientTypes.map((client) => (

@@ -108,7 +108,8 @@ function Proyectos() {
         </header>
 
         <div className="hero-copy subpage-intro">
-          <h1>Proyectos de inteligencia territorial con impacto en campo.</h1>
+          <h1>Diseñamos, desarrollamos y ejecutamos proyectos con inteligencia humana y artificial para una mejor gestión territorial
+            .</h1>
           <p className="hero-text">
             Desarrollamos soluciones de análisis, modelado y monitoreo para proyectos que requieren una visión integral del territorio.
           </p>
@@ -118,7 +119,6 @@ function Proyectos() {
       <section className="services-section projects-services-section">
         <div className="section-heading">
           <p className="eyebrow">Lo que hacemos</p>
-          <h2>Impulsamos proyectos con datos, tecnología y ejecución de campo.</h2>
         </div>
         <div className="service-grid projects-grid">
           {projectServices.map((item) => (
