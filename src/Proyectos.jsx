@@ -81,7 +81,7 @@ const projectServices = [
     title: 'Diseño y Programación de Geovisores y Geoportales',
     description:
       'Desarrollamos plataformas web geográficas para visualizar, consultar y compartir información espacial mediante geovisores y geoportales adaptados a cada proyecto.',
-    image: assetPath('/proyectos/proyecto-planeacion-urbana-ordenamiento.png'),
+    image: assetPath('/proyectos/proyecto-geovisores-geoportales.png'),
     imageAlt: 'Imagen de referencia para diseño y programacion de geovisores y geoportales',
   },
   {
