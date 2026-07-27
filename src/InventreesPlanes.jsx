@@ -1074,7 +1074,7 @@ function InventreesPlanes() {
             El cliente debe proporcionar una capa de polígonos que delimite el área para la cual se solicita la licencia.
           </p>
           <p>
-            Formatos aceptados: SHP (archivos comprimidos en ZIP), KML o GeoJSON. También lo puede generar <Link to="/servicios/software/inventrees/poligono">aquí</Link>.
+            Formatos aceptados: SHP (archivos comprimidos en ZIP), KML o GeoJSON. También lo puede generar <Link className="inventory-highlight-link" to="/servicios/software/inventrees/poligono">AQUÍ</Link>.
           </p>
           <div className="inventory-file-upload">
             <span>Subir archivo del polígono</span>
