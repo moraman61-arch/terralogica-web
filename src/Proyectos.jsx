@@ -1,97 +1,14 @@
 import { Link } from 'react-router-dom'
 import './App.css'
 import { assetPath } from './assetPath'
+import { proyectoTemas } from './proyectoTemasData'
 
-const projectServices = [
-  {
-    title: 'Medio Ambiente y Recursos Naturales',
-    description:
-      'Diseñamos proyectos para monitoreo ambiental, conservación de ecosistemas, manejo de cuencas y uso sostenible de recursos naturales.',
-    image: assetPath('/proyectos/proyecto-medio-ambiente-recursos.png'),
-    imageAlt: 'Imagen de referencia para proyectos de medio ambiente y recursos naturales',
-  },
-  {
-    title: 'Planeación Urbana y Ordenamiento del Territorio',
-    description:
-      'Impulsamos iniciativas para ordenar el crecimiento urbano, zonificar usos del suelo y mejorar la ocupación equilibrada del territorio.',
-    linkTo: '/servicios/proyectos/planeacion-ordenamiento',
-    image: assetPath('/proyectos/proyecto-planeacion-urbana-ordenamiento.png'),
-    imageAlt: 'Imagen de referencia para proyectos de planeacion urbana y ordenamiento del territorio',
-  },
-  {
-    title: 'Agricultura y Desarrollo Rural',
-    description:
-      'Formulamos proyectos productivos con enfoque territorial para fortalecer cadenas agrícolas, acceso a servicios y desarrollo rural sostenible.',
-    image: assetPath('/proyectos/proyecto-agricultura-desarrollo-rural.png'),
-    imageAlt: 'Imagen de referencia para proyectos de agricultura y desarrollo rural',
-  },
-  {
-    title: 'Gestión de Riesgos y Protección Civil',
-    description:
-      'Desarrollamos proyectos de prevención y respuesta ante amenazas naturales y antrópicas, analizando las amenazas, la vulnerabilidad y el riesgo.',
-    linkTo: '/servicios/proyectos/gestion-riesgos-proteccion-civil',
-    image: assetPath('/proyectos/proyecto-gestion-riesgos-proteccion-civil.png'),
-    imageAlt: 'Imagen de referencia para proyectos de gestion de riesgos y proteccion civil',
-  },
-  {
-    title: 'Gobernanza Territorial y Participación Ciudadana',
-    description:
-      'Diseñamos procesos participativos y proyectos colaborativos para mejorar la toma de decisiones territoriales entre actores públicos y sociales.',
-    image: assetPath('/proyectos/campesinos.png'),
-    imageAlt: 'Imagen de referencia para proyectos de gobernanza territorial y participacion ciudadana',
-  },
-  {
-    title: 'Contaminación Ambiental y Salud Pública',
-    description:
-      'Implementamos proyectos para identificar fuentes de contaminación, evaluar impactos y priorizar acciones de mitigación con enfoque de salud pública.',
-    image: assetPath('/proyectos/unnamed-15.jpg'),
-    imageClass: 'project-card-image-contaminacion',
-    imageAlt: 'Imagen de referencia para proyectos de contaminacion ambiental y salud publica',
-  },
-  {
-    title: 'Infraestructura, Movilidad y Transporte',
-    description:
-      'Estructuramos proyectos para optimizar redes de infraestructura y transporte, mejorando conectividad, seguridad y eficiencia operativa.',
-    image: assetPath('/proyectos/Mapa.png'),
-    imageAlt: 'Imagen de referencia para proyectos de infraestructura movilidad y transporte',
-  },
-  {
-    title: 'Turismo, Cultura y Patrimonio',
-    description:
-      'Desarrollamos proyectos para gestión de destinos, valorización cultural y protección del patrimonio con visión territorial integral.',
-    image: assetPath('/proyectos/proyecto-turismo-cultura-patrimonio.png'),
-    imageAlt: 'Imagen de referencia para proyectos de turismo cultura y patrimonio',
-  },
-  {
-    title: 'Energía e Industrias Extractivas',
-    description:
-      'Diseñamos proyectos para localización, monitoreo y gestión territorial de actividades energéticas y extractivas con criterios ambientales y sociales.',
-    image: assetPath('/proyectos/proyecto-energia-industrias-extractivas.png'),
-    imageAlt: 'Imagen de referencia para proyectos de energia e industrias extractivas',
-  },
-  {
-    title: 'Levantamiento de Información con Drones y Sensores Móviles',
-    description:
-      'Realizamos campañas de captura en campo con drones y sensores móviles para generar información geoespacial precisa, actualizada y lista para análisis territorial.',
-    image: assetPath('/proyectos/img_0372.png'),
-    imageClass: 'project-card-image-drones',
-    imageAlt: 'Imagen de referencia para levantamiento de informacion con drones y sensores moviles',
-  },
-  {
-    title: 'Diseño y Programación de Geovisores y Geoportales',
-    description:
-      'Desarrollamos plataformas web geográficas para visualizar, consultar y compartir información espacial mediante geovisores y geoportales adaptados a cada proyecto.',
-    image: assetPath('/proyectos/proyecto-geovisores-geoportales.png'),
-    imageAlt: 'Imagen de referencia para diseño y programacion de geovisores y geoportales',
-  },
-  {
-    title: 'Servicios de Asesoría en Gestión Territorial',
-    description:
-      'Brindamos acompañamiento técnico y estratégico para la toma de decisiones, formulación de proyectos y fortalecimiento de procesos de gestión territorial.',
-    image: assetPath('/proyectos/proyecto-gobernanza-participacion.png'),
-    imageAlt: 'Imagen de referencia para servicios de asesoria en gestion territorial',
-  },
-]
+const projectServices = proyectoTemas.map((topic) => ({
+  ...topic,
+  linkTo: topic.linkTo ?? `/servicios/proyectos/oferta/${topic.slug}`,
+  image: assetPath(topic.imagePath),
+  linkLabel: 'Oferta de Proyectos',
+}))
 
 function Proyectos() {
   return (
@@ -142,11 +59,9 @@ function Proyectos() {
               )}
               <h3>{item.title}</h3>
               <p>{item.description}</p>
-              {item.linkTo ? (
-                <Link className="service-card-cta project-panel-link" to={item.linkTo}>
-                  Proyectos
-                </Link>
-              ) : null}
+              <Link className="service-card-cta project-panel-link" to={item.linkTo}>
+                {item.linkLabel}
+              </Link>
             </article>
           ))}
         </div>

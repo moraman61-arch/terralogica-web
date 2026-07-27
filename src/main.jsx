@@ -7,6 +7,7 @@ import App from './App.jsx'
 const QuienesSomos = lazy(() => import('./QuienesSomos.jsx'))
 const Servicios = lazy(() => import('./Servicios.jsx'))
 const Proyectos = lazy(() => import('./Proyectos.jsx'))
+const ProyectoOfertaTema = lazy(() => import('./ProyectoOfertaTema.jsx'))
 const PlaneacionOrdenamiento = lazy(() => import('./PlaneacionOrdenamiento.jsx'))
 const GestionRiesgosProteccionCivil = lazy(() => import('./GestionRiesgosProteccionCivil.jsx'))
 const Amenazas = lazy(() => import('./Amenazas.jsx'))
@@ -27,6 +28,7 @@ createRoot(document.getElementById('root')).render(
           <Route path="/quienes-somos" element={<QuienesSomos />} />
           <Route path="/servicios" element={<Servicios />} />
           <Route path="/servicios/proyectos" element={<Proyectos />} />
+          <Route path="/servicios/proyectos/oferta/:temaSlug" element={<ProyectoOfertaTema />} />
           <Route path="/servicios/proyectos/planeacion-ordenamiento" element={<PlaneacionOrdenamiento />} />
           <Route path="/servicios/proyectos/gestion-riesgos-proteccion-civil" element={<GestionRiesgosProteccionCivil />} />
           <Route path="/servicios/proyectos/gestion-riesgos-proteccion-civil/amenazas" element={<Amenazas />} />
