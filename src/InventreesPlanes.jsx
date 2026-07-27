@@ -4,7 +4,6 @@ import Hls from 'hls.js'
 import shp from 'shpjs'
 import { kml as kmlToGeoJSON } from '@tmcw/togeojson'
 import './App.css'
-import { assetPath } from './assetPath'
 
 const polygonStorageKey = 'inventrees-polygon-registration'
 
@@ -784,6 +783,10 @@ function InventreesPlanes() {
     Boolean(currentRegistration?.polygonAttachment) ||
     (Array.isArray(currentRegistration?.polygon) && currentRegistration.polygon.length >= 3)
   const registeredPolygonFileName = getRegisteredPolygonFileName(currentRegistration)
+  const idleUploadMessage = registeredPolygonFileName
+    ? `Archivo registrado disponible: ${registeredPolygonFileName}.`
+    : 'No hay archivo cargado.'
+  const uploadMessageToDisplay = uploadStatus === 'idle' ? idleUploadMessage : uploadMessage
   const filePickerLabel = selectedUploadFileName || registeredPolygonFileName || 'Ningún archivo seleccionado'
   const quoteEmailDraft =
     quote.status === 'valid'
@@ -897,20 +900,7 @@ function InventreesPlanes() {
         hlsInstance.destroy()
       }
     }
-  }, [currentIntroVideo.src])
-
-  useEffect(() => {
-    if (uploadStatus !== 'idle') {
-      return
-    }
-
-    if (registeredPolygonFileName) {
-      setUploadMessage(`Archivo registrado disponible: ${registeredPolygonFileName}.`)
-      return
-    }
-
-    setUploadMessage('No hay archivo cargado.')
-  }, [registeredPolygonFileName, uploadStatus])
+  }, [currentIntroVideo.format, currentIntroVideo.src])
 
   useEffect(() => {
     if (location.state?.scrollToSection !== 'requirements') {
@@ -1107,7 +1097,7 @@ function InventreesPlanes() {
               onChange={handlePolygonFileUpload}
             />
           </div>
-          <p className={`inventory-upload-message inventory-upload-message-${uploadStatus}`}>{uploadMessage}</p>
+          <p className={`inventory-upload-message inventory-upload-message-${uploadStatus}`}>{uploadMessageToDisplay}</p>
           <div className="inventory-polygon-actions">
             <div className={`inventory-polygon-status inventory-polygon-status-${polygonStatus}`}>
               {polygonStatusMessage}
