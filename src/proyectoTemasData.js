@@ -59,14 +59,6 @@ export const proyectoTemas = [
     imageAlt: 'Imagen de referencia para proyectos de infraestructura movilidad y transporte',
   },
   {
-    slug: 'turismo-cultura-patrimonio',
-    title: 'Turismo, Cultura y Patrimonio',
-    description:
-      'Desarrollamos proyectos para gestión de destinos, valorización cultural y protección del patrimonio con visión territorial integral.',
-    imagePath: '/proyectos/proyecto-turismo-cultura-patrimonio.png',
-    imageAlt: 'Imagen de referencia para proyectos de turismo cultura y patrimonio',
-  },
-  {
     slug: 'energia-industrias-extractivas',
     title: 'Energía e Industrias Extractivas',
     description:
@@ -122,14 +114,6 @@ export const proyectoTemas = [
       'Analizamos cobertura, distribución y necesidades de vivienda y servicios urbanos para apoyar decisiones de inversión y planeación.',
     imagePath: '/planeacion/conavi.png',
     imageAlt: 'Vista ilustrativa para vivienda y equipamiento urbano',
-  },
-  {
-    slug: 'ordenamiento-territorial',
-    title: 'Ordenamiento Territorial',
-    description:
-      'Diseñamos proyectos para armonizar ocupación del territorio, vocaciones del suelo y dinámicas sociales, económicas y ambientales.',
-    imagePath: '/banners/ciencia-frontera-real.png',
-    imageAlt: 'Vista ilustrativa para ordenamiento territorial',
   },
   {
     slug: 'seguridad-bienestar-social',

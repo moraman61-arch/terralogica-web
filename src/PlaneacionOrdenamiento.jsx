@@ -40,15 +40,6 @@ const planeacionProjectTypes = [
       'Analizamos cobertura, distribución y necesidades de vivienda y servicios urbanos para apoyar decisiones de inversión y planeación.',
   },
   {
-    title: 'Ordenamiento Territorial',
-    image: assetPath('/banners/ciencia-frontera-real.png'),
-    imageAlt: 'Vista ilustrativa para ordenamiento territorial',
-    linkTo: '/servicios/proyectos/oferta/ordenamiento-territorial',
-    linkLabel: 'Oferta de Proyectos',
-    description:
-      'Diseñamos proyectos para armonizar ocupación del territorio, vocaciones del suelo y dinámicas sociales, económicas y ambientales.',
-  },
-  {
     title: 'Seguridad y Bienestar Social',
     image: assetPath('/planeacion/iluminacion-campus.png'),
     imageAlt: 'Vista ilustrativa para seguridad y bienestar social',
