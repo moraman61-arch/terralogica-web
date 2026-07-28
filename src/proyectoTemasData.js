@@ -99,4 +99,44 @@ export const proyectoTemas = [
     imagePath: '/proyectos/proyecto-gobernanza-participacion.png',
     imageAlt: 'Imagen de referencia para servicios de asesoria en gestion territorial',
   },
+  {
+    slug: 'geoportales-informacion-urbana',
+    title: 'Geoportales de información urbana',
+    description:
+      'Construimos plataformas geoespaciales para consultar, compartir y analizar información urbana de manera clara y accesible.',
+    imagePath: '/planeacion/inventario-guadalajara-01.png',
+    imageAlt: 'Vista ilustrativa para geoportales de información urbana',
+  },
+  {
+    slug: 'uso-zonificacion-suelo',
+    title: 'Uso y Zonificación del Suelo',
+    description:
+      'Generamos insumos cartográficos y normativos para definir usos del suelo y orientar el crecimiento urbano con mayor orden.',
+    imagePath: '/planeacion/uso-del-suelo-cd-salud.png',
+    imageAlt: 'Vista ilustrativa para uso y zonificación del suelo',
+  },
+  {
+    slug: 'vivienda-equipamiento-urbano',
+    title: 'Vivienda y Equipamiento Urbano',
+    description:
+      'Analizamos cobertura, distribución y necesidades de vivienda y servicios urbanos para apoyar decisiones de inversión y planeación.',
+    imagePath: '/planeacion/conavi.png',
+    imageAlt: 'Vista ilustrativa para vivienda y equipamiento urbano',
+  },
+  {
+    slug: 'ordenamiento-territorial',
+    title: 'Ordenamiento Territorial',
+    description:
+      'Diseñamos proyectos para armonizar ocupación del territorio, vocaciones del suelo y dinámicas sociales, económicas y ambientales.',
+    imagePath: '/banners/ciencia-frontera-real.png',
+    imageAlt: 'Vista ilustrativa para ordenamiento territorial',
+  },
+  {
+    slug: 'seguridad-bienestar-social',
+    title: 'Seguridad y Bienestar Social',
+    description:
+      'Aplicamos análisis territorial para identificar patrones espaciales que fortalezcan prevención, seguridad y bienestar comunitario.',
+    imagePath: '/planeacion/iluminacion-campus.png',
+    imageAlt: 'Vista ilustrativa para seguridad y bienestar social',
+  },
 ]
