@@ -6,6 +6,16 @@ export const proyectoTemas = [
       'Diseñamos proyectos para monitoreo ambiental, conservación de ecosistemas, manejo de cuencas y uso sostenible de recursos naturales.',
     imagePath: '/proyectos/proyecto-medio-ambiente-recursos.png',
     imageAlt: 'Imagen de referencia para proyectos de medio ambiente y recursos naturales',
+    showMainCard: false,
+    relatedPanels: [
+      {
+        title: 'Contaminación Ambiental y Salud Pública',
+        description:
+          'Implementamos proyectos para identificar fuentes de contaminación, evaluar impactos y priorizar acciones de mitigación con enfoque de salud pública.',
+        imagePath: '/proyectos/unnamed-15.jpg',
+        imageAlt: 'Imagen de referencia para proyectos de contaminacion ambiental y salud publica',
+      },
+    ],
   },
   {
     slug: 'planeacion-ordenamiento',
@@ -32,23 +42,6 @@ export const proyectoTemas = [
     imagePath: '/proyectos/proyecto-gestion-riesgos-proteccion-civil.png',
     imageAlt: 'Imagen de referencia para proyectos de gestion de riesgos y proteccion civil',
     linkTo: '/servicios/proyectos/gestion-riesgos-proteccion-civil',
-  },
-  {
-    slug: 'gobernanza-territorial-participacion-ciudadana',
-    title: 'Gobernanza Territorial y Participación Ciudadana',
-    description:
-      'Diseñamos procesos participativos y proyectos colaborativos para mejorar la toma de decisiones territoriales entre actores públicos y sociales.',
-    imagePath: '/proyectos/campesinos.png',
-    imageAlt: 'Imagen de referencia para proyectos de gobernanza territorial y participacion ciudadana',
-  },
-  {
-    slug: 'contaminacion-ambiental-salud-publica',
-    title: 'Contaminación Ambiental y Salud Pública',
-    description:
-      'Implementamos proyectos para identificar fuentes de contaminación, evaluar impactos y priorizar acciones de mitigación con enfoque de salud pública.',
-    imagePath: '/proyectos/unnamed-15.jpg',
-    imageClass: 'project-card-image-contaminacion',
-    imageAlt: 'Imagen de referencia para proyectos de contaminacion ambiental y salud publica',
   },
   {
     slug: 'infraestructura-movilidad-transporte',
@@ -90,37 +83,5 @@ export const proyectoTemas = [
       'Brindamos acompañamiento técnico y estratégico para la toma de decisiones, formulación de proyectos y fortalecimiento de procesos de gestión territorial.',
     imagePath: '/proyectos/proyecto-gobernanza-participacion.png',
     imageAlt: 'Imagen de referencia para servicios de asesoria en gestion territorial',
-  },
-  {
-    slug: 'geoportales-informacion-urbana',
-    title: 'Geoportales de información urbana',
-    description:
-      'Construimos plataformas geoespaciales para consultar, compartir y analizar información urbana de manera clara y accesible.',
-    imagePath: '/planeacion/inventario-guadalajara-01.png',
-    imageAlt: 'Vista ilustrativa para geoportales de información urbana',
-  },
-  {
-    slug: 'uso-zonificacion-suelo',
-    title: 'Uso y Zonificación del Suelo',
-    description:
-      'Generamos insumos cartográficos y normativos para definir usos del suelo y orientar el crecimiento urbano con mayor orden.',
-    imagePath: '/planeacion/uso-del-suelo-cd-salud.png',
-    imageAlt: 'Vista ilustrativa para uso y zonificación del suelo',
-  },
-  {
-    slug: 'vivienda-equipamiento-urbano',
-    title: 'Vivienda y Equipamiento Urbano',
-    description:
-      'Analizamos cobertura, distribución y necesidades de vivienda y servicios urbanos para apoyar decisiones de inversión y planeación.',
-    imagePath: '/planeacion/conavi.png',
-    imageAlt: 'Vista ilustrativa para vivienda y equipamiento urbano',
-  },
-  {
-    slug: 'seguridad-bienestar-social',
-    title: 'Seguridad y Bienestar Social',
-    description:
-      'Aplicamos análisis territorial para identificar patrones espaciales que fortalezcan prevención, seguridad y bienestar comunitario.',
-    imagePath: '/planeacion/iluminacion-campus.png',
-    imageAlt: 'Vista ilustrativa para seguridad y bienestar social',
   },
 ]

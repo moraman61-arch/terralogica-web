@@ -55,13 +55,31 @@ function ProyectoOfertaTema() {
           <p className="eyebrow">Oferta de Proyectos</p>
           <h2>{projectTopic.title}</h2>
         </div>
-        <article className="service-card project-card planeacion-project-card">
-          <img className="planeacion-project-image" src={assetPath(projectTopic.imagePath)} alt={projectTopic.imageAlt} />
-          <p>{projectTopic.description}</p>
+        {projectTopic.showMainCard !== false ? (
+          <article className="service-card project-card planeacion-project-card">
+            <img className="planeacion-project-image" src={assetPath(projectTopic.imagePath)} alt={projectTopic.imageAlt} />
+            <p>{projectTopic.description}</p>
+            <Link className="service-card-cta project-panel-link" to="/servicios/proyectos">
+              Volver a Proyectos
+            </Link>
+          </article>
+        ) : (
           <Link className="service-card-cta project-panel-link" to="/servicios/proyectos">
             Volver a Proyectos
           </Link>
-        </article>
+        )}
+
+        {projectTopic.relatedPanels?.length ? (
+          <div className="service-grid projects-grid planeacion-projects-grid">
+            {projectTopic.relatedPanels.map((panel) => (
+              <article key={panel.title} className="service-card project-card planeacion-project-card">
+                <img className="planeacion-project-image" src={assetPath(panel.imagePath)} alt={panel.imageAlt} />
+                <h3>{panel.title}</h3>
+                <p>{panel.description}</p>
+              </article>
+            ))}
+          </div>
+        ) : null}
       </section>
     </main>
   )

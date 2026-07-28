@@ -12,42 +12,6 @@ const planeacionProjectTypes = [
     description:
       'Desarrollamos levantamientos territoriales para registrar, ubicar y evaluar infraestructura urbana clave para su mantenimiento y gestión.',
   },
-  {
-    title: 'Geoportales de información urbana',
-    image: assetPath('/planeacion/inventario-guadalajara-01.png'),
-    imageAlt: 'Vista ilustrativa para geoportales de información urbana',
-    linkTo: '/servicios/proyectos/oferta/geoportales-informacion-urbana',
-    linkLabel: 'Oferta de Proyectos',
-    description:
-      'Construimos plataformas geoespaciales para consultar, compartir y analizar información urbana de manera clara y accesible.',
-  },
-  {
-    title: 'Uso y Zonificación del Suelo',
-    image: assetPath('/planeacion/uso-del-suelo-cd-salud.png'),
-    imageAlt: 'Vista ilustrativa para uso y zonificación del suelo',
-    linkTo: '/servicios/proyectos/oferta/uso-zonificacion-suelo',
-    linkLabel: 'Oferta de Proyectos',
-    description:
-      'Generamos insumos cartográficos y normativos para definir usos del suelo y orientar el crecimiento urbano con mayor orden.',
-  },
-  {
-    title: 'Vivienda y Equipamiento Urbano',
-    image: assetPath('/planeacion/conavi.png'),
-    imageAlt: 'Vista ilustrativa para vivienda y equipamiento urbano',
-    linkTo: '/servicios/proyectos/oferta/vivienda-equipamiento-urbano',
-    linkLabel: 'Oferta de Proyectos',
-    description:
-      'Analizamos cobertura, distribución y necesidades de vivienda y servicios urbanos para apoyar decisiones de inversión y planeación.',
-  },
-  {
-    title: 'Seguridad y Bienestar Social',
-    image: assetPath('/planeacion/iluminacion-campus.png'),
-    imageAlt: 'Vista ilustrativa para seguridad y bienestar social',
-    linkTo: '/servicios/proyectos/oferta/seguridad-bienestar-social',
-    linkLabel: 'Oferta de Proyectos',
-    description:
-      'Aplicamos análisis territorial para identificar patrones espaciales que fortalezcan prevención, seguridad y bienestar comunitario.',
-  },
 ]
 
 function PlaneacionOrdenamiento() {
