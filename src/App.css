@@ -802,7 +802,7 @@
   width: 100%;
   aspect-ratio: 16 / 9;
   display: block;
-  object-fit: cover;
+  object-fit: contain;
   border-radius: 0.8rem;
   border: 1px solid rgba(146, 198, 255, 0.25);
   background: #07173f;
@@ -2181,7 +2181,7 @@
   }
 
   .inventory-intro-video {
-    aspect-ratio: 4 / 3;
+    aspect-ratio: 16 / 9;
   }
 
   .amenaza-section-header {
