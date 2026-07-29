@@ -576,6 +576,16 @@ function getRecommendedLicenseId(km) {
   return 'monthly-medium-large'
 }
 
+function getSuggestedContractMonths(km) {
+  if (!Number.isFinite(km) || km <= 0) {
+    return 1
+  }
+
+  // 10 m entre capturas ~= 100 imagenes por km; cuota gratuita de 10,000/mes ~= 100 km/mes.
+  const suggestedMonths = Math.round(km / 100)
+  return Math.max(1, suggestedMonths)
+}
+
 function formatMonthlyQuoteLabel(monthlyAmount, months) {
   const normalizedMonths = Number.isFinite(Number(months)) && Number(months) >= 1 ? Math.floor(Number(months)) : 1
   const totalAmount = monthlyAmount * normalizedMonths
@@ -738,11 +748,12 @@ function InventreesPlanes() {
     polygonRegistration.roadLengthKm > 0
       ? polygonRegistration.roadLengthKm
       : null
+  const initialContractMonths = getSuggestedContractMonths(initialKmValue)
   const initialRecommendedLicenseId = getRecommendedLicenseId(initialKmValue) ?? licenseOptions[0].id
 
   const [selectedModuleId, setSelectedModuleId] = useState(plansByModule[0].id)
   const [selectedLicenseId, setSelectedLicenseId] = useState(initialRecommendedLicenseId)
-  const [contractMonths, setContractMonths] = useState(1)
+  const [contractMonths, setContractMonths] = useState(initialContractMonths)
   const [kmValue, setKmValue] = useState(initialKmValue ? formatInitialKmValue(initialKmValue) : '')
   const [currentIntroVideoIndex, setCurrentIntroVideoIndex] = useState(0)
   const [isIntroVideoPlaying, setIsIntroVideoPlaying] = useState(true)
@@ -755,6 +766,8 @@ function InventreesPlanes() {
   const [selectedUploadFileName, setSelectedUploadFileName] = useState('')
   const [quoteAttachmentMessage, setQuoteAttachmentMessage] = useState('')
   const introVideoRef = useRef(null)
+  const introVideoAutoPausedRef = useRef(false)
+  const introVideoInViewportRef = useRef(true)
   const polygonUploadInputRef = useRef(null)
   const requirementsSectionRef = useRef(null)
 
@@ -762,9 +775,13 @@ function InventreesPlanes() {
 
   const handleKmChange = (event) => {
     const nextKmValue = formatKmInputValue(event.target.value)
-    const recommendedLicenseId = getRecommendedLicenseId(parseKmInput(nextKmValue))
+    const parsedNextKm = parseKmInput(nextKmValue)
+    const recommendedLicenseId = getRecommendedLicenseId(parsedNextKm)
 
     setKmValue(nextKmValue)
+    if (Number.isFinite(parsedNextKm) && parsedNextKm > 0) {
+      setContractMonths(getSuggestedContractMonths(parsedNextKm))
+    }
 
     if (recommendedLicenseId && recommendedLicenseId !== selectedLicenseId) {
       setSelectedLicenseId(recommendedLicenseId)
@@ -775,6 +792,7 @@ function InventreesPlanes() {
   const selectedPlan =
     selectedModule.plans.find((plan) => plan.licenseId === selectedLicenseId) ?? selectedModule.plans[0]
   const parsedKm = parseKmInput(kmValue)
+  const suggestedContractMonths = getSuggestedContractMonths(parsedKm)
   const quote = calculateQuote(selectedPlan, parsedKm, contractMonths)
   const recommendedLicenseId = getRecommendedLicenseId(parsedKm)
   const recommendedOption = licenseOptions.find((option) => option.id === recommendedLicenseId) ?? null
@@ -890,10 +908,14 @@ function InventreesPlanes() {
       videoElement.src = currentIntroVideo.src
     }
 
-    videoElement
-      .play()
-      .then(() => setIsIntroVideoPlaying(true))
-      .catch(() => setIsIntroVideoPlaying(false))
+    if (!document.hidden && introVideoInViewportRef.current) {
+      videoElement
+        .play()
+        .then(() => setIsIntroVideoPlaying(true))
+        .catch(() => setIsIntroVideoPlaying(false))
+    } else {
+      setIsIntroVideoPlaying(false)
+    }
 
     return () => {
       if (hlsInstance) {
@@ -901,6 +923,71 @@ function InventreesPlanes() {
       }
     }
   }, [currentIntroVideo.format, currentIntroVideo.src])
+
+  useEffect(() => {
+    const videoElement = introVideoRef.current
+    if (!videoElement) {
+      return undefined
+    }
+
+    const pauseForVisibility = () => {
+      if (!videoElement.paused) {
+        introVideoAutoPausedRef.current = true
+        videoElement.pause()
+      }
+    }
+
+    const resumeAfterVisibility = () => {
+      if (!introVideoAutoPausedRef.current || !videoElement.paused) {
+        return
+      }
+
+      videoElement
+        .play()
+        .then(() => {
+          introVideoAutoPausedRef.current = false
+          setIsIntroVideoPlaying(true)
+        })
+        .catch(() => setIsIntroVideoPlaying(false))
+    }
+
+    const intersectionObserver = new IntersectionObserver(
+      (entries) => {
+        const isVisible = entries.some((entry) => entry.isIntersecting && entry.intersectionRatio >= 0.35)
+        introVideoInViewportRef.current = isVisible
+
+        if (!isVisible) {
+          pauseForVisibility()
+          return
+        }
+
+        if (!document.hidden) {
+          resumeAfterVisibility()
+        }
+      },
+      { threshold: [0, 0.35, 0.75] },
+    )
+
+    intersectionObserver.observe(videoElement)
+
+    const handleVisibilityChange = () => {
+      if (document.hidden) {
+        pauseForVisibility()
+        return
+      }
+
+      if (introVideoInViewportRef.current) {
+        resumeAfterVisibility()
+      }
+    }
+
+    document.addEventListener('visibilitychange', handleVisibilityChange)
+
+    return () => {
+      intersectionObserver.disconnect()
+      document.removeEventListener('visibilitychange', handleVisibilityChange)
+    }
+  }, [currentIntroVideoIndex])
 
   useEffect(() => {
     if (location.state?.scrollToSection !== 'requirements') {
@@ -1016,7 +1103,7 @@ function InventreesPlanes() {
         </header>
 
         <div className="hero-copy subpage-intro">
-          <p className="eyebrow inventory-hero-eyebrow">INVENTREES: Inventario de Arbolado Público Urbano</p>
+          <h1 className="eyebrow inventory-hero-eyebrow">INVENTREES: Inventario de Arbolado Público Urbano</h1>
           <div className="inventory-feature-panels" aria-label="Características principales por módulo">
             {moduleFeaturePanels.map((panel) => (
               <article key={panel.title} className="inventory-feature-panel">
@@ -1034,6 +1121,7 @@ function InventreesPlanes() {
               ref={introVideoRef}
               className="inventory-intro-video"
               autoPlay
+              controls
               muted
               playsInline
               preload="metadata"
@@ -1057,7 +1145,7 @@ function InventreesPlanes() {
               ))}
             </div>
           </div>
-          <h1 className="inventory-hero-title">Crear y mantener su propio inventario de arbolado público urbano es ahora ¡muy fácil!</h1>
+          <h2 className="inventory-hero-title">Crear y mantener su propio inventario de arbolado público urbano es ahora ¡muy fácil!</h2>
           <p className="hero-text inventory-hero-description">
             Estructura comercial flexible y equitativa para comunidades pequeñas, ciudades medias y grandes, con reglas claras por cobertura de km de vialidad. INVENTREES es solo para gobiernos locales y comunidades. No trabajamos con empresas.
           </p>
@@ -1172,6 +1260,10 @@ function InventreesPlanes() {
 
           <p className="inventory-threshold-note">
             <em>Nota:</em> para 250 km o menos, el cotizador recomienda la suscripción mensual para comunidades pequeñas. Para más de 250 km y hasta 5,000 km recomienda la suscripción mensual para ciudades medias y grandes. Para más de 5,000 km recomienda la licencia permanente.
+          </p>
+
+          <p className="inventory-threshold-note">
+            <em>Sugerencia:</em> como las imágenes de Google Street View suelen estar espaciadas aproximadamente cada 10 metros, se estima un consumo de ~100 imágenes por km de vialidad. Con la cuota gratuita mensual de 10,000 imágenes, el número sugerido de meses se calcula como <strong>km de vialidad / 100</strong> y se redondea al entero más cercano. Para este valor de km, la sugerencia actual es <strong>{suggestedContractMonths} {suggestedContractMonths === 1 ? 'mes' : 'meses'}</strong>. Puede modificar este valor manualmente. Si se rebasa la cuota gratuita de Google, se aplicaría un costo aproximado de <strong>USD 7.00 por cada 1,000 imágenes extra</strong> consultadas.
           </p>
 
           <div className={`inventory-quote-result inventory-quote-result-${quote.status}`}>

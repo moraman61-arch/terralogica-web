@@ -411,7 +411,7 @@ function ThreatProjectMap({ title, onOpenModel }) {
   return (
     <figure className="amenazas-mini-map" aria-label={`Mapa de proyectos para ${title}`}>
       <div ref={mapContainerRef} className="amenazas-leaflet-map" />
-      <figcaption>Proyectos realizados. Rueda del ratón para acercar/alejar. Clic en los marcadores para más información.</figcaption>
+      <figcaption>Proyectos destacados. Rueda del ratón para acercar/alejar. Clic en los marcadores para más información.</figcaption>
     </figure>
   )
 }
