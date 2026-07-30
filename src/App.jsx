@@ -237,9 +237,9 @@ function App() {
             <div className="hero-actions">
               {clientTypes.map((client) => (
                 <div key={client.id} className="client-button-wrapper">
-                  <a 
+                  <button
+                    type="button"
                     className="primary-link" 
-                    href="#contacto"
                     onMouseEnter={() => {
                       if (isHoverCapable) {
                         setHoveredClient(client.id)
@@ -251,14 +251,21 @@ function App() {
                       }
                     }}
                     onClick={(event) => {
-                      if (!isHoverCapable && hoveredClient !== client.id) {
-                        event.preventDefault()
+                      if (isHoverCapable) {
+                        return
+                      }
+
+                      event.preventDefault()
+                      if (hoveredClient === client.id) {
+                        setHoveredClient(null)
+                      } else {
                         setHoveredClient(client.id)
                       }
                     }}
+                    aria-expanded={hoveredClient === client.id}
                   >
                     {client.label}
-                  </a>
+                  </button>
                   {hoveredClient === client.id && (
                     <div className="client-info-panel">
                       <p>{client.description}</p>
