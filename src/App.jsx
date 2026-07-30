@@ -94,7 +94,36 @@ const clientTypes = [
 
 function App() {
   const [hoveredClient, setHoveredClient] = useState(null)
+  const [isHoverCapable, setIsHoverCapable] = useState(() => {
+    if (typeof window === 'undefined' || typeof window.matchMedia !== 'function') {
+      return true
+    }
+
+    return window.matchMedia('(hover: hover) and (pointer: fine)').matches
+  })
   const heroVideoRefs = useRef([])
+
+  useEffect(() => {
+    if (typeof window === 'undefined' || typeof window.matchMedia !== 'function') {
+      return undefined
+    }
+
+    const mediaQuery = window.matchMedia('(hover: hover) and (pointer: fine)')
+
+    const updateHoverCapability = () => {
+      setIsHoverCapable(mediaQuery.matches)
+    }
+
+    updateHoverCapability()
+
+    if (typeof mediaQuery.addEventListener === 'function') {
+      mediaQuery.addEventListener('change', updateHoverCapability)
+      return () => mediaQuery.removeEventListener('change', updateHoverCapability)
+    }
+
+    mediaQuery.addListener(updateHoverCapability)
+    return () => mediaQuery.removeListener(updateHoverCapability)
+  }, [])
 
   useEffect(() => {
     const hlsInstances = []
@@ -211,8 +240,22 @@ function App() {
                   <a 
                     className="primary-link" 
                     href="#contacto"
-                    onMouseEnter={() => setHoveredClient(client.id)}
-                    onMouseLeave={() => setHoveredClient(null)}
+                    onMouseEnter={() => {
+                      if (isHoverCapable) {
+                        setHoveredClient(client.id)
+                      }
+                    }}
+                    onMouseLeave={() => {
+                      if (isHoverCapable) {
+                        setHoveredClient(null)
+                      }
+                    }}
+                    onClick={(event) => {
+                      if (!isHoverCapable && hoveredClient !== client.id) {
+                        event.preventDefault()
+                        setHoveredClient(client.id)
+                      }
+                    }}
                   >
                     {client.label}
                   </a>
