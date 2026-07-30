@@ -73,7 +73,7 @@ export const proyectoTemas = [
     title: 'Diseño y Programación de Geovisores y Geoportales',
     description:
       'Desarrollamos plataformas web geográficas para visualizar, consultar y compartir información espacial mediante geovisores y geoportales adaptados a cada proyecto.',
-    imagePath: '/proyectos/proyecto-geovisores-geoportales.png',
+    imagePath: '/proyectos/AcervoCOFOM.png',
     imageAlt: 'Imagen de referencia para diseño y programacion de geovisores y geoportales',
   },
   {

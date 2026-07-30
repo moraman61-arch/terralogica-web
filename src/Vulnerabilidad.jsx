@@ -11,11 +11,11 @@ const vulnerabilidadProjectTypes = [
       'Identificamos población, infraestructura y activos estratégicos expuestos ante distintos escenarios de amenaza en el territorio.',
   },
   {
-    title: 'Fragilidad de Sistemas',
-    image: assetPath('/proyectos/proyecto-gestion-riesgos-proteccion-civil.png'),
-    imageAlt: 'Vista ilustrativa para fragilidad de sistemas',
+    title: 'Sensibilidad de Sistemas',
+    image: assetPath('/proyectos/Sensibilidad.png'),
+    imageAlt: 'Vista ilustrativa para sensibilidad de sistemas',
     description:
-      'Evaluamos condiciones físicas, sociales y funcionales que incrementan la susceptibilidad de daño frente a eventos adversos.',
+      'Evaluamos condiciones físicas y socioeconómicas que incrementan la susceptibilidad de daño frente a eventos adversos.',
   },
   {
     title: 'Capacidad de Respuesta',
@@ -45,7 +45,7 @@ function Vulnerabilidad() {
         <div className="hero-copy subpage-intro planeacion-intro">
           <h1>Vulnerabilidad.</h1>
           <p className="hero-text">
-            Esta sección concentra proyectos para analizar exposición, fragilidad y capacidades de respuesta con enfoque territorial.
+            Esta sección concentra proyectos para evaluar exposición, sensibilidad y capacidades de respuesta con enfoque territorial.
           </p>
         </div>
       </section>
