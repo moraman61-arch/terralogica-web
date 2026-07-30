@@ -2164,6 +2164,17 @@
     grid-template-columns: 1fr;
   }
 
+  .values-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .values-grid > :nth-child(3) {
+    grid-column: auto;
+    max-width: 100%;
+    margin-left: 0;
+    margin-right: 0;
+  }
+
   .inventory-feature-panels {
     grid-template-columns: 1fr;
   }
