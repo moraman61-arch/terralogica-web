@@ -8,19 +8,22 @@ import { assetPath } from './assetPath'
 const vulnerabilidadProjectTypes = [
   {
     slug: 'exposicion',
-    title: 'Exposición Territorial',
+    title: 'Exposición a Amenazas',
     image: assetPath('/proyectos/18041082.jpg'),
     imageAlt: 'Vista ilustrativa para exposición territorial',
-    mediaLabel: 'Exposición y contexto territorial',
+    mediaLabel: 'Exposición al peligro de deslizamiento',
     description:
       'Identificamos población, infraestructura, actividades económicas y recursos naturales expuestos ante distintos escenarios de amenaza en el territorio.',
     sectionIntro:
-      'Integramos información cartográfica, demográfica y de infraestructura para priorizar zonas donde la exposición representa un riesgo mayor para la población y los activos.',
+      'Integramos información geoespacial, demográfica y de infraestructura para identificar zonas donde la exposición a las amenazas produce situaciones de susceptibilidad al daño en población, infraestructura, actividades económicas y recursos naturales.',
     solutions: [
       {
         title: 'Población expuesta',
-        description:
-          'Evaluamos la distribución de la población en relación con zonas de alto riesgo para orientar estrategias de prevención y protección.',
+        description: (
+          <>
+            Evaluamos la <span className="amenaza-highlight-word">distribución</span> de la población en relación con zonas de alto nivel de amenazas para orientar estrategias de prevención y protección.
+          </>
+        ),
         points: [
           { name: 'Zona metropolitana - Morelia', lat: 19.7, lng: -101.18, popupTitle: 'Población expuesta', popupBody: 'Áreas urbanas con mayor concentración de residentes y servicios críticos.' },
           { name: 'Corredor industrial - Guadalajara', lat: 20.67, lng: -103.35, popupTitle: 'Infraestructura crítica', popupBody: 'Sectores con alta densidad de conectividad y activos esenciales.' },
@@ -29,8 +32,11 @@ const vulnerabilidadProjectTypes = [
       },
       {
         title: 'Infraestructura y activos',
-        description:
-          'Reconocemos el valor de la infraestructura vial, energética y social para estimar el impacto potencial por eventos adversos.',
+        description: (
+          <>
+            Analizamos la <span className="amenaza-highlight-word">ubicación</span> de la infraestructura vial, de servicios y de activos estratégicos para estimar el impacto potencial por eventos adversos.
+          </>
+        ),
         points: [
           { name: 'Carretera federal - Puebla', lat: 19.04, lng: -98.2, popupTitle: 'Vías de comunicación', popupBody: 'Corredores estratégicos con alta conectividad regional.' },
           { name: 'Centro histórico - Oaxaca', lat: 17.07, lng: -96.72, popupTitle: 'Patrimonio y servicios', popupBody: 'Zonas de alta sensibilidad patrimonial y funcional.' },
@@ -39,8 +45,11 @@ const vulnerabilidadProjectTypes = [
       },
       {
         title: 'Escenarios de impacto',
-        description:
-          'Modelamos escenarios para entender cómo cambia la exposición cuando interactúan amenazas, condiciones sociales y dinámica territorial.',
+        description: (
+          <>
+            Modelamos <span className="amenaza-highlight-word">escenarios</span> para entender cómo cambia la exposición en condiciones tendenciales y de intervención en el territorio.
+          </>
+        ),
         points: [
           { name: 'Cuenca urbana - Tlaxcala', lat: 19.31, lng: -98.24, popupTitle: 'Escenario urbano', popupBody: 'Expansión de riesgo asociado a densificación y ocupación.' },
           { name: 'Zona periurbana - Querétaro', lat: 20.59, lng: -100.39, popupTitle: 'Expansión residencial', popupBody: 'Áreas de crecimiento rápido con mayor exposición acumulada.' },
@@ -54,16 +63,19 @@ const vulnerabilidadProjectTypes = [
     title: 'Sensibilidad de Sistemas',
     image: assetPath('/proyectos/Sensibilidad.png'),
     imageAlt: 'Vista ilustrativa para sensibilidad de sistemas',
-    mediaLabel: 'Sensibilidad y fragilidad territorial',
+    mediaLabel: 'Precariedad socioeconómica de la población y vivienda',
     description:
       'Evaluamos las condiciones físicas y socioeconómicas en el sistema territorial que incrementan la susceptibilidad de daño frente a eventos adversos.',
     sectionIntro:
-      'Analizamos la fragilidad de los sistemas naturales y sociales para identificar qué elementos del territorio responden con mayor vulnerabilidad ante perturbaciones.',
+      'Analizamos la fortaleza y fragilidad de los sistemas naturales y sociales para identificar qué elementos del territorio responden con mayor susceptibilidad ante perturbaciones.',
     solutions: [
       {
         title: 'Fragilidad física',
-        description:
-          'Revisamos características de suelo, topografía y cobertura para detectar zonas más susceptibles a afectaciones permanentes.',
+        description: (
+          <>
+            Evaluamos las <span className="amenaza-highlight-word">características estructurales</span> de cada componente de los sistemas para detectar los elementos y componentes más susceptibles al daño.
+          </>
+        ),
         points: [
           { name: 'Sierra de las Cruces - Estado de México', lat: 19.2, lng: -99.65, popupTitle: 'Relieve complejo', popupBody: 'Terrenos con mayor sensibilidad a erosión y desestabilización.' },
           { name: 'Llanura costera - Campeche', lat: 18.6, lng: -90.5, popupTitle: 'Suelo saturado', popupBody: 'Áreas con mayor sensibilidad frente a inundaciones y sedimentación.' },
@@ -72,8 +84,11 @@ const vulnerabilidadProjectTypes = [
       },
       {
         title: 'Condiciones socioeconómicas',
-        description:
-          'Comparte información de capacidad de respuesta social, acceso a servicios y movilidad para ubicar comunidades más sensibles.',
+        description: (
+          <>
+            Analizamos las <span className="amenaza-highlight-word">condiciones socioeconómicas</span> del desarrollo para identificar los componentes y sistemas más sensibles al daño.
+          </>
+        ),
         points: [
           { name: 'Colonia periférica - Ciudad Juárez', lat: 31.69, lng: -106.42, popupTitle: 'Accesibilidad limitada', popupBody: 'Comunidades con restricciones de movilidad y servicios básicos.' },
           { name: 'Delegación urbana - CDMX', lat: 19.43, lng: -99.13, popupTitle: 'Alta densificación', popupBody: 'Áreas urbanas con mayor presión sobre infraestructura y equipamiento.' },
@@ -82,8 +97,11 @@ const vulnerabilidadProjectTypes = [
       },
       {
         title: 'Capacidad de adaptación',
-        description:
-          'Observamos los elementos del territorio que pueden reforzar o debilitar la capacidad de adaptación del sistema frente a presiones continuas.',
+        description: (
+          <>
+            Ponderamos las <span className="amenaza-highlight-word">características organizacionales</span> que refuerzan o debilitan la capacidad de adaptación del sistema y sus componentes.
+          </>
+        ),
         points: [
           { name: 'Bosque urbano - Mérida', lat: 20.97, lng: -89.62, popupTitle: 'Cobertura vegetal', popupBody: 'Áreas de amortiguamiento ambiental y regulación térmica.' },
           { name: 'Reserva natural - Oaxaca', lat: 17.05, lng: -96.72, popupTitle: 'Conectividad ecológica', popupBody: 'Corredores que mantienen servicios ecosistémicos esenciales.' },
@@ -97,16 +115,19 @@ const vulnerabilidadProjectTypes = [
     title: 'Capacidad de Respuesta',
     image: assetPath('/proyectos/capacidad de respuesta 01.png'),
     imageAlt: 'Vista ilustrativa para capacidad de respuesta',
-    mediaLabel: 'Capacidad de respuesta y resiliencia',
+    mediaLabel: 'Construcción de resiliencia',
     description:
       'Analizamos recursos institucionales y comunitarios para reducir la vulnerabilidad, mejorar la preparación y recuperación, incrementando la resiliencia.',
     sectionIntro:
-      'Ubicamos los recursos y mecanismos de respuesta disponibles para identificar brechas de capacidad y fortalecer la resiliencia territorial.',
+      'Integramos el conocimiento de exposición y sensibilidad frente a amenazas con el conocimiento de los recursos institucionales y comunitarios disponibles para identificar brechas de capacidad y fortalecer la resiliencia territorial.',
     solutions: [
       {
         title: 'Recursos institucionales',
-        description:
-          'Identificamos centros de operación, brigadas y redes de apoyo para entender la capacidad de gestión frente a emergencias.',
+        description: (
+          <>
+            Identificamos centros de operación, recursos humanos, materiales y económicos para entender la <span className="amenaza-highlight-word">capacidad de gestión</span> frente a emergencias.
+          </>
+        ),
         points: [
           { name: 'Comando de respuesta - Toluca', lat: 19.28, lng: -99.66, popupTitle: 'Centros de coordinación', popupBody: 'Instalaciones con capacidad operativa para respuesta inmediata.' },
           { name: 'Base logística - Monterrey', lat: 25.68, lng: -100.32, popupTitle: 'Logística y abastecimiento', popupBody: 'Puntos de apoyo con capacidad de movilización rápida.' },
@@ -115,8 +136,11 @@ const vulnerabilidadProjectTypes = [
       },
       {
         title: 'Redes comunitarias',
-        description:
-          'Evaluamos la organización comunitaria y la articulación social para fortalecer la respuesta local.',
+        description: (
+          <>
+            Reconocemos y evaluamos la <span className="amenaza-highlight-word">organización</span> comunitaria y la articulación social para fortalecer la respuesta local en condiciones de emergencia.
+          </>
+        ),
         points: [
           { name: 'Comunidad de alta participación - Puebla', lat: 19.04, lng: -98.2, popupTitle: 'Participación social', popupBody: 'Comunidades con redes locales de apoyo y organización activa.' },
           { name: 'Asociaciones de vecinos - Mérida', lat: 20.97, lng: -89.62, popupTitle: 'Organización vecinal', popupBody: 'Redes locales que facilitan la coordinación y la difusión de información.' },
@@ -125,8 +149,11 @@ const vulnerabilidadProjectTypes = [
       },
       {
         title: 'Planificación y recuperación',
-        description:
-          'Diseñamos rutas de recuperación y protocolos de acción para reducir el tiempo de respuesta y mejorar la continuidad institucional.',
+        description: (
+          <>
+            Diseñamos políticas de prevención, rutas de recuperación y protocolos de acción para reducir el tiempo de respuesta y mejorar la <span className="amenaza-highlight-word">resiliencia</span> territorial.
+          </>
+        ),
         points: [
           { name: 'Corredor de recuperación - Guadalajara', lat: 20.67, lng: -103.35, popupTitle: 'Recuperación posterior', popupBody: 'Sectores prioritarios para reactivación de servicios y movilidad.' },
           { name: 'Área de reconstrucción - Oaxaca', lat: 17.07, lng: -96.72, popupTitle: 'Reconstrucción', popupBody: 'Zonas donde se prioriza la restitución de infraestructura esencial.' },

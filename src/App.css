@@ -1874,6 +1874,11 @@
   font-size: 0.95rem;
 }
 
+.amenaza-highlight-word {
+  color: #ff8c1a;
+  font-weight: 700;
+}
+
 .amenazas-mini-map {
   margin: 0;
   padding: 0.55rem;
