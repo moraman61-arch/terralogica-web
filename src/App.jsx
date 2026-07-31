@@ -231,7 +231,7 @@ function App() {
               </div>
             </div>
             <p className="hero-text">
-              En Terralógica ayudamos al cliente a entender su territorio, ordenar su manejo
+              En Terralógica ayudamos al cliente a entender su territorio, ordenar su manejo, identificar problemas
               y detectar oportunidades, con conocimiento científico, técnica avanzada y tecnologías de vanguardia .
             </p>
             <div className="hero-actions">
