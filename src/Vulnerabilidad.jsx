@@ -234,7 +234,7 @@ function Vulnerabilidad() {
         <div className="hero-copy subpage-intro planeacion-intro">
           <h1>Vulnerabilidad.</h1>
           <p className="hero-text">
-            Esta sección concentra proyectos para evaluar exposición, sensibilidad y capacidades de respuesta con enfoque territorial.
+            Esta sección describe nuestra oferta de proyectos para evaluar exposición, sensibilidad y capacidades de respuesta con enfoque territorial.
           </p>
         </div>
       </section>
