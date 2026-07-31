@@ -207,7 +207,12 @@ function VulnerabilidadMap({ points }) {
     }
   }, [points])
 
-  return <div className="vulnerability-map-shell" ref={mapContainerRef} aria-label="Mapa de referencia" />
+  return (
+    <figure className="amenazas-mini-map" aria-label="Mapa de referencia">
+      <div className="vulnerability-map-shell" ref={mapContainerRef} />
+      <figcaption>Proyectos destacados. Rueda del ratón para acercar/alejar. Clic en los marcadores para más información.</figcaption>
+    </figure>
+  )
 }
 
 function Vulnerabilidad() {
