@@ -13,7 +13,7 @@ const vulnerabilidadProjectTypes = [
     imageAlt: 'Vista ilustrativa para exposición territorial',
     mediaLabel: 'Exposición y contexto territorial',
     description:
-      'Identificamos población, infraestructura y activos estratégicos expuestos ante distintos escenarios de amenaza en el territorio.',
+      'Identificamos población, infraestructura, actividades económicas y recursos naturales expuestos ante distintos escenarios de amenaza en el territorio.',
     sectionIntro:
       'Integramos información cartográfica, demográfica y de infraestructura para priorizar zonas donde la exposición representa un riesgo mayor para la población y los activos.',
     solutions: [
@@ -56,7 +56,7 @@ const vulnerabilidadProjectTypes = [
     imageAlt: 'Vista ilustrativa para sensibilidad de sistemas',
     mediaLabel: 'Sensibilidad y fragilidad territorial',
     description:
-      'Evaluamos condiciones físicas y socioeconómicas que incrementan la susceptibilidad de daño frente a eventos adversos.',
+      'Evaluamos las condiciones físicas y socioeconómicas en el sistema territorial que incrementan la susceptibilidad de daño frente a eventos adversos.',
     sectionIntro:
       'Analizamos la fragilidad de los sistemas naturales y sociales para identificar qué elementos del territorio responden con mayor vulnerabilidad ante perturbaciones.',
     solutions: [
@@ -99,7 +99,7 @@ const vulnerabilidadProjectTypes = [
     imageAlt: 'Vista ilustrativa para capacidad de respuesta',
     mediaLabel: 'Capacidad de respuesta y resiliencia',
     description:
-      'Analizamos recursos institucionales y comunitarios para reducir vulnerabilidad y mejorar la preparación y recuperación.',
+      'Analizamos recursos institucionales y comunitarios para reducir la vulnerabilidad, mejorar la preparación y recuperación, incrementando la resiliencia.',
     sectionIntro:
       'Ubicamos los recursos y mecanismos de respuesta disponibles para identificar brechas de capacidad y fortalecer la resiliencia territorial.',
     solutions: [
