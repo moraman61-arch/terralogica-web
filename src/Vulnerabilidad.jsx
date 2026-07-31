@@ -5,7 +5,7 @@ import { assetPath } from './assetPath'
 const vulnerabilidadProjectTypes = [
   {
     title: 'Exposición Territorial',
-    image: assetPath('/proyectos/proyecto-gestion-riesgos-proteccion-civil.png'),
+    image: assetPath('/proyectos/18041082.jpg'),
     imageAlt: 'Vista ilustrativa para exposición territorial',
     description:
       'Identificamos población, infraestructura y activos estratégicos expuestos ante distintos escenarios de amenaza en el territorio.',
@@ -19,7 +19,7 @@ const vulnerabilidadProjectTypes = [
   },
   {
     title: 'Capacidad de Respuesta',
-    image: assetPath('/proyectos/proyecto-gestion-riesgos-proteccion-civil.png'),
+    image: assetPath('/proyectos/capacidad de respuesta 01.png'),
     imageAlt: 'Vista ilustrativa para capacidad de respuesta',
     description:
       'Analizamos recursos institucionales y comunitarios para reducir vulnerabilidad y mejorar la preparación y recuperación.',
