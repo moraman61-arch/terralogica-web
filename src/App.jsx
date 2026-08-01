@@ -342,7 +342,7 @@ function App() {
           <p className="eyebrow">Contacto</p>
           <h2>Si eres gobierno, empresa, organización, comunidad o persona, te ayudamos a gestionar mejor tu territorio.</h2>
         </div>
-        <a className="primary-link" href="mailto:moraman61@gmail.com">
+        <a className="primary-link" href="mailto:info@terralogica.mx">
           Contacto
         </a>
       </section>
