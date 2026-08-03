@@ -17,8 +17,8 @@ const inventreesProjectTypes = [
     featuredProjectsImage: '/inventrees/arbolado-zmg-01.png',
     featuredProjectsImageAlt: 'Inventario de arbolado público urbano de la Zona Metropolitana de Guadalajara',
     featuredProjectsNotes: [
-      'En 2017, para el Gobierno de Jalisco, desarrollamos el inventario del arbolado público urbano de la Zona Metropolitana de Guadalajara, que abarcó siete municipios:',
-      'Actualmente estamos iniciando la Etapa de Geolocalización del proyecto de Inventario de Arbolado Público Urbano de la CDMX, que comprende las 16 alcaldias.',
+      'En 2017, para el Gobierno de Jalisco, desarrollamos el inventario del arbolado público urbano de la Zona Metropolitana de Guadalajara, que abarcó siete municipios (haga clic en la imagen para abrir el geovisualizador del proyecto):',
+      'Actualmente estamos iniciando la Etapa de Geolocalización del proyecto de Inventario de Arbolado Público Urbano de la CDMX, que comprende las 16 alcaldias. En el 2027 realizaremos las Etapas de Medición y Caracterización. Se estima que el inventario incluirá alrededor de 3,000,000 de árboles.',
     ],
     imageAlt: 'Imagen de referencia para inventario de arbolado publico',
     mediaLabel: 'Inventario y gestión de arbolado urbano.',
