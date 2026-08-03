@@ -164,6 +164,38 @@ const currencyFormatter = new Intl.NumberFormat('en-US', {
   minimumFractionDigits: 2,
 })
 
+const integerFormatter = new Intl.NumberFormat('en-US', {
+  maximumFractionDigits: 0,
+})
+
+const decimalFormatter = new Intl.NumberFormat('en-US', {
+  minimumFractionDigits: 0,
+  maximumFractionDigits: 2,
+})
+
+const defaultInventoryMonths = 12
+const googleFreeImagesPerMonth = 10000
+const googleExtraImageBlock = 1000
+const googleExtraImageBlockCost = 7
+const estimatedImagesPerKm = 100
+const operatorImagesPerMonth = 18480
+const operatorMonthlyCost = 800
+
+const licenseRecommendationDetails = {
+  'small-monthly': {
+    licenseType: 'Suscripción mensual',
+    licenseMode: 'Comunidades pequeñas',
+  },
+  'monthly-medium-large': {
+    licenseType: 'Suscripción mensual',
+    licenseMode: 'Ciudades medias y grandes',
+  },
+  'permanent-medium-large': {
+    licenseType: 'Licencia permanente',
+    licenseMode: 'Ciudades medias y grandes',
+  },
+}
+
 const contactEmail = 'info@terralogica.mx'
 
 const introVideos = [
@@ -576,14 +608,8 @@ function getRecommendedLicenseId(km) {
   return 'monthly-medium-large'
 }
 
-function getSuggestedContractMonths(km) {
-  if (!Number.isFinite(km) || km <= 0) {
-    return 1
-  }
-
-  // 10 m entre capturas ~= 100 imagenes por km; cuota gratuita de 10,000/mes ~= 100 km/mes.
-  const suggestedMonths = Math.round(km / 100)
-  return Math.max(1, suggestedMonths)
+function getDefaultInventoryMonths() {
+  return defaultInventoryMonths
 }
 
 function formatMonthlyQuoteLabel(monthlyAmount, months) {
@@ -591,6 +617,117 @@ function formatMonthlyQuoteLabel(monthlyAmount, months) {
   const totalAmount = monthlyAmount * normalizedMonths
   const monthsLabel = normalizedMonths === 1 ? '1 mes' : `${normalizedMonths} meses`
   return `${currencyFormatter.format(monthlyAmount)} / mes | ${currencyFormatter.format(totalAmount)} por ${monthsLabel}`
+}
+
+function formatQuoteForLicenses(quote, usersCount) {
+  const normalizedUsers = Number.isFinite(Number(usersCount)) && Number(usersCount) >= 1 ? Math.floor(Number(usersCount)) : 1
+
+  if (!quote || quote.status !== 'valid' || normalizedUsers < 1) {
+    return null
+  }
+
+  if (Number.isFinite(quote.monthlyAmount)) {
+    const months = Number.isFinite(quote.months) && quote.months >= 1 ? Math.floor(quote.months) : 1
+    const unitMonthly = quote.monthlyAmount
+    const totalMonthly = unitMonthly * normalizedUsers
+    const totalPeriod = totalMonthly * months
+    const monthsLabel = months === 1 ? '1 mes' : `${months} meses`
+
+    return {
+      unitLabel: `${currencyFormatter.format(unitMonthly)} / mes por licencia`,
+      totalLabel: `${currencyFormatter.format(totalMonthly)} / mes por ${normalizedUsers} licencias | ${currencyFormatter.format(totalPeriod)} por ${monthsLabel}`,
+      unitMonthlyAmount: unitMonthly,
+      totalMonthlyAmount: totalMonthly,
+      totalPeriodAmount: totalPeriod,
+      months,
+    }
+  }
+
+  if (Number.isFinite(quote.totalAmount)) {
+    const unitAmount = quote.totalAmount
+    const totalAmount = unitAmount * normalizedUsers
+
+    return {
+      unitLabel: `${currencyFormatter.format(unitAmount)} por licencia`,
+      totalLabel: `${currencyFormatter.format(totalAmount)} por ${normalizedUsers} licencias`,
+      unitAmount,
+      totalAmount,
+    }
+  }
+
+  return null
+}
+
+function calculateProjectCostBreakdown(quoteByUsers, months, usersCount, inventoryRecommendation) {
+  if (!quoteByUsers || !inventoryRecommendation) {
+    return null
+  }
+
+  const normalizedMonths = Number.isFinite(Number(months)) && Number(months) >= 1 ? Math.floor(Number(months)) : 1
+  const normalizedUsers = Number.isFinite(Number(usersCount)) && Number(usersCount) >= 1 ? Math.floor(Number(usersCount)) : 1
+  const softwareTotal = Number.isFinite(quoteByUsers.totalPeriodAmount)
+    ? quoteByUsers.totalPeriodAmount
+    : Number.isFinite(quoteByUsers.totalAmount)
+      ? quoteByUsers.totalAmount
+      : null
+
+  if (!Number.isFinite(softwareTotal)) {
+    return null
+  }
+
+  const operatorsMonthlyCost = normalizedUsers * operatorMonthlyCost
+  const operatorsTotalCost = operatorsMonthlyCost * normalizedMonths
+  const googleTotalCost = inventoryRecommendation.extraImagesCostTotal
+  const googleMonthlyCost = inventoryRecommendation.extraImagesCostPerMonth
+  const grandTotal = softwareTotal + operatorsTotalCost + googleTotalCost
+
+  return {
+    softwareTotal,
+    operatorsMonthlyCost,
+    operatorsTotalCost,
+    googleMonthlyCost,
+    googleTotalCost,
+    grandTotal,
+  }
+}
+
+function calculateInventoryRecommendation(km, months, usersCount) {
+  if (!Number.isFinite(km) || km <= 0) {
+    return null
+  }
+
+  const normalizedMonths = Number.isFinite(Number(months)) && Number(months) >= 1 ? Math.floor(Number(months)) : getDefaultInventoryMonths()
+  const normalizedUsers = Number.isFinite(Number(usersCount)) && Number(usersCount) >= 1 ? Math.floor(Number(usersCount)) : 1
+  const totalImages = Math.ceil(km * estimatedImagesPerKm)
+  const targetImagesPerMonth = totalImages / normalizedMonths
+  const targetKmPerMonth = km / normalizedMonths
+  const recommendedUsers = Math.max(1, Math.ceil(targetImagesPerMonth / operatorImagesPerMonth))
+  const selectedUsersCapacityPerMonth = normalizedUsers * operatorImagesPerMonth
+  const recommendedUsersCapacityPerMonth = recommendedUsers * operatorImagesPerMonth
+  const totalFreeImages = googleFreeImagesPerMonth * normalizedMonths
+  const extraImagesTotal = Math.max(0, totalImages - totalFreeImages)
+  const extraImagesPerMonth = extraImagesTotal / normalizedMonths
+  const extraImageBlocksTotal = Math.ceil(extraImagesTotal / googleExtraImageBlock)
+  const extraImagesCostTotal = extraImageBlocksTotal * googleExtraImageBlockCost
+  const extraImagesCostPerMonth = extraImagesCostTotal / normalizedMonths
+
+  return {
+    normalizedMonths,
+    normalizedUsers,
+    totalImages,
+    targetImagesPerMonth,
+    targetKmPerMonth,
+    recommendedUsers,
+    selectedUsersCapacityPerMonth,
+    recommendedUsersCapacityPerMonth,
+    selectedUsersEnough: selectedUsersCapacityPerMonth >= targetImagesPerMonth,
+    userShortfall: Math.max(0, recommendedUsers - normalizedUsers),
+    totalFreeImages,
+    extraImagesTotal,
+    extraImagesPerMonth,
+    extraImagesCostTotal,
+    extraImagesCostPerMonth,
+  }
 }
 
 function calculateQuote(plan, km, months = 1) {
@@ -631,6 +768,8 @@ function calculateQuote(plan, km, months = 1) {
     return {
       status: 'valid',
       amountLabel: formatMonthlyQuoteLabel(discountedAmount, normalizedMonths),
+      monthlyAmount: discountedAmount,
+      months: normalizedMonths,
       detail:
         normalizedMonths >= 2
           ? `Escala mensual entre ${currencyFormatter.format(plan.minAmount)} y ${currencyFormatter.format(plan.maxAmount)} según km. Incluye descuento de ${discountPercent.toFixed(0)}% por contratar ${normalizedMonths} meses desde el inicio.`
@@ -642,6 +781,8 @@ function calculateQuote(plan, km, months = 1) {
     return {
       status: 'valid',
       amountLabel: formatMonthlyQuoteLabel(plan.flatAmount, normalizedMonths),
+      monthlyAmount: plan.flatAmount,
+      months: normalizedMonths,
       detail: 'Pago mensual estimado para la modalidad seleccionada.',
     }
   }
@@ -653,6 +794,14 @@ function calculateQuote(plan, km, months = 1) {
   return {
     status: 'valid',
     amountLabel: plan.billing === 'monthly' ? formatMonthlyQuoteLabel(total, normalizedMonths) : currencyFormatter.format(total),
+    ...(plan.billing === 'monthly'
+      ? {
+          monthlyAmount: total,
+          months: normalizedMonths,
+        }
+      : {
+          totalAmount: total,
+        }),
     detail:
       plan.billing === 'monthly'
         ? `Pago mensual estimado con ${formatKmLimit(km)} km de vialidad a ${currencyFormatter.format(plan.rate)} por km.`
@@ -660,7 +809,7 @@ function calculateQuote(plan, km, months = 1) {
   }
 }
 
-function buildQuoteEmailDraft({ moduleName, planType, kmValueText, amountLabel, recommendedLabel, monthsText }) {
+function buildQuoteEmailDraft({ moduleName, planType, amountLabel, recommendedLabel, monthsText, usersText, recommendationSummary }) {
   const subject = `Solicitud de cotización INVENTREES - ${moduleName}`
   const bodyLines = [
     'Hola,',
@@ -668,10 +817,11 @@ function buildQuoteEmailDraft({ moduleName, planType, kmValueText, amountLabel, 
     'Solicito una cotización para INVENTREES con la siguiente configuración:',
     `Módulo: ${moduleName}`,
     `Licencia seleccionada: ${planType}`,
-    `Km de vialidad: ${kmValueText}`,
-    ...(monthsText ? [`Meses de contratación inicial: ${monthsText}`] : []),
+    `Número de licencias / usuarios: ${usersText}`,
+    ...(monthsText ? [`Meses para realizar el inventario: ${monthsText}`] : []),
     `Estimado mostrado: ${amountLabel}`,
     `Licencia recomendada por el cotizador: ${recommendedLabel ?? 'No disponible'}`,
+    ...(recommendationSummary ? ['', recommendationSummary] : []),
     '',
     'Adjuntaremos la capa de polígonos requerida en formato SHP (ZIP), KML o GeoJSON.',
     '',
@@ -745,14 +895,15 @@ function InventreesPlanes() {
   const initialKmValue =
     polygonRegistration.status === 'registered' &&
     Number.isFinite(polygonRegistration.roadLengthKm) &&
-    polygonRegistration.roadLengthKm > 0
+    polygonRegistration.roadLengthKm >= 0
       ? polygonRegistration.roadLengthKm
       : null
-  const initialContractMonths = getSuggestedContractMonths(initialKmValue)
+  const initialContractMonths = getDefaultInventoryMonths()
   const initialRecommendedLicenseId = getRecommendedLicenseId(initialKmValue) ?? licenseOptions[0].id
 
   const [selectedModuleId, setSelectedModuleId] = useState(plansByModule[0].id)
   const [selectedLicenseId, setSelectedLicenseId] = useState(initialRecommendedLicenseId)
+  const [usersCount, setUsersCount] = useState(1)
   const [contractMonths, setContractMonths] = useState(initialContractMonths)
   const [kmValue, setKmValue] = useState(initialKmValue ? formatInitialKmValue(initialKmValue) : '')
   const [currentIntroVideoIndex, setCurrentIntroVideoIndex] = useState(0)
@@ -770,6 +921,7 @@ function InventreesPlanes() {
   const introVideoInViewportRef = useRef(true)
   const polygonUploadInputRef = useRef(null)
   const requirementsSectionRef = useRef(null)
+  const lastPolygonUpdateRef = useRef(polygonRegistration.updatedAt ?? null)
 
   const polygonStatusMessage = polygonStatus === 'registered' ? 'Polígono registrado' : 'Polígono no registrado'
 
@@ -779,9 +931,6 @@ function InventreesPlanes() {
     const recommendedLicenseId = getRecommendedLicenseId(parsedNextKm)
 
     setKmValue(nextKmValue)
-    if (Number.isFinite(parsedNextKm) && parsedNextKm > 0) {
-      setContractMonths(getSuggestedContractMonths(parsedNextKm))
-    }
 
     if (recommendedLicenseId && recommendedLicenseId !== selectedLicenseId) {
       setSelectedLicenseId(recommendedLicenseId)
@@ -792,10 +941,33 @@ function InventreesPlanes() {
   const selectedPlan =
     selectedModule.plans.find((plan) => plan.licenseId === selectedLicenseId) ?? selectedModule.plans[0]
   const parsedKm = parseKmInput(kmValue)
-  const suggestedContractMonths = getSuggestedContractMonths(parsedKm)
   const quote = calculateQuote(selectedPlan, parsedKm, contractMonths)
+  const quoteByUsers = formatQuoteForLicenses(quote, usersCount)
+  const inventoryRecommendation = calculateInventoryRecommendation(parsedKm, contractMonths, usersCount)
+  const selectedProjectCost = calculateProjectCostBreakdown(quoteByUsers, contractMonths, usersCount, inventoryRecommendation)
   const recommendedLicenseId = getRecommendedLicenseId(parsedKm)
   const recommendedOption = licenseOptions.find((option) => option.id === recommendedLicenseId) ?? null
+  const recommendedLicenseDetails = recommendedLicenseId ? licenseRecommendationDetails[recommendedLicenseId] : null
+  const recommendedPlan =
+    recommendedLicenseId ? selectedModule.plans.find((plan) => plan.licenseId === recommendedLicenseId) ?? null : null
+  const recommendedQuote = recommendedPlan ? calculateQuote(recommendedPlan, parsedKm, contractMonths) : null
+  const recommendedQuoteByUsers =
+    inventoryRecommendation && recommendedQuote
+      ? formatQuoteForLicenses(recommendedQuote, inventoryRecommendation.recommendedUsers)
+      : null
+  const recommendedProjectCost =
+    inventoryRecommendation && recommendedQuoteByUsers
+      ? calculateProjectCostBreakdown(
+          recommendedQuoteByUsers,
+          inventoryRecommendation.normalizedMonths,
+          inventoryRecommendation.recommendedUsers,
+          inventoryRecommendation,
+        )
+      : null
+  const recommendationSummary =
+    inventoryRecommendation && recommendedOption && recommendedLicenseDetails
+      ? `Recomendación automática: ${recommendedLicenseDetails.licenseType} en modalidad ${recommendedLicenseDetails.licenseMode}, con ${formatKmLimit(parsedKm)} km de vialidad, ${inventoryRecommendation.normalizedMonths} ${inventoryRecommendation.normalizedMonths === 1 ? 'mes' : 'meses'} para realizar el inventario y ${inventoryRecommendation.recommendedUsers} ${inventoryRecommendation.recommendedUsers === 1 ? 'usuario/licencia' : 'usuarios/licencias'}.`
+      : null
   const currentRegistration = readPolygonRegistration()
   const hasPolygonForAttachment =
     Boolean(currentRegistration?.polygonAttachment) ||
@@ -811,10 +983,11 @@ function InventreesPlanes() {
       ? buildQuoteEmailDraft({
           moduleName: selectedModule.name,
           planType: selectedPlan.type,
-          kmValueText: formatKmLimit(parsedKm),
-          monthsText: selectedPlan.mode === 'scaled-monthly' ? String(contractMonths) : null,
+          monthsText: String(contractMonths),
+          usersText: String(usersCount),
           amountLabel: quote.amountLabel,
           recommendedLabel: recommendedOption?.label,
+          recommendationSummary,
         })
       : {
           subject: 'Solicitud de información INVENTREES',
@@ -1001,6 +1174,67 @@ function InventreesPlanes() {
 
     navigate(location.pathname, { replace: true, state: null })
   }, [location.pathname, location.state, navigate])
+
+  useEffect(() => {
+    const syncFromRegistration = () => {
+      const latestRegistration = readPolygonRegistration()
+      const latestUpdate = latestRegistration?.updatedAt ?? null
+
+      if (latestUpdate === lastPolygonUpdateRef.current) {
+        return
+      }
+
+      lastPolygonUpdateRef.current = latestUpdate
+      setPolygonStatus(latestRegistration.status)
+
+      if (
+        latestRegistration.status === 'registered' &&
+        Number.isFinite(latestRegistration.roadLengthKm) &&
+        latestRegistration.roadLengthKm >= 0
+      ) {
+        const formattedKm = formatInitialKmValue(Number(latestRegistration.roadLengthKm))
+        const parsedLatestKm = Number(latestRegistration.roadLengthKm)
+        const nextLicenseId = getRecommendedLicenseId(parsedLatestKm)
+
+        setKmValue(formattedKm)
+        if (nextLicenseId) {
+          setSelectedLicenseId(nextLicenseId)
+        }
+      }
+
+      if (latestRegistration.status !== 'registered') {
+        setKmValue('')
+      }
+    }
+
+    const handleVisibilityChange = () => {
+      if (!document.hidden) {
+        syncFromRegistration()
+      }
+    }
+
+    const handleWindowFocus = () => {
+      syncFromRegistration()
+    }
+
+    const handleStorage = (event) => {
+      if (event.key === polygonStorageKey) {
+        syncFromRegistration()
+      }
+    }
+
+    syncFromRegistration()
+
+    document.addEventListener('visibilitychange', handleVisibilityChange)
+    window.addEventListener('focus', handleWindowFocus)
+    window.addEventListener('storage', handleStorage)
+
+    return () => {
+      document.removeEventListener('visibilitychange', handleVisibilityChange)
+      window.removeEventListener('focus', handleWindowFocus)
+      window.removeEventListener('storage', handleStorage)
+    }
+  }, [])
 
   const handleIntroVideoEnded = () => {
     setIsIntroVideoPlaying(true)
@@ -1202,7 +1436,7 @@ function InventreesPlanes() {
       <section className="services-section inventory-plans-section">
         <div className="section-heading compact">
           <p className="eyebrow">Cotizador rápido</p>
-          <h2>Seleccione módulo, modalidad y km de vialidad para obtener un estimado inmediato.</h2>
+          <h2>Seleccione módulo, modalidad, km de vialidad y número de licencias / usuarios para obtener un estimado inmediato.</h2>
         </div>
 
         <div className="identity-card inventory-quote-card">
@@ -1229,22 +1463,20 @@ function InventreesPlanes() {
               </select>
             </label>
 
-            {selectedPlan.mode === 'scaled-monthly' ? (
-              <label className="inventory-field">
-                <span>Meses de contratación inicial</span>
-                <input
-                  type="number"
-                  min="1"
-                  step="1"
-                  value={contractMonths}
-                  onChange={(event) => {
-                    const parsedValue = Number(event.target.value)
-                    setContractMonths(Number.isFinite(parsedValue) && parsedValue >= 1 ? Math.floor(parsedValue) : 1)
-                  }}
-                  placeholder="Ej. 2"
-                />
-              </label>
-            ) : null}
+            <label className="inventory-field">
+              <span>Meses para realizar el inventario</span>
+              <input
+                type="number"
+                min="1"
+                step="1"
+                value={contractMonths}
+                onChange={(event) => {
+                  const parsedValue = Number(event.target.value)
+                  setContractMonths(Number.isFinite(parsedValue) && parsedValue >= 1 ? Math.floor(parsedValue) : 1)
+                }}
+                placeholder="Ej. 12"
+              />
+            </label>
 
             <label className="inventory-field">
               <span>Km de vialidad</span>
@@ -1256,25 +1488,82 @@ function InventreesPlanes() {
                 placeholder="Ej. 325 o 12,500"
               />
             </label>
+
+            <label className="inventory-field">
+              <span>Número de licencias / usuarios</span>
+              <input
+                type="number"
+                min="1"
+                step="1"
+                value={usersCount}
+                onChange={(event) => {
+                  const parsedValue = Number(event.target.value)
+                  setUsersCount(Number.isFinite(parsedValue) && parsedValue >= 1 ? Math.floor(parsedValue) : 1)
+                }}
+                placeholder="Ej. 5"
+              />
+            </label>
           </div>
 
           <p className="inventory-threshold-note">
             <em>Nota:</em> para 250 km o menos, el cotizador recomienda la suscripción mensual para comunidades pequeñas. Para más de 250 km y hasta 5,000 km recomienda la suscripción mensual para ciudades medias y grandes. Para más de 5,000 km recomienda la licencia permanente.
           </p>
 
-          <p className="inventory-threshold-note">
-            <em>Sugerencia:</em> como las imágenes de Google Street View suelen estar espaciadas aproximadamente cada 10 metros, se estima un consumo de ~100 imágenes por km de vialidad. Con la cuota gratuita mensual de 10,000 imágenes, el número sugerido de meses se calcula como <strong>km de vialidad / 100</strong> y se redondea al entero más cercano. Para este valor de km, la sugerencia actual es <strong>{suggestedContractMonths} {suggestedContractMonths === 1 ? 'mes' : 'meses'}</strong>. Puede modificar este valor manualmente. Si se rebasa la cuota gratuita de Google, se aplicaría un costo aproximado de <strong>USD 7.00 por cada 1,000 imágenes extra</strong> consultadas.
-          </p>
+          {inventoryRecommendation ? (
+            <div className="inventory-threshold-note">
+              <p>
+                <em>Sugerencia:</em> para concluir <strong>{formatKmLimit(parsedKm)} km</strong> en <strong>{inventoryRecommendation.normalizedMonths} {inventoryRecommendation.normalizedMonths === 1 ? 'mes' : 'meses'}</strong>, la mejor combinación es <strong>{recommendedLicenseDetails?.licenseType}</strong> en modalidad <strong>{recommendedLicenseDetails?.licenseMode}</strong> con <strong>{inventoryRecommendation.recommendedUsers} {inventoryRecommendation.recommendedUsers === 1 ? 'usuario/licencia' : 'usuarios/licencias'}</strong>.
+              </p>
+              <p>
+                Esto supone <strong>{integerFormatter.format(inventoryRecommendation.totalImages)}</strong> imágenes en total, un ritmo de <strong>{integerFormatter.format(inventoryRecommendation.targetImagesPerMonth)}</strong> imágenes por mes y aproximadamente <strong>{decimalFormatter.format(inventoryRecommendation.targetKmPerMonth)} km/mes</strong> de avance operativo.
+              </p>
+              <p>
+                Google Maps API aportaría <strong>{integerFormatter.format(Math.min(inventoryRecommendation.totalImages, inventoryRecommendation.totalFreeImages))}</strong> imágenes gratuitas durante el proyecto; las imágenes extra estimadas serían <strong>{integerFormatter.format(inventoryRecommendation.extraImagesTotal)}</strong>, con un costo aproximado de <strong>{currencyFormatter.format(inventoryRecommendation.extraImagesCostTotal)}</strong> en todo el proyecto ({currencyFormatter.format(inventoryRecommendation.extraImagesCostPerMonth)} por mes en promedio).
+              </p>
+              <p>
+                El costo operativo estimado para captura y procesamiento sería de <strong>{currencyFormatter.format(inventoryRecommendation.recommendedUsers * operatorMonthlyCost)}</strong> por mes en operarios, asumiendo <strong>{currencyFormatter.format(operatorMonthlyCost)}</strong> por usuario/licencia y una capacidad de <strong>{integerFormatter.format(operatorImagesPerMonth)}</strong> imágenes por mes por operario.
+              </p>
+              {usersCount !== inventoryRecommendation.recommendedUsers ? (
+                <p>
+                  Con el valor capturado de <strong>{usersCount}</strong> {usersCount === 1 ? 'usuario/licencia' : 'usuarios/licencias'}, {inventoryRecommendation.selectedUsersEnough ? 'sí se alcanza el ritmo objetivo' : `no se alcanza el ritmo objetivo; faltan ${inventoryRecommendation.userShortfall} ${inventoryRecommendation.userShortfall === 1 ? 'usuario/licencia' : 'usuarios/licencias'}` }.
+                </p>
+              ) : null}
+            </div>
+          ) : null}
 
           <div className={`inventory-quote-result inventory-quote-result-${quote.status}`}>
             <p className="inventory-quote-title">{selectedModule.name}</p>
             <p className="inventory-quote-plan">{selectedPlan.type}</p>
             {quote.amountLabel ? <p className="inventory-quote-amount">{quote.amountLabel}</p> : null}
+            {quoteByUsers?.unitLabel ? <p className="inventory-quote-message">Precio unitario: {quoteByUsers.unitLabel}</p> : null}
+            {quoteByUsers?.totalLabel ? <p className="inventory-quote-message">Precio total por licencias: {quoteByUsers.totalLabel}</p> : null}
+            <p className="inventory-quote-message">Número de licencias / usuarios: {usersCount}</p>
             <p className="inventory-quote-message">{quote.message ?? quote.detail}</p>
-            {recommendedOption ? (
-              <p className="inventory-quote-recommendation">
-                Recomendación automática: {recommendedOption.label}
-              </p>
+            {selectedProjectCost ? (
+              <div className="inventory-quote-recommendation">
+                <p>Total general del proyecto con la selección actual:</p>
+                <p>Software: {currencyFormatter.format(selectedProjectCost.softwareTotal)}</p>
+                <p>Operarios: {currencyFormatter.format(selectedProjectCost.operatorsTotalCost)} ({currencyFormatter.format(selectedProjectCost.operatorsMonthlyCost)} por mes)</p>
+                <p>Google Maps API extra: {currencyFormatter.format(selectedProjectCost.googleTotalCost)} ({currencyFormatter.format(selectedProjectCost.googleMonthlyCost)} por mes en promedio)</p>
+                <p><strong>Total estimado del proyecto: {currencyFormatter.format(selectedProjectCost.grandTotal)}</strong></p>
+              </div>
+            ) : null}
+            {inventoryRecommendation && recommendedOption && recommendedQuoteByUsers ? (
+              <div className="inventory-quote-recommendation">
+                <p>
+                  Recomendación automática: {recommendedOption.label} con {inventoryRecommendation.recommendedUsers} {inventoryRecommendation.recommendedUsers === 1 ? 'usuario/licencia' : 'usuarios/licencias'} para terminar en {inventoryRecommendation.normalizedMonths} {inventoryRecommendation.normalizedMonths === 1 ? 'mes' : 'meses'}.
+                </p>
+                {recommendedQuoteByUsers.unitLabel ? <p>Software recomendado, precio unitario: {recommendedQuoteByUsers.unitLabel}</p> : null}
+                {recommendedQuoteByUsers.totalLabel ? <p>Software recomendado, precio total: {recommendedQuoteByUsers.totalLabel}</p> : null}
+                {recommendedProjectCost ? (
+                  <>
+                    <p>Total proyecto recomendado, software: {currencyFormatter.format(recommendedProjectCost.softwareTotal)}</p>
+                    <p>Total proyecto recomendado, operarios: {currencyFormatter.format(recommendedProjectCost.operatorsTotalCost)} ({currencyFormatter.format(recommendedProjectCost.operatorsMonthlyCost)} por mes)</p>
+                    <p>Total proyecto recomendado, Google Maps API extra: {currencyFormatter.format(recommendedProjectCost.googleTotalCost)} ({currencyFormatter.format(recommendedProjectCost.googleMonthlyCost)} por mes en promedio)</p>
+                    <p><strong>Total estimado del proyecto recomendado: {currencyFormatter.format(recommendedProjectCost.grandTotal)}</strong></p>
+                  </>
+                ) : null}
+              </div>
             ) : null}
             <button
               type="button"

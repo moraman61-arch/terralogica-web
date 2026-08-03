@@ -7,6 +7,31 @@ import './App.css'
 const polygonStorageKey = 'inventrees-polygon-registration'
 const defaultView = [18, 0]
 const defaultZoom = 2
+const overpassEndpoints = [
+  'https://overpass-api.de/api/interpreter',
+  'https://overpass.kumi.systems/api/interpreter',
+]
+
+function waitFor(ms) {
+  return new Promise((resolve) => {
+    window.setTimeout(resolve, ms)
+  })
+}
+
+async function fetchWithTimeout(resource, options = {}, timeoutMs = 22000) {
+  const controller = new AbortController()
+  const timeoutId = window.setTimeout(() => controller.abort(), timeoutMs)
+
+  try {
+    const response = await fetch(resource, {
+      ...options,
+      signal: controller.signal,
+    })
+    return response
+  } finally {
+    window.clearTimeout(timeoutId)
+  }
+}
 
 function persistPolygonRegistration(payload) {
   window.localStorage.setItem(polygonStorageKey, JSON.stringify(payload))
@@ -122,48 +147,62 @@ async function estimateRoadLengthInsidePolygonKm(polygonCoordinates) {
   const query = buildRoadLengthQuery(polygonCoordinates)
   const polygonRingLonLat = polygonCoordinates.map(([lat, lon]) => [lon, lat])
 
-  try {
-    const response = await fetch('https://overpass-api.de/api/interpreter', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'text/plain;charset=UTF-8',
-      },
-      body: query,
-    })
+  const maxAttempts = 4
 
-    if (!response.ok) {
-      return null
-    }
+  for (let attempt = 0; attempt < maxAttempts; attempt += 1) {
+    const endpoint = overpassEndpoints[attempt % overpassEndpoints.length]
 
-    const data = await response.json()
-    const wayElements = Array.isArray(data?.elements) ? data.elements.filter((element) => element.type === 'way') : []
+    try {
+      const response = await fetchWithTimeout(
+        endpoint,
+        {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'text/plain;charset=UTF-8',
+          },
+          body: query,
+        },
+        22000,
+      )
 
-    let totalLengthKm = 0
-
-    for (const wayElement of wayElements) {
-      const geometry = Array.isArray(wayElement.geometry) ? wayElement.geometry : []
-      if (geometry.length < 2) {
-        continue
+      if (!response.ok) {
+        throw new Error(`Overpass status ${response.status}`)
       }
 
-      for (let pointIndex = 0; pointIndex < geometry.length - 1; pointIndex += 1) {
-        const start = [geometry[pointIndex].lon, geometry[pointIndex].lat]
-        const end = [geometry[pointIndex + 1].lon, geometry[pointIndex + 1].lat]
-        const segmentLengthKm = haversineDistanceKm(start, end)
+      const data = await response.json()
+      const wayElements = Array.isArray(data?.elements) ? data.elements.filter((element) => element.type === 'way') : []
 
-        if (segmentLengthKm === 0) {
+      let totalLengthKm = 0
+
+      for (const wayElement of wayElements) {
+        const geometry = Array.isArray(wayElement.geometry) ? wayElement.geometry : []
+        if (geometry.length < 2) {
           continue
         }
 
-        const insideRatio = estimateSegmentInsideRatio(start, end, polygonRingLonLat)
-        totalLengthKm += segmentLengthKm * insideRatio
+        for (let pointIndex = 0; pointIndex < geometry.length - 1; pointIndex += 1) {
+          const start = [geometry[pointIndex].lon, geometry[pointIndex].lat]
+          const end = [geometry[pointIndex + 1].lon, geometry[pointIndex + 1].lat]
+          const segmentLengthKm = haversineDistanceKm(start, end)
+
+          if (segmentLengthKm === 0) {
+            continue
+          }
+
+          const insideRatio = estimateSegmentInsideRatio(start, end, polygonRingLonLat)
+          totalLengthKm += segmentLengthKm * insideRatio
+        }
+      }
+
+      return Number(totalLengthKm.toFixed(2))
+    } catch {
+      if (attempt < maxAttempts - 1) {
+        await waitFor(450 * (attempt + 1))
       }
     }
-
-    return Number(totalLengthKm.toFixed(2))
-  } catch {
-    return null
   }
+
+  return null
 }
 
 function readPolygonRegistration() {
