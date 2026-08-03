@@ -16,10 +16,6 @@ const licenseOptions = [
     id: 'monthly-medium-large',
     label: 'Suscripción mensual para ciudades medias',
   },
-  {
-    id: 'permanent-medium-large',
-    label: 'Licencia permanente para ciudades grandes',
-  },
 ]
 
 const plansByModule = [
@@ -54,17 +50,6 @@ const plansByModule = [
         minKmExclusive: true,
         maxKm: 3500,
       },
-      {
-        licenseId: 'permanent-medium-large',
-        type: 'Licencia permanente para ciudades grandes',
-        price: 'USD 1.20 por km de vialidad (tope USD 15,000.00)',
-        range: 'Más de 3,500 km',
-        mode: 'rate',
-        rate: 1.2,
-        maxAmount: 15000,
-        minKm: 3500,
-        minKmExclusive: true,
-      },
     ],
   },
   {
@@ -98,17 +83,6 @@ const plansByModule = [
         minKmExclusive: true,
         maxKm: 3500,
       },
-      {
-        licenseId: 'permanent-medium-large',
-        type: 'Licencia permanente para ciudades grandes',
-        price: 'USD 1.70 por km de vialidad (tope USD 18,000.00)',
-        range: 'Más de 3,500 km',
-        mode: 'rate',
-        rate: 1.7,
-        maxAmount: 18000,
-        minKm: 3500,
-        minKmExclusive: true,
-      },
     ],
   },
   {
@@ -141,17 +115,6 @@ const plansByModule = [
         minKm: 250,
         minKmExclusive: true,
         maxKm: 3500,
-      },
-      {
-        licenseId: 'permanent-medium-large',
-        type: 'Licencia permanente para ciudades grandes',
-        price: 'USD 1.70 por km de vialidad (tope USD 18,000.00)',
-        range: 'Más de 3,500 km',
-        mode: 'rate',
-        rate: 1.7,
-        maxAmount: 18000,
-        minKm: 3500,
-        minKmExclusive: true,
       },
     ],
   },
@@ -189,10 +152,6 @@ const licenseRecommendationDetails = {
   'monthly-medium-large': {
     licenseType: 'Suscripción mensual',
     licenseMode: 'Ciudades medias',
-  },
-  'permanent-medium-large': {
-    licenseType: 'Licencia permanente',
-    licenseMode: 'Ciudades grandes',
   },
 }
 
@@ -602,7 +561,7 @@ function getRecommendedLicenseId(km) {
   }
 
   if (km > 3500) {
-    return 'permanent-medium-large'
+    return null
   }
 
   return 'monthly-medium-large'
@@ -728,6 +687,15 @@ function calculateInventoryRecommendation(km, months, usersCount) {
     extraImagesCostTotal,
     extraImagesCostPerMonth,
   }
+}
+
+function getSuggestedUsersCount(km, months) {
+  const recommendation = calculateInventoryRecommendation(km, months, 1)
+  if (!recommendation || !Number.isFinite(recommendation.recommendedUsers)) {
+    return 1
+  }
+
+  return Math.max(1, Math.floor(recommendation.recommendedUsers))
 }
 
 function calculateQuote(plan, km, months = 1) {
@@ -899,11 +867,12 @@ function InventreesPlanes() {
       ? polygonRegistration.roadLengthKm
       : null
   const initialContractMonths = getDefaultInventoryMonths()
+  const initialUsersCount = getSuggestedUsersCount(initialKmValue, initialContractMonths)
   const initialRecommendedLicenseId = getRecommendedLicenseId(initialKmValue) ?? licenseOptions[0].id
 
   const [selectedModuleId, setSelectedModuleId] = useState(plansByModule[0].id)
   const [selectedLicenseId, setSelectedLicenseId] = useState(initialRecommendedLicenseId)
-  const [usersCount, setUsersCount] = useState(1)
+  const [usersCount, setUsersCount] = useState(initialUsersCount)
   const [contractMonths, setContractMonths] = useState(initialContractMonths)
   const [kmValue, setKmValue] = useState(initialKmValue ? formatInitialKmValue(initialKmValue) : '')
   const [currentIntroVideoIndex, setCurrentIntroVideoIndex] = useState(0)
@@ -931,6 +900,9 @@ function InventreesPlanes() {
     const recommendedLicenseId = getRecommendedLicenseId(parsedNextKm)
 
     setKmValue(nextKmValue)
+    if (Number.isFinite(parsedNextKm) && parsedNextKm > 0) {
+      setUsersCount(getSuggestedUsersCount(parsedNextKm, contractMonths))
+    }
 
     if (recommendedLicenseId && recommendedLicenseId !== selectedLicenseId) {
       setSelectedLicenseId(recommendedLicenseId)
@@ -941,6 +913,7 @@ function InventreesPlanes() {
   const selectedPlan =
     selectedModule.plans.find((plan) => plan.licenseId === selectedLicenseId) ?? selectedModule.plans[0]
   const parsedKm = parseKmInput(kmValue)
+  const isLargeCity = Number.isFinite(parsedKm) && parsedKm > 3500
   const quote = calculateQuote(selectedPlan, parsedKm, contractMonths)
   const quoteByUsers = formatQuoteForLicenses(quote, usersCount)
   const inventoryRecommendation = calculateInventoryRecommendation(parsedKm, contractMonths, usersCount)
@@ -1197,6 +1170,7 @@ function InventreesPlanes() {
         const nextLicenseId = getRecommendedLicenseId(parsedLatestKm)
 
         setKmValue(formattedKm)
+        setUsersCount(getSuggestedUsersCount(parsedLatestKm, contractMonths))
         if (nextLicenseId) {
           setSelectedLicenseId(nextLicenseId)
         }
@@ -1234,7 +1208,7 @@ function InventreesPlanes() {
       window.removeEventListener('focus', handleWindowFocus)
       window.removeEventListener('storage', handleStorage)
     }
-  }, [])
+  }, [contractMonths])
 
   const handleIntroVideoEnded = () => {
     setIsIntroVideoPlaying(true)
@@ -1436,7 +1410,7 @@ function InventreesPlanes() {
       <section className="services-section inventory-plans-section">
         <div className="section-heading compact">
           <p className="eyebrow">Cotizador rápido</p>
-          <h2>Seleccione módulo, modalidad, km de vialidad y número de licencias / usuarios para obtener un estimado inmediato.</h2>
+          <h2>Seleccione módulo, tipo de licencia y km de vialidad para obtener orientación inmediata.</h2>
         </div>
 
         <div className="identity-card inventory-quote-card">
@@ -1454,29 +1428,41 @@ function InventreesPlanes() {
 
             <label className="inventory-field">
               <span>Tipo de licencia</span>
-              <select value={selectedLicenseId} onChange={(event) => setSelectedLicenseId(event.target.value)}>
-                {licenseOptions.map((option) => (
-                  <option key={option.id} value={option.id}>
-                    {option.label}
-                  </option>
-                ))}
-              </select>
+              {isLargeCity ? (
+                <input type="text" value="Ciudad Grande" readOnly aria-readonly="true" />
+              ) : (
+                <select value={selectedLicenseId} onChange={(event) => setSelectedLicenseId(event.target.value)}>
+                  {licenseOptions.map((option) => (
+                    <option key={option.id} value={option.id}>
+                      {option.label}
+                    </option>
+                  ))}
+                </select>
+              )}
             </label>
 
-            <label className="inventory-field">
-              <span>Meses para realizar el inventario</span>
-              <input
-                type="number"
-                min="1"
-                step="1"
-                value={contractMonths}
-                onChange={(event) => {
-                  const parsedValue = Number(event.target.value)
-                  setContractMonths(Number.isFinite(parsedValue) && parsedValue >= 1 ? Math.floor(parsedValue) : 1)
-                }}
-                placeholder="Ej. 12"
-              />
-            </label>
+            {!isLargeCity ? (
+              <label className="inventory-field">
+                <span>Meses para realizar el inventario</span>
+                <input
+                  type="number"
+                  min="1"
+                  step="1"
+                  value={contractMonths}
+                  onChange={(event) => {
+                    const parsedValue = Number(event.target.value)
+                    const nextMonths = Number.isFinite(parsedValue) && parsedValue >= 1 ? Math.floor(parsedValue) : 1
+                    setContractMonths(nextMonths)
+
+                    const parsedCurrentKm = parseKmInput(kmValue)
+                    if (Number.isFinite(parsedCurrentKm) && parsedCurrentKm > 0) {
+                      setUsersCount(getSuggestedUsersCount(parsedCurrentKm, nextMonths))
+                    }
+                  }}
+                  placeholder="Ej. 12"
+                />
+              </label>
+            ) : null}
 
             <label className="inventory-field">
               <span>Km de vialidad</span>
@@ -1489,27 +1475,29 @@ function InventreesPlanes() {
               />
             </label>
 
-            <label className="inventory-field">
-              <span>Número de licencias / usuarios</span>
-              <input
-                type="number"
-                min="1"
-                step="1"
-                value={usersCount}
-                onChange={(event) => {
-                  const parsedValue = Number(event.target.value)
-                  setUsersCount(Number.isFinite(parsedValue) && parsedValue >= 1 ? Math.floor(parsedValue) : 1)
-                }}
-                placeholder="Ej. 5"
-              />
-            </label>
+            {!isLargeCity ? (
+              <label className="inventory-field">
+                <span>Número de licencias / usuarios</span>
+                <input
+                  type="number"
+                  min="1"
+                  step="1"
+                  value={usersCount}
+                  onChange={(event) => {
+                    const parsedValue = Number(event.target.value)
+                    setUsersCount(Number.isFinite(parsedValue) && parsedValue >= 1 ? Math.floor(parsedValue) : 1)
+                  }}
+                  placeholder="Ej. 5"
+                />
+              </label>
+            ) : null}
           </div>
 
           <p className="inventory-threshold-note">
-            <em>Nota:</em> para 250 km o menos, el cotizador recomienda la suscripción mensual para comunidades pequeñas. Para más de 250 km y hasta 3,500 km recomienda la suscripción mensual para ciudades medias. Para más de 3,500 km recomienda la licencia permanente para ciudades grandes.
+            <em>Nota:</em> para 250 km o menos, el cotizador recomienda la suscripción mensual para comunidades pequeñas. Para más de 250 km y hasta 3,500 km recomienda la suscripción mensual para ciudades medias. Para más de 3,500 km se recomienda solicitar una propuesta de proyecto.
           </p>
 
-          {inventoryRecommendation ? (
+          {inventoryRecommendation && !isLargeCity ? (
             <div className="inventory-threshold-note">
               <p>
                 <em>Sugerencia:</em> para concluir <strong>{formatKmLimit(parsedKm)} km</strong> en <strong>{inventoryRecommendation.normalizedMonths} {inventoryRecommendation.normalizedMonths === 1 ? 'mes' : 'meses'}</strong>, la mejor combinación es <strong>{recommendedLicenseDetails?.licenseType}</strong> en modalidad <strong>{recommendedLicenseDetails?.licenseMode}</strong> con <strong>{inventoryRecommendation.recommendedUsers} {inventoryRecommendation.recommendedUsers === 1 ? 'usuario/licencia' : 'usuarios/licencias'}</strong>.
@@ -1531,15 +1519,27 @@ function InventreesPlanes() {
             </div>
           ) : null}
 
+          {isLargeCity ? (
+            <p className="inventory-threshold-note">
+              <em>Sugerencia:</em> Ciudad Grande: le hacemos una <Link className="inventory-highlight-link" to="/servicios/proyectos/inventrees-proyectos">propuesta</Link> de proyecto para su inventario.
+            </p>
+          ) : null}
+
           <div className={`inventory-quote-result inventory-quote-result-${quote.status}`}>
-            <p className="inventory-quote-title">{selectedModule.name}</p>
-            <p className="inventory-quote-plan">{selectedPlan.type}</p>
-            {quote.amountLabel ? <p className="inventory-quote-amount">{quote.amountLabel}</p> : null}
-            {quoteByUsers?.unitLabel ? <p className="inventory-quote-message">Precio unitario: {quoteByUsers.unitLabel}</p> : null}
-            {quoteByUsers?.totalLabel ? <p className="inventory-quote-message">Precio total por licencias: {quoteByUsers.totalLabel}</p> : null}
-            <p className="inventory-quote-message">Número de licencias / usuarios: {usersCount}</p>
-            <p className="inventory-quote-message">{quote.message ?? quote.detail}</p>
-            {selectedProjectCost ? (
+            {!isLargeCity ? <p className="inventory-quote-title">{selectedModule.name}</p> : null}
+            {!isLargeCity ? <p className="inventory-quote-plan">{selectedPlan.type}</p> : null}
+            {quote.amountLabel && selectedLicenseId !== 'monthly-medium-large' && !isLargeCity ? <p className="inventory-quote-amount">{quote.amountLabel}</p> : null}
+            {quoteByUsers?.unitLabel && !isLargeCity ? <p className="inventory-quote-message">Precio unitario: {quoteByUsers.unitLabel}</p> : null}
+            {quoteByUsers?.totalLabel && !isLargeCity ? <p className="inventory-quote-message">Precio total por licencias: {quoteByUsers.totalLabel}</p> : null}
+            {!isLargeCity ? <p className="inventory-quote-message">Número de licencias / usuarios: {usersCount}</p> : null}
+            {isLargeCity ? (
+              <p className="inventory-quote-message">
+                Ciudad Grande: le hacemos una <Link className="inventory-highlight-link" to="/servicios/proyectos/inventrees-proyectos">propuesta</Link> de proyecto para su inventario.
+              </p>
+            ) : (
+              <p className="inventory-quote-message">{quote.message ?? quote.detail}</p>
+            )}
+            {selectedProjectCost && !isLargeCity ? (
               <div className="inventory-quote-recommendation">
                 <p>Total general del proyecto con la selección actual:</p>
                 <p>Software: {currencyFormatter.format(selectedProjectCost.softwareTotal)}</p>
@@ -1548,7 +1548,7 @@ function InventreesPlanes() {
                 <p><strong>Total estimado del proyecto: {currencyFormatter.format(selectedProjectCost.grandTotal)}</strong></p>
               </div>
             ) : null}
-            {inventoryRecommendation && recommendedOption && recommendedQuoteByUsers ? (
+            {inventoryRecommendation && recommendedOption && recommendedQuoteByUsers && !isLargeCity ? (
               <div className="inventory-quote-recommendation">
                 <p>
                   Recomendación automática: {recommendedOption.label} con {inventoryRecommendation.recommendedUsers} {inventoryRecommendation.recommendedUsers === 1 ? 'usuario/licencia' : 'usuarios/licencias'} para terminar en {inventoryRecommendation.normalizedMonths} {inventoryRecommendation.normalizedMonths === 1 ? 'mes' : 'meses'}.
@@ -1587,7 +1587,7 @@ function InventreesPlanes() {
 
         <div className="section-heading compact">
           <p className="eyebrow">Módulos y licencias</p>
-          <h2>Cada módulo incluye tres modalidades de compra con precios y umbrales específicos.</h2>
+          <h2>Cada módulo incluye dos modalidades de compra con precios y umbrales específicos.</h2>
           <p className="inventory-currency-note">Todos los precios se expresan en USD (dólares americanos).</p>
         </div>
 
