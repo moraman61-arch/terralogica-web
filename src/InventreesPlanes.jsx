@@ -1649,7 +1649,7 @@ function InventreesPlanes() {
 
           {isLargeCity ? (
             <p className="inventory-threshold-note">
-              <em>Sugerencia:</em> Ciudad Grande: le hacemos una <Link className="inventory-highlight-link" to="/servicios/proyectos/inventrees-proyectos">propuesta</Link> de proyecto para su inventario.
+              <em>Sugerencia:</em> Ciudad Grande, le hacemos una <Link className="inventory-highlight-link" to="/servicios/proyectos/inventrees-proyectos">propuesta</Link> de proyecto para su inventario.
             </p>
           ) : null}
 

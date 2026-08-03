@@ -8,17 +8,22 @@ const inventreesProjectTypes = [
     image: '/inventrees/inventario-arbolado-publico.png',
     videoSrc: 'https://customer-kywq3a5r9m82v8jr.cloudflarestream.com/60ef438773ea1d3329bbc2573bcb4541/manifest/video.m3u8',
     postVideoTextBeforeLink:
-      'Diseñamos y desarrollamos su proyecto de inventario de arbolado por etapas, según sus necesidades y presupuesto. Para localidades pequeñas recomendamos la ',
-    postVideoLinkText: 'compra del software',
+      'Diseñamos y desarrollamos su proyecto de inventario de arbolado por etapas, según sus necesidades y presupuesto. Para localidades pequeñas y medias recomendamos la ',
+    postVideoLinkText: 'renta del software',
     postVideoLinkTo: '/servicios/software/inventrees',
     postVideoTextAfterLink:
-      ' a un costo muy reducido. Para las ciudades medias y grandes ofrecemos elaborar su inventario en un tiempo de hasta 1 año dependiendo de su extensión.',
+      ' a un costo muy reducido. Para las ciudades grandes ofrecemos elaborar su inventario en un tiempo de hasta 1 año dependiendo de su extensión.',
     featuredProjectsTitle: 'Proyectos Destacados',
     featuredProjectsImage: '/inventrees/arbolado-zmg-01.png',
     featuredProjectsImageAlt: 'Inventario de arbolado público urbano de la Zona Metropolitana de Guadalajara',
+    featuredProjectsSecondImage: '/inventrees/InventarioCDMX01.png',
+    featuredProjectsSecondImageAlt: 'INVENTREES CDMX | Portal de Seguimiento 1a. Etapa',
+    featuredProjectsSecondImageLink:
+      'https://ciga-unam.maps.arcgis.com/apps/instant/compare/index.html?appid=c592a4b7222042d58d22c8006c3bbfa6',
+    featuredProjectsSecondImageLabel: 'INVENTREES CDMX | Portal de Seguimiento 1a. Etapa',
     featuredProjectsNotes: [
       'En 2017, para el Gobierno de Jalisco, desarrollamos el inventario del arbolado público urbano de la Zona Metropolitana de Guadalajara, que abarcó siete municipios (haga clic en la imagen para abrir el geovisualizador del proyecto):',
-      'Actualmente estamos iniciando la Etapa de Geolocalización del proyecto de Inventario de Arbolado Público Urbano de la CDMX, que comprende las 16 alcaldias. En el 2027 realizaremos las Etapas de Medición y Caracterización. Se estima que el inventario incluirá alrededor de 3,000,000 de árboles.',
+      'Actualmente, Agosto de 2026, estamos iniciando la Etapa de Geolocalización del proyecto de Inventario de Arbolado Público Urbano de la CDMX, que comprende las 16 alcaldias y que concluirá en Diciembre de 2026. En el 2027 realizaremos las Etapas de Medición y Caracterización. Se estima que el inventario incluirá alrededor de 3,000,000 de árboles.',
     ],
     imageAlt: 'Imagen de referencia para inventario de arbolado publico',
     mediaLabel: 'Inventario y gestión de arbolado urbano.',
@@ -232,6 +237,21 @@ function InventreesProyectos() {
                             className="inventrees-featured-projects-image"
                             src={projectType.featuredProjectsImage}
                             alt={projectType.featuredProjectsImageAlt}
+                            loading="lazy"
+                          />
+                        </a>
+                      ) : null}
+                      {noteIndex === 1 && projectType.featuredProjectsSecondImage ? (
+                        <a
+                          href={projectType.featuredProjectsSecondImageLink}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          aria-label={projectType.featuredProjectsSecondImageLabel}
+                        >
+                          <img
+                            className="inventrees-featured-projects-image"
+                            src={projectType.featuredProjectsSecondImage}
+                            alt={projectType.featuredProjectsSecondImageAlt}
                             loading="lazy"
                           />
                         </a>
