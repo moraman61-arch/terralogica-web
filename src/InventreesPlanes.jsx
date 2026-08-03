@@ -689,6 +689,65 @@ function calculateInventoryRecommendation(km, months, usersCount) {
   }
 }
 
+function calculateOptimalInventoryDefaults(plan, km, maxMonths = 60) {
+  if (!plan || !Number.isFinite(km) || km <= 0) {
+    return null
+  }
+
+  if (plan.maxKm !== undefined && km > plan.maxKm) {
+    return null
+  }
+
+  if (plan.minKm !== undefined && (plan.minKmExclusive ? km <= plan.minKm : km < plan.minKm)) {
+    return null
+  }
+
+  const totalImages = Math.ceil(km * estimatedImagesPerKm)
+  const maxSearchMonths = Math.max(1, Math.floor(maxMonths))
+  let bestCandidate = null
+
+  for (let months = 1; months <= maxSearchMonths; months += 1) {
+    const requiredUsers = Math.max(1, Math.ceil(totalImages / (months * operatorImagesPerMonth)))
+    const quote = calculateQuote(plan, km, months)
+
+    if (quote.status !== 'valid') {
+      continue
+    }
+
+    const quoteByUsers = formatQuoteForLicenses(quote, requiredUsers)
+    const inventoryRecommendation = calculateInventoryRecommendation(km, months, requiredUsers)
+    const projectCost = calculateProjectCostBreakdown(quoteByUsers, months, requiredUsers, inventoryRecommendation)
+
+    if (!projectCost) {
+      continue
+    }
+
+    const candidate = {
+      months,
+      users: requiredUsers,
+      projectCost,
+    }
+
+    if (!bestCandidate) {
+      bestCandidate = candidate
+      continue
+    }
+
+    const currentTotal = candidate.projectCost.grandTotal
+    const bestTotal = bestCandidate.projectCost.grandTotal
+
+    if (
+      currentTotal < bestTotal ||
+      (Math.abs(currentTotal - bestTotal) < 0.0001 && candidate.users < bestCandidate.users) ||
+      (Math.abs(currentTotal - bestTotal) < 0.0001 && candidate.users === bestCandidate.users && candidate.months < bestCandidate.months)
+    ) {
+      bestCandidate = candidate
+    }
+  }
+
+  return bestCandidate
+}
+
 function getSuggestedUsersCount(km, months) {
   const recommendation = calculateInventoryRecommendation(km, months, 1)
   if (!recommendation || !Number.isFinite(recommendation.recommendedUsers)) {
@@ -866,9 +925,13 @@ function InventreesPlanes() {
     polygonRegistration.roadLengthKm >= 0
       ? polygonRegistration.roadLengthKm
       : null
-  const initialContractMonths = getDefaultInventoryMonths()
-  const initialUsersCount = getSuggestedUsersCount(initialKmValue, initialContractMonths)
   const initialRecommendedLicenseId = getRecommendedLicenseId(initialKmValue) ?? licenseOptions[0].id
+  const initialSelectedModule = plansByModule[0]
+  const initialSelectedPlan =
+    initialSelectedModule.plans.find((plan) => plan.licenseId === initialRecommendedLicenseId) ?? initialSelectedModule.plans[0]
+  const initialOptimalInventory = calculateOptimalInventoryDefaults(initialSelectedPlan, initialKmValue)
+  const initialContractMonths = initialOptimalInventory?.months ?? getDefaultInventoryMonths()
+  const initialUsersCount = initialOptimalInventory?.users ?? 1
 
   const [selectedModuleId, setSelectedModuleId] = useState(plansByModule[0].id)
   const [selectedLicenseId, setSelectedLicenseId] = useState(initialRecommendedLicenseId)
@@ -892,6 +955,20 @@ function InventreesPlanes() {
   const requirementsSectionRef = useRef(null)
   const lastPolygonUpdateRef = useRef(polygonRegistration.updatedAt ?? null)
 
+  const applyOptimalInventoryDefaults = (plan, nextKmValue) => {
+    const optimalInventory = calculateOptimalInventoryDefaults(plan, nextKmValue)
+
+    if (!optimalInventory) {
+      setContractMonths(getDefaultInventoryMonths())
+      setUsersCount(1)
+      return null
+    }
+
+    setContractMonths(optimalInventory.months)
+    setUsersCount(optimalInventory.users)
+    return optimalInventory
+  }
+
   const polygonStatusMessage = polygonStatus === 'registered' ? 'Polígono registrado' : 'Polígono no registrado'
 
   const handleKmChange = (event) => {
@@ -900,12 +977,47 @@ function InventreesPlanes() {
     const recommendedLicenseId = getRecommendedLicenseId(parsedNextKm)
 
     setKmValue(nextKmValue)
-    if (Number.isFinite(parsedNextKm) && parsedNextKm > 0) {
-      setUsersCount(getSuggestedUsersCount(parsedNextKm, contractMonths))
-    }
 
     if (recommendedLicenseId && recommendedLicenseId !== selectedLicenseId) {
       setSelectedLicenseId(recommendedLicenseId)
+    }
+
+    const currentModule = plansByModule.find((module) => module.id === selectedModuleId) ?? plansByModule[0]
+    const nextPlanId = recommendedLicenseId ?? selectedLicenseId
+    const nextPlan = currentModule.plans.find((plan) => plan.licenseId === nextPlanId) ?? currentModule.plans[0]
+
+    if (Number.isFinite(parsedNextKm) && parsedNextKm > 0) {
+      applyOptimalInventoryDefaults(nextPlan, parsedNextKm)
+    } else {
+      setContractMonths(getDefaultInventoryMonths())
+      setUsersCount(1)
+    }
+  }
+
+  const handleModuleChange = (event) => {
+    const nextModuleId = event.target.value
+    setSelectedModuleId(nextModuleId)
+
+    const nextModule = plansByModule.find((module) => module.id === nextModuleId) ?? plansByModule[0]
+    const parsedCurrentKm = parseKmInput(kmValue)
+    const nextLicenseId = getRecommendedLicenseId(parsedCurrentKm) ?? selectedLicenseId
+    const nextPlan = nextModule.plans.find((plan) => plan.licenseId === nextLicenseId) ?? nextModule.plans[0]
+
+    if (Number.isFinite(parsedCurrentKm) && parsedCurrentKm > 0) {
+      applyOptimalInventoryDefaults(nextPlan, parsedCurrentKm)
+    }
+  }
+
+  const handleLicenseChange = (event) => {
+    const nextLicenseId = event.target.value
+    setSelectedLicenseId(nextLicenseId)
+
+    const currentModule = plansByModule.find((module) => module.id === selectedModuleId) ?? plansByModule[0]
+    const parsedCurrentKm = parseKmInput(kmValue)
+    const nextPlan = currentModule.plans.find((plan) => plan.licenseId === nextLicenseId) ?? currentModule.plans[0]
+
+    if (Number.isFinite(parsedCurrentKm) && parsedCurrentKm > 0) {
+      applyOptimalInventoryDefaults(nextPlan, parsedCurrentKm)
     }
   }
 
@@ -1169,12 +1281,15 @@ function InventreesPlanes() {
         const formattedKm = formatInitialKmValue(Number(latestRegistration.roadLengthKm))
         const parsedLatestKm = Number(latestRegistration.roadLengthKm)
         const nextLicenseId = getRecommendedLicenseId(parsedLatestKm)
+        const nextModule = plansByModule.find((module) => module.id === selectedModuleId) ?? plansByModule[0]
+        const nextPlan = nextModule.plans.find((plan) => plan.licenseId === nextLicenseId) ?? nextModule.plans[0]
 
         setKmValue(formattedKm)
-        setUsersCount(getSuggestedUsersCount(parsedLatestKm, contractMonths))
         if (nextLicenseId) {
           setSelectedLicenseId(nextLicenseId)
         }
+
+        applyOptimalInventoryDefaults(nextPlan, parsedLatestKm)
       }
 
       if (latestRegistration.status !== 'registered') {
@@ -1209,7 +1324,7 @@ function InventreesPlanes() {
       window.removeEventListener('focus', handleWindowFocus)
       window.removeEventListener('storage', handleStorage)
     }
-  }, [contractMonths])
+  }, [contractMonths, selectedModuleId])
 
   const handleIntroVideoEnded = () => {
     setIsIntroVideoPlaying(true)
@@ -1354,7 +1469,7 @@ function InventreesPlanes() {
               ))}
             </div>
           </div>
-          <h2 className="inventory-hero-title">Crear y mantener su propio inventario de arbolado público urbano es ahora ¡muy fácil!</h2>
+          <h2 className="inventory-hero-title">Contar con un inventario de arbolado público urbano es ahora ¡muy fácil!</h2>
           <p className="hero-text inventory-hero-description">
             Estructura comercial flexible y equitativa para comunidades pequeñas, ciudades medias y ciudades grandes, con reglas claras por cobertura de km de vialidad. INVENTREES es solo para gobiernos locales y comunidades. No trabajamos con empresas.
           </p>
@@ -1418,7 +1533,7 @@ function InventreesPlanes() {
           <div className="inventory-quote-grid">
             <label className="inventory-field">
               <span>Módulo</span>
-              <select value={selectedModuleId} onChange={(event) => setSelectedModuleId(event.target.value)}>
+              <select value={selectedModuleId} onChange={handleModuleChange}>
                 {plansByModule.map((module) => (
                   <option key={module.id} value={module.id}>
                     {module.name}
@@ -1432,7 +1547,7 @@ function InventreesPlanes() {
               {isLargeCity ? (
                 <input type="text" value="Ciudad Grande" readOnly aria-readonly="true" />
               ) : (
-                <select value={selectedLicenseId} onChange={(event) => setSelectedLicenseId(event.target.value)}>
+                <select value={selectedLicenseId} onChange={handleLicenseChange}>
                   {licenseOptions.map((option) => (
                     <option key={option.id} value={option.id}>
                       {option.label}
@@ -1513,7 +1628,7 @@ function InventreesPlanes() {
           {inventoryRecommendation && !isLargeCity ? (
             <div className="inventory-threshold-note">
               <p>
-                <em>Sugerencia:</em> para concluir <strong>{formatKmLimit(parsedKm)} km</strong> en <strong>{inventoryRecommendation.normalizedMonths} {inventoryRecommendation.normalizedMonths === 1 ? 'mes' : 'meses'}</strong>, la mejor combinación es <strong>{recommendedLicenseDetails?.licenseType}</strong> en modalidad <strong>{recommendedLicenseDetails?.licenseMode}</strong> con <strong>{inventoryRecommendation.recommendedUsers} {inventoryRecommendation.recommendedUsers === 1 ? 'usuario/licencia' : 'usuarios/licencias'}</strong>.
+                <em>Sugerencia:</em> para concluir un inventario de <strong>{formatKmLimit(parsedKm)} km</strong> en <strong>{inventoryRecommendation.normalizedMonths} {inventoryRecommendation.normalizedMonths === 1 ? 'mes' : 'meses'}</strong>, la mejor combinación es <strong>{recommendedLicenseDetails?.licenseType}</strong> en modalidad <strong>{recommendedLicenseDetails?.licenseMode}</strong> con <strong>{inventoryRecommendation.recommendedUsers} {inventoryRecommendation.recommendedUsers === 1 ? 'usuario/licencia' : 'usuarios/licencias'}</strong>.
               </p>
               <p>
                 Esto supone <strong>{integerFormatter.format(inventoryRecommendation.totalImages)}</strong> imágenes en total, un ritmo de <strong>{integerFormatter.format(inventoryRecommendation.targetImagesPerMonth)}</strong> imágenes por mes y aproximadamente <strong>{decimalFormatter.format(inventoryRecommendation.targetKmPerMonth)} km/mes</strong> de avance operativo.
