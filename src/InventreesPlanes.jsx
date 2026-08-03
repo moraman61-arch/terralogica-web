@@ -1521,9 +1521,6 @@ function InventreesPlanes() {
               <p>
                 Google Maps API aportaría <strong>{integerFormatter.format(Math.min(inventoryRecommendation.totalImages, inventoryRecommendation.totalFreeImages))}</strong> imágenes gratuitas durante el proyecto; las imágenes extra estimadas serían <strong>{integerFormatter.format(inventoryRecommendation.extraImagesTotal)}</strong>, con un costo aproximado de <strong>{currencyFormatter.format(inventoryRecommendation.extraImagesCostTotal)}</strong> en todo el proyecto ({currencyFormatter.format(inventoryRecommendation.extraImagesCostPerMonth)} por mes en promedio).
               </p>
-              <p>
-                El costo operativo estimado para captura y procesamiento sería de <strong>{currencyFormatter.format(inventoryRecommendation.recommendedUsers * operatorMonthlyCost)}</strong> por mes en operarios, asumiendo <strong>{currencyFormatter.format(operatorMonthlyCost)}</strong> por usuario/licencia y una capacidad de <strong>{integerFormatter.format(operatorImagesPerMonth)}</strong> imágenes por mes por operario.
-              </p>
               {usersCount !== inventoryRecommendation.recommendedUsers ? (
                 <p
                   className={!inventoryRecommendation.selectedUsersEnough ? 'inventory-goal-alert' : undefined}
@@ -1552,17 +1549,17 @@ function InventreesPlanes() {
             {inventoryRecommendation && recommendedOption && recommendedQuoteByUsers && canShowCostEstimates ? (
               <div className="inventory-quote-recommendation">
                 <p>
-                  Recomendación automática: {recommendedOption.label} con {inventoryRecommendation.recommendedUsers} {inventoryRecommendation.recommendedUsers === 1 ? 'usuario/licencia' : 'usuarios/licencias'} para terminar en {inventoryRecommendation.normalizedMonths} {inventoryRecommendation.normalizedMonths === 1 ? 'mes' : 'meses'}.
+                  <strong>Recomendación automática: {recommendedOption.label} con {inventoryRecommendation.recommendedUsers} {inventoryRecommendation.recommendedUsers === 1 ? 'usuario/licencia' : 'usuarios/licencias'} para terminar en {inventoryRecommendation.normalizedMonths} {inventoryRecommendation.normalizedMonths === 1 ? 'mes' : 'meses'}.</strong>
                 </p>
-                {recommendedQuoteByUsers.unitLabel ? <p>Software recomendado, precio unitario: {recommendedQuoteByUsers.unitLabel}</p> : null}
-                {recommendedQuoteByUsers.totalLabel ? <p>Software recomendado, precio total: {recommendedQuoteByUsers.totalLabel}</p> : null}
+                {recommendedQuoteByUsers.unitLabel ? <p><strong>Software recomendado, precio unitario: {recommendedQuoteByUsers.unitLabel}</strong></p> : null}
+                {recommendedQuoteByUsers.totalLabel ? <p><strong>Software recomendado, precio total: {recommendedQuoteByUsers.totalLabel}</strong></p> : null}
                 {recommendedProjectCost ? (
                   <>
-                    <p>Total proyecto recomendado, software: {currencyFormatter.format(recommendedProjectCost.softwareTotal)}</p>
+                    <p aria-hidden="true">&nbsp;</p>
                     <p className="inventory-threshold-note"><em>Costos adicionales (a cargo del cliente):</em></p>
                     <p>Total proyecto recomendado, operarios: {currencyFormatter.format(recommendedProjectCost.operatorsTotalCost)} ({currencyFormatter.format(recommendedProjectCost.operatorsMonthlyCost)} por mes)</p>
                     <p>Total proyecto recomendado, Google Maps API extra: {currencyFormatter.format(recommendedProjectCost.googleTotalCost)} ({currencyFormatter.format(recommendedProjectCost.googleMonthlyCost)} por mes en promedio)</p>
-                    <p><strong>Total estimado del proyecto recomendado: {currencyFormatter.format(recommendedProjectCost.grandTotal)}</strong></p>
+                    <p>Total estimado del proyecto recomendado: {currencyFormatter.format(recommendedProjectCost.grandTotal)}</p>
                   </>
                 ) : null}
               </div>
