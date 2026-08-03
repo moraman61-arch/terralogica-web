@@ -14,11 +14,11 @@ const licenseOptions = [
   },
   {
     id: 'monthly-medium-large',
-    label: 'Suscripción mensual para ciudades medias y grandes',
+    label: 'Suscripción mensual para ciudades medias',
   },
   {
     id: 'permanent-medium-large',
-    label: 'Licencia permanente para ciudades medias y grandes',
+    label: 'Licencia permanente para ciudades grandes',
   },
 ]
 
@@ -41,28 +41,28 @@ const plansByModule = [
       },
       {
         licenseId: 'monthly-medium-large',
-        type: 'Suscripción mensual para ciudades medias y grandes',
+        type: 'Suscripción mensual para ciudades medias',
         price: 'USD 450.00 a USD 500.00 mensuales (descuento por meses)',
-        range: 'Más de 250 km y hasta 5,000 km',
+        range: 'Más de 250 km y hasta 3,500 km',
         mode: 'scaled-monthly',
         minAmount: 450,
         maxAmount: 500,
         startKm: 250,
-        endKm: 5000,
+        endKm: 3500,
         discountPerExtraMonth: 0.01,
         minKm: 250,
         minKmExclusive: true,
-        maxKm: 5000,
+        maxKm: 3500,
       },
       {
         licenseId: 'permanent-medium-large',
-        type: 'Licencia permanente para ciudades medias y grandes',
+        type: 'Licencia permanente para ciudades grandes',
         price: 'USD 1.20 por km de vialidad (tope USD 15,000.00)',
-        range: 'Más de 5,000 km',
+        range: 'Más de 3,500 km',
         mode: 'rate',
         rate: 1.2,
         maxAmount: 15000,
-        minKm: 5000,
+        minKm: 3500,
         minKmExclusive: true,
       },
     ],
@@ -85,28 +85,28 @@ const plansByModule = [
       },
       {
         licenseId: 'monthly-medium-large',
-        type: 'Suscripción mensual para ciudades medias y grandes',
+        type: 'Suscripción mensual para ciudades medias',
         price: 'USD 500.00 a USD 550.00 mensuales (descuento por meses)',
-        range: 'Más de 250 km y hasta 5,000 km',
+        range: 'Más de 250 km y hasta 3,500 km',
         mode: 'scaled-monthly',
         minAmount: 500,
         maxAmount: 550,
         startKm: 250,
-        endKm: 5000,
+        endKm: 3500,
         discountPerExtraMonth: 0.01,
         minKm: 250,
         minKmExclusive: true,
-        maxKm: 5000,
+        maxKm: 3500,
       },
       {
         licenseId: 'permanent-medium-large',
-        type: 'Licencia permanente para ciudades medias y grandes',
+        type: 'Licencia permanente para ciudades grandes',
         price: 'USD 1.70 por km de vialidad (tope USD 18,000.00)',
-        range: 'Más de 5,000 km',
+        range: 'Más de 3,500 km',
         mode: 'rate',
         rate: 1.7,
         maxAmount: 18000,
-        minKm: 5000,
+        minKm: 3500,
         minKmExclusive: true,
       },
     ],
@@ -129,28 +129,28 @@ const plansByModule = [
       },
       {
         licenseId: 'monthly-medium-large',
-        type: 'Suscripción mensual para ciudades medias y grandes',
+        type: 'Suscripción mensual para ciudades medias',
         price: 'USD 500.00 a USD 550.00 mensuales (descuento por meses)',
-        range: 'Más de 250 km y hasta 5,000 km',
+        range: 'Más de 250 km y hasta 3,500 km',
         mode: 'scaled-monthly',
         minAmount: 500,
         maxAmount: 550,
         startKm: 250,
-        endKm: 5000,
+        endKm: 3500,
         discountPerExtraMonth: 0.01,
         minKm: 250,
         minKmExclusive: true,
-        maxKm: 5000,
+        maxKm: 3500,
       },
       {
         licenseId: 'permanent-medium-large',
-        type: 'Licencia permanente para ciudades medias y grandes',
+        type: 'Licencia permanente para ciudades grandes',
         price: 'USD 1.70 por km de vialidad (tope USD 18,000.00)',
-        range: 'Más de 5,000 km',
+        range: 'Más de 3,500 km',
         mode: 'rate',
         rate: 1.7,
         maxAmount: 18000,
-        minKm: 5000,
+        minKm: 3500,
         minKmExclusive: true,
       },
     ],
@@ -188,11 +188,11 @@ const licenseRecommendationDetails = {
   },
   'monthly-medium-large': {
     licenseType: 'Suscripción mensual',
-    licenseMode: 'Ciudades medias y grandes',
+    licenseMode: 'Ciudades medias',
   },
   'permanent-medium-large': {
     licenseType: 'Licencia permanente',
-    licenseMode: 'Ciudades medias y grandes',
+    licenseMode: 'Ciudades grandes',
   },
 }
 
@@ -601,7 +601,7 @@ function getRecommendedLicenseId(km) {
     return 'small-monthly'
   }
 
-  if (km > 5000) {
+  if (km > 3500) {
     return 'permanent-medium-large'
   }
 
@@ -1381,7 +1381,7 @@ function InventreesPlanes() {
           </div>
           <h2 className="inventory-hero-title">Crear y mantener su propio inventario de arbolado público urbano es ahora ¡muy fácil!</h2>
           <p className="hero-text inventory-hero-description">
-            Estructura comercial flexible y equitativa para comunidades pequeñas, ciudades medias y grandes, con reglas claras por cobertura de km de vialidad. INVENTREES es solo para gobiernos locales y comunidades. No trabajamos con empresas.
+            Estructura comercial flexible y equitativa para comunidades pequeñas, ciudades medias y ciudades grandes, con reglas claras por cobertura de km de vialidad. INVENTREES es solo para gobiernos locales y comunidades. No trabajamos con empresas.
           </p>
         </div>
       </section>
@@ -1506,7 +1506,7 @@ function InventreesPlanes() {
           </div>
 
           <p className="inventory-threshold-note">
-            <em>Nota:</em> para 250 km o menos, el cotizador recomienda la suscripción mensual para comunidades pequeñas. Para más de 250 km y hasta 5,000 km recomienda la suscripción mensual para ciudades medias y grandes. Para más de 5,000 km recomienda la licencia permanente.
+            <em>Nota:</em> para 250 km o menos, el cotizador recomienda la suscripción mensual para comunidades pequeñas. Para más de 250 km y hasta 3,500 km recomienda la suscripción mensual para ciudades medias. Para más de 3,500 km recomienda la licencia permanente para ciudades grandes.
           </p>
 
           {inventoryRecommendation ? (
