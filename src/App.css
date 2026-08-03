@@ -1247,6 +1247,15 @@
   color: var(--heading);
 }
 
+.inventory-goal-alert {
+  color: #ff6b6b;
+  font-weight: 700;
+}
+
+.inventory-goal-alert strong {
+  color: #ff6b6b;
+}
+
 .inventory-quote-result {
   padding: 1.15rem 1.25rem;
   border-radius: 1rem;

@@ -917,7 +917,8 @@ function InventreesPlanes() {
   const quote = calculateQuote(selectedPlan, parsedKm, contractMonths)
   const quoteByUsers = formatQuoteForLicenses(quote, usersCount)
   const inventoryRecommendation = calculateInventoryRecommendation(parsedKm, contractMonths, usersCount)
-  const selectedProjectCost = calculateProjectCostBreakdown(quoteByUsers, contractMonths, usersCount, inventoryRecommendation)
+  const objectiveReached = !inventoryRecommendation || inventoryRecommendation.selectedUsersEnough
+  const canShowCostEstimates = !isLargeCity && objectiveReached
   const recommendedLicenseId = getRecommendedLicenseId(parsedKm)
   const recommendedOption = licenseOptions.find((option) => option.id === recommendedLicenseId) ?? null
   const recommendedLicenseDetails = recommendedLicenseId ? licenseRecommendationDetails[recommendedLicenseId] : null
@@ -1410,7 +1411,7 @@ function InventreesPlanes() {
       <section className="services-section inventory-plans-section">
         <div className="section-heading compact">
           <p className="eyebrow">Cotizador rápido</p>
-          <h2>Seleccione módulo, tipo de licencia y km de vialidad para obtener orientación inmediata.</h2>
+          <h2>Seleccione módulo, tipo de licencia y km de vialidad para obtener una estimación inmediata.</h2>
         </div>
 
         <div className="identity-card inventory-quote-card">
@@ -1450,7 +1451,13 @@ function InventreesPlanes() {
                   step="1"
                   value={contractMonths}
                   onChange={(event) => {
-                    const parsedValue = Number(event.target.value)
+                    const rawValue = event.target.value
+                    if (rawValue === '') {
+                      setContractMonths('')
+                      return
+                    }
+
+                    const parsedValue = Number(rawValue)
                     const nextMonths = Number.isFinite(parsedValue) && parsedValue >= 1 ? Math.floor(parsedValue) : 1
                     setContractMonths(nextMonths)
 
@@ -1484,7 +1491,13 @@ function InventreesPlanes() {
                   step="1"
                   value={usersCount}
                   onChange={(event) => {
-                    const parsedValue = Number(event.target.value)
+                    const rawValue = event.target.value
+                    if (rawValue === '') {
+                      setUsersCount('')
+                      return
+                    }
+
+                    const parsedValue = Number(rawValue)
                     setUsersCount(Number.isFinite(parsedValue) && parsedValue >= 1 ? Math.floor(parsedValue) : 1)
                   }}
                   placeholder="Ej. 5"
@@ -1512,8 +1525,11 @@ function InventreesPlanes() {
                 El costo operativo estimado para captura y procesamiento sería de <strong>{currencyFormatter.format(inventoryRecommendation.recommendedUsers * operatorMonthlyCost)}</strong> por mes en operarios, asumiendo <strong>{currencyFormatter.format(operatorMonthlyCost)}</strong> por usuario/licencia y una capacidad de <strong>{integerFormatter.format(operatorImagesPerMonth)}</strong> imágenes por mes por operario.
               </p>
               {usersCount !== inventoryRecommendation.recommendedUsers ? (
-                <p>
-                  Con el valor capturado de <strong>{usersCount}</strong> {usersCount === 1 ? 'usuario/licencia' : 'usuarios/licencias'}, {inventoryRecommendation.selectedUsersEnough ? 'sí se alcanza el ritmo objetivo' : `no se alcanza el ritmo objetivo; faltan ${inventoryRecommendation.userShortfall} ${inventoryRecommendation.userShortfall === 1 ? 'usuario/licencia' : 'usuarios/licencias'}` }.
+                <p
+                  className={!inventoryRecommendation.selectedUsersEnough ? 'inventory-goal-alert' : undefined}
+                  style={!inventoryRecommendation.selectedUsersEnough ? { color: '#ff6b6b', fontWeight: 700 } : undefined}
+                >
+                  Con el valor capturado de <strong style={!inventoryRecommendation.selectedUsersEnough ? { color: '#ff6b6b' } : undefined}>{usersCount}</strong> {usersCount === 1 ? 'usuario/licencia' : 'usuarios/licencias'}, {inventoryRecommendation.selectedUsersEnough ? 'sí se alcanza el ritmo objetivo' : `no se alcanza el ritmo objetivo; faltan ${inventoryRecommendation.userShortfall} ${inventoryRecommendation.userShortfall === 1 ? 'usuario/licencia' : 'usuarios/licencias'}`} {inventoryRecommendation.selectedUsersEnough ? null : '(Cambie el número de meses y/o el número de licencias)'}.
                 </p>
               ) : null}
             </div>
@@ -1528,27 +1544,12 @@ function InventreesPlanes() {
           <div className={`inventory-quote-result inventory-quote-result-${quote.status}`}>
             {!isLargeCity ? <p className="inventory-quote-title">{selectedModule.name}</p> : null}
             {!isLargeCity ? <p className="inventory-quote-plan">{selectedPlan.type}</p> : null}
-            {quote.amountLabel && selectedLicenseId !== 'monthly-medium-large' && !isLargeCity ? <p className="inventory-quote-amount">{quote.amountLabel}</p> : null}
-            {quoteByUsers?.unitLabel && !isLargeCity ? <p className="inventory-quote-message">Precio unitario: {quoteByUsers.unitLabel}</p> : null}
-            {quoteByUsers?.totalLabel && !isLargeCity ? <p className="inventory-quote-message">Precio total por licencias: {quoteByUsers.totalLabel}</p> : null}
+            {quote.amountLabel && selectedLicenseId !== 'monthly-medium-large' && canShowCostEstimates ? <p className="inventory-quote-amount">{quote.amountLabel}</p> : null}
+            {quoteByUsers?.unitLabel && canShowCostEstimates ? <p className="inventory-quote-message">Precio unitario: {quoteByUsers.unitLabel}</p> : null}
+            {quoteByUsers?.totalLabel && canShowCostEstimates ? <p className="inventory-quote-message">Precio total por licencias: {quoteByUsers.totalLabel}</p> : null}
             {!isLargeCity ? <p className="inventory-quote-message">Número de licencias / usuarios: {usersCount}</p> : null}
-            {isLargeCity ? (
-              <p className="inventory-quote-message">
-                Ciudad Grande: le hacemos una <Link className="inventory-highlight-link" to="/servicios/proyectos/inventrees-proyectos">propuesta</Link> de proyecto para su inventario.
-              </p>
-            ) : (
-              <p className="inventory-quote-message">{quote.message ?? quote.detail}</p>
-            )}
-            {selectedProjectCost && !isLargeCity ? (
-              <div className="inventory-quote-recommendation">
-                <p>Total general del proyecto con la selección actual:</p>
-                <p>Software: {currencyFormatter.format(selectedProjectCost.softwareTotal)}</p>
-                <p>Operarios: {currencyFormatter.format(selectedProjectCost.operatorsTotalCost)} ({currencyFormatter.format(selectedProjectCost.operatorsMonthlyCost)} por mes)</p>
-                <p>Google Maps API extra: {currencyFormatter.format(selectedProjectCost.googleTotalCost)} ({currencyFormatter.format(selectedProjectCost.googleMonthlyCost)} por mes en promedio)</p>
-                <p><strong>Total estimado del proyecto: {currencyFormatter.format(selectedProjectCost.grandTotal)}</strong></p>
-              </div>
-            ) : null}
-            {inventoryRecommendation && recommendedOption && recommendedQuoteByUsers && !isLargeCity ? (
+            {canShowCostEstimates ? <p className="inventory-quote-message">{quote.message ?? quote.detail}</p> : null}
+            {inventoryRecommendation && recommendedOption && recommendedQuoteByUsers && canShowCostEstimates ? (
               <div className="inventory-quote-recommendation">
                 <p>
                   Recomendación automática: {recommendedOption.label} con {inventoryRecommendation.recommendedUsers} {inventoryRecommendation.recommendedUsers === 1 ? 'usuario/licencia' : 'usuarios/licencias'} para terminar en {inventoryRecommendation.normalizedMonths} {inventoryRecommendation.normalizedMonths === 1 ? 'mes' : 'meses'}.
@@ -1558,6 +1559,7 @@ function InventreesPlanes() {
                 {recommendedProjectCost ? (
                   <>
                     <p>Total proyecto recomendado, software: {currencyFormatter.format(recommendedProjectCost.softwareTotal)}</p>
+                    <p className="inventory-threshold-note"><em>Costos adicionales (a cargo del cliente):</em></p>
                     <p>Total proyecto recomendado, operarios: {currencyFormatter.format(recommendedProjectCost.operatorsTotalCost)} ({currencyFormatter.format(recommendedProjectCost.operatorsMonthlyCost)} por mes)</p>
                     <p>Total proyecto recomendado, Google Maps API extra: {currencyFormatter.format(recommendedProjectCost.googleTotalCost)} ({currencyFormatter.format(recommendedProjectCost.googleMonthlyCost)} por mes en promedio)</p>
                     <p><strong>Total estimado del proyecto recomendado: {currencyFormatter.format(recommendedProjectCost.grandTotal)}</strong></p>
