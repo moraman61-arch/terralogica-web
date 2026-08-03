@@ -1556,8 +1556,8 @@ function InventreesPlanes() {
                 {recommendedProjectCost ? (
                   <>
                     <p aria-hidden="true">&nbsp;</p>
-                    <p className="inventory-threshold-note"><em>Costos adicionales (a cargo del cliente):</em></p>
-                    <p>Total proyecto recomendado, operarios: {currencyFormatter.format(recommendedProjectCost.operatorsTotalCost)} ({currencyFormatter.format(recommendedProjectCost.operatorsMonthlyCost)} por mes)</p>
+                    <p className="inventory-threshold-note"><em>Costos adicionales a considerar (a cargo del cliente):</em></p>
+                    <p>Total proyecto recomendado, operarios: {currencyFormatter.format(recommendedProjectCost.operatorsTotalCost)} ({currencyFormatter.format(recommendedProjectCost.operatorsMonthlyCost)} por mes; si ya cuenta con operarios el costo es $0.00)</p>
                     <p>Total proyecto recomendado, Google Maps API extra: {currencyFormatter.format(recommendedProjectCost.googleTotalCost)} ({currencyFormatter.format(recommendedProjectCost.googleMonthlyCost)} por mes en promedio)</p>
                     <p>Total estimado del proyecto recomendado: {currencyFormatter.format(recommendedProjectCost.grandTotal)}</p>
                   </>
@@ -1587,7 +1587,7 @@ function InventreesPlanes() {
         <div className="section-heading compact">
           <p className="eyebrow">Módulos y licencias</p>
           <h2>Cada módulo incluye dos modalidades de compra con precios y umbrales específicos.</h2>
-          <p className="inventory-currency-note">Todos los precios se expresan en USD (dólares americanos).</p>
+          <p className="inventory-currency-note">Todos los precios se expresan en USD (dólares de los Estados Unidos de América).</p>
         </div>
 
         <div className="inventory-module-grid">
