@@ -1,6 +1,20 @@
 const allowedExtensions = ['.zip', '.kml', '.geojson', '.json']
 const maxFileSizeBytes = 15 * 1024 * 1024
 
+async function fetchWithTimeout(url, options, timeoutMs = 10000) {
+  const controller = new AbortController()
+  const timeoutId = setTimeout(() => controller.abort(), timeoutMs)
+
+  try {
+    return await fetch(url, {
+      ...options,
+      signal: controller.signal,
+    })
+  } finally {
+    clearTimeout(timeoutId)
+  }
+}
+
 function jsonResponse(payload, status = 200, corsOrigin = '*') {
   return new Response(JSON.stringify(payload), {
     status,
@@ -100,27 +114,39 @@ async function sendNotificationEmail(payload, env) {
 
   const notifyFrom = env.NOTIFY_FROM || 'Cotizador INVENTREES <onboarding@resend.dev>'
 
-  const emailBody = buildNotificationText(payload)
-  const response = await fetch('https://api.resend.com/emails', {
-    method: 'POST',
-    headers: {
-      Authorization: `Bearer ${env.RESEND_API_KEY}`,
-      'Content-Type': 'application/json',
-    },
-    body: JSON.stringify({
-      from: notifyFrom,
-      to: [env.NOTIFY_TO],
-      subject: `Nueva solicitud de cotizacion INVENTREES | ${payload.nombre}`,
-      text: emailBody,
-    }),
-  })
+  try {
+    const emailBody = buildNotificationText(payload)
+    const response = await fetchWithTimeout(
+      'https://api.resend.com/emails',
+      {
+        method: 'POST',
+        headers: {
+          Authorization: `Bearer ${env.RESEND_API_KEY}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          from: notifyFrom,
+          to: [env.NOTIFY_TO],
+          subject: `Nueva solicitud de cotizacion INVENTREES | ${payload.nombre}`,
+          text: emailBody,
+        }),
+      },
+      10000,
+    )
 
-  if (!response.ok) {
-    const detail = await response.text()
-    return { ok: false, reason: 'resend_error', detail }
+    if (!response.ok) {
+      const detail = await response.text()
+      return { ok: false, reason: 'resend_error', detail }
+    }
+
+    return { ok: true }
+  } catch (error) {
+    if (error instanceof Error && error.name === 'AbortError') {
+      return { ok: false, reason: 'resend_timeout' }
+    }
+
+    return { ok: false, reason: 'resend_network_error' }
   }
-
-  return { ok: true }
 }
 
 export async function onRequestOptions(context) {
