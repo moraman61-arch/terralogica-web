@@ -1,0 +1,17 @@
+name = "terralogics"
+compatibility_date = "2026-08-04"
+pages_build_output_dir = "dist"
+
+[vars]
+ALLOWED_ORIGIN = "https://www.terralogica.mx"
+NOTIFY_TO = "info@terralogica.mx"
+NOTIFY_FROM = "Cotizador INVENTREES <noreply@terralogica.mx>"
+
+[[d1_databases]]
+binding = "QUOTES_DB"
+database_name = "terralogics_quotes"
+database_id = "REEMPLAZAR_CON_DATABASE_ID"
+
+[[r2_buckets]]
+binding = "QUOTE_FILES"
+bucket_name = "terralogics-quote-files"

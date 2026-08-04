@@ -1,5 +1,126 @@
-import { Link } from 'react-router-dom'
+import { useEffect, useRef, useState } from 'react'
+import { Link, useLocation } from 'react-router-dom'
 import './App.css'
+
+const quoteRecipientEmail = 'info@terralogica.mx'
+const polygonStorageKey = 'inventrees-polygon-registration'
+const quoteApiUrl = (import.meta.env.VITE_QUOTE_API_URL || '/api/quote').trim()
+
+const quoteServicePanels = [
+  {
+    id: 'geolocalizacion',
+    title: 'Geolocalización',
+    options: [
+      { id: 'geo-arboles-vivos', label: 'Geolocalización de árboles vivos' },
+      { id: 'geo-cepas-vacantes', label: 'Geolocalización de cepas vacantes' },
+      { id: 'geo-tocones', label: 'Geolocalización de tocones' },
+      { id: 'geo-arboles-muertos', label: 'Geolocalización de árboles muertos' },
+    ],
+  },
+  {
+    id: 'medicion',
+    title: 'Medición',
+    options: [
+      { id: 'med-inclinacion', label: 'Medición de inclinación' },
+      { id: 'med-dap', label: 'Medición de DAP (1.30 m)' },
+      { id: 'med-copa', label: 'Medición de copa' },
+      { id: 'med-altura', label: 'Medición de altura' },
+      { id: 'med-desbalance-copa', label: 'Estimación de desbalance de copa' },
+    ],
+  },
+  {
+    id: 'caracterizacion',
+    title: 'Caracterización',
+    options: [
+      { id: 'car-ia-especie', label: 'Identificación de especie con IA' },
+      { id: 'car-estructura', label: 'Estructura del árbol' },
+      { id: 'car-mantenimiento', label: 'Indicación de mantenimiento' },
+      { id: 'car-desmoche', label: 'Indicación de desmoche' },
+      {
+        id: 'car-interferencia',
+        label: 'Indicación de interferencia con infraestructura aérea y terrestre',
+      },
+    ],
+  },
+]
+
+const supportedPolygonExtensions = ['.zip', '.kml', '.geojson', '.json']
+
+function readPolygonRegistration() {
+  try {
+    const rawValue = window.localStorage.getItem(polygonStorageKey)
+    if (!rawValue) {
+      return {
+        status: 'pending',
+        polygon: null,
+        polygonAttachment: null,
+        polygonFileName: null,
+      }
+    }
+
+    const parsedValue = JSON.parse(rawValue)
+    return {
+      ...parsedValue,
+      status: parsedValue?.status === 'registered' ? 'registered' : 'pending',
+      polygon: Array.isArray(parsedValue?.polygon) ? parsedValue.polygon : null,
+      polygonAttachment: parsedValue?.polygonAttachment ?? null,
+      polygonFileName: parsedValue?.polygonFileName ?? null,
+    }
+  } catch {
+    return {
+      status: 'pending',
+      polygon: null,
+      polygonAttachment: null,
+      polygonFileName: null,
+    }
+  }
+}
+
+function persistPolygonRegistration(payload) {
+  window.localStorage.setItem(polygonStorageKey, JSON.stringify(payload))
+}
+
+function attachmentToFile(attachment) {
+  if (!attachment) {
+    return null
+  }
+
+  if (attachment.encoding === 'base64') {
+    const binaryString = window.atob(attachment.data)
+    const bytes = new Uint8Array(binaryString.length)
+    for (let index = 0; index < binaryString.length; index += 1) {
+      bytes[index] = binaryString.charCodeAt(index)
+    }
+    return new File([bytes], attachment.name, { type: attachment.mimeType })
+  }
+
+  return new File([attachment.data], attachment.name, { type: attachment.mimeType })
+}
+
+function buildAttachmentFileFromRegistration(registration) {
+  return attachmentToFile(registration?.polygonAttachment)
+}
+
+function getRegisteredPolygonFileName(registration) {
+  if (typeof registration?.polygonFileName === 'string' && registration.polygonFileName.trim()) {
+    return registration.polygonFileName.trim()
+  }
+
+  if (typeof registration?.polygonAttachment?.name === 'string' && registration.polygonAttachment.name.trim()) {
+    return registration.polygonAttachment.name.trim()
+  }
+
+  if (registration?.status === 'registered' && Array.isArray(registration?.polygon) && registration.polygon.length >= 3) {
+    return 'inventrees-poligono.kml'
+  }
+
+  return null
+}
+
+function isSupportedPolygonFile(fileName) {
+  const lowerName = fileName.toLowerCase()
+  return supportedPolygonExtensions.some((extension) => lowerName.endsWith(extension))
+}
 
 const inventreesProjectTypes = [
   {
@@ -108,6 +229,274 @@ const inventreesProjectTypes = [
 ]
 
 function InventreesProyectos() {
+  const location = useLocation()
+  const [initialPolygonRegistration] = useState(() => readPolygonRegistration())
+  const initialRegisteredPolygonFileName = getRegisteredPolygonFileName(initialPolygonRegistration)
+  const polygonUploadInputRef = useRef(null)
+  const [polygonFile, setPolygonFile] = useState(() => buildAttachmentFileFromRegistration(initialPolygonRegistration))
+  const [registeredPolygonFileName, setRegisteredPolygonFileName] = useState(initialRegisteredPolygonFileName)
+  const [polygonStatus, setPolygonStatus] = useState(() => initialPolygonRegistration.status)
+  const [uploadStatus, setUploadStatus] = useState(() => (initialRegisteredPolygonFileName ? 'success' : 'idle'))
+  const [uploadMessage, setUploadMessage] = useState(() =>
+    initialRegisteredPolygonFileName ? `Archivo registrado disponible: ${initialRegisteredPolygonFileName}.` : 'No hay archivo cargado.',
+  )
+  const [quoteNotice, setQuoteNotice] = useState(null)
+  const [isSubmittingQuote, setIsSubmittingQuote] = useState(false)
+  const [selectedServices, setSelectedServices] = useState(() => ({
+    geolocalizacion: [],
+    medicion: [],
+    caracterizacion: [],
+  }))
+  const [clientForm, setClientForm] = useState({
+    nombre: '',
+    puestoFuncion: '',
+    dependenciaGobierno: '',
+    telefonoContacto: '',
+    correoElectronico: '',
+  })
+
+  useEffect(() => {
+    if (!location.hash) {
+      return
+    }
+
+    const targetId = location.hash.replace('#', '')
+    if (!targetId) {
+      return
+    }
+
+    const timeoutId = window.setTimeout(() => {
+      const targetElement = document.getElementById(targetId)
+      if (targetElement) {
+        targetElement.scrollIntoView({ behavior: 'smooth', block: 'start' })
+      }
+    }, 40)
+
+    return () => window.clearTimeout(timeoutId)
+  }, [location.hash])
+
+  const handlePolygonFileUpload = (event) => {
+    const selectedFile = event.target.files?.[0]
+
+    if (!selectedFile) {
+      return
+    }
+
+    if (!isSupportedPolygonFile(selectedFile.name)) {
+      setPolygonFile(null)
+      setPolygonStatus('pending')
+      setUploadStatus('error')
+      setUploadMessage('Formato no soportado. Use SHP en ZIP, KML o GeoJSON.')
+      setQuoteNotice(null)
+      return
+    }
+
+    setPolygonFile(selectedFile)
+    setRegisteredPolygonFileName(selectedFile.name)
+    setPolygonStatus('registered')
+    setUploadStatus('success')
+    setUploadMessage(`Archivo registrado disponible: ${selectedFile.name}.`)
+    setQuoteNotice(null)
+  }
+
+  const handleClearPolygon = () => {
+    const previousRegistration = readPolygonRegistration()
+    persistPolygonRegistration({
+      ...previousRegistration,
+      status: 'pending',
+      polygon: null,
+      roadLengthKm: null,
+      polygonAttachment: null,
+      polygonFileName: null,
+      polygonSource: null,
+      updatedAt: new Date().toISOString(),
+    })
+
+    setPolygonFile(null)
+    setRegisteredPolygonFileName(null)
+    setPolygonStatus('pending')
+    setUploadStatus('idle')
+    setUploadMessage('No hay archivo cargado.')
+    setQuoteNotice(null)
+
+    if (polygonUploadInputRef.current) {
+      polygonUploadInputRef.current.value = ''
+    }
+  }
+
+  const handleServiceOptionToggle = (panelId, optionId) => {
+    setSelectedServices((previousValue) => {
+      const panelSelections = previousValue[panelId] ?? []
+      const alreadySelected = panelSelections.includes(optionId)
+
+      return {
+        ...previousValue,
+        [panelId]: alreadySelected
+          ? panelSelections.filter((item) => item !== optionId)
+          : [...panelSelections, optionId],
+      }
+    })
+  }
+
+  const handleClientFieldChange = (event) => {
+    const { name, value } = event.target
+    setClientForm((previousValue) => ({
+      ...previousValue,
+      [name]: value,
+    }))
+  }
+
+  const buildPanelSelectionSummary = (panel) => {
+    const selectedOptionIds = selectedServices[panel.id] ?? []
+    const selectedLabels = panel.options
+      .filter((option) => selectedOptionIds.includes(option.id))
+      .map((option) => option.label)
+
+    if (!selectedLabels.length) {
+      return `${panel.title}: Sin selección`
+    }
+
+    return `${panel.title}: ${selectedLabels.join(', ')}`
+  }
+
+  const buildSelectedServicesPayload = () => {
+    return quoteServicePanels.map((panel) => {
+      const selectedOptionIds = selectedServices[panel.id] ?? []
+      const selectedOptions = panel.options
+        .filter((option) => selectedOptionIds.includes(option.id))
+        .map((option) => option.label)
+
+      return {
+        id: panel.id,
+        title: panel.title,
+        selectedOptions,
+      }
+    })
+  }
+
+  const handleRequestQuote = async (event) => {
+    event.preventDefault()
+
+    if (isSubmittingQuote) {
+      return
+    }
+
+    if (!polygonFile) {
+      setQuoteNotice({
+        type: 'error',
+        text: 'Debe registrar el archivo del polígono antes de solicitar la cotización.',
+      })
+      return
+    }
+
+    const requiredFields = [
+      clientForm.nombre,
+      clientForm.puestoFuncion,
+      clientForm.dependenciaGobierno,
+      clientForm.telefonoContacto,
+      clientForm.correoElectronico,
+    ]
+
+    if (requiredFields.some((field) => !field.trim())) {
+      setQuoteNotice({
+        type: 'error',
+        text: 'Complete todos los datos del cliente para preparar la solicitud.',
+      })
+      return
+    }
+
+    const emailLooksValid = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(clientForm.correoElectronico.trim())
+    if (!emailLooksValid) {
+      setQuoteNotice({
+        type: 'error',
+        text: 'Ingrese un correo electrónico válido.',
+      })
+      return
+    }
+
+    const selectedOptionsCount = Object.values(selectedServices).reduce(
+      (total, currentPanelSelections) => total + currentPanelSelections.length,
+      0,
+    )
+
+    const subject = 'Solicitud de Cotización - Proyecto INVENTREES'
+    const bodyLines = [
+      'Hola,',
+      '',
+      'Solicito una cotización de proyecto con la siguiente información:',
+      '',
+      'Datos del cliente:',
+      `Nombre: ${clientForm.nombre.trim()}`,
+      `Cargo o función: ${clientForm.puestoFuncion.trim()}`,
+      `Dependencia de gobierno: ${clientForm.dependenciaGobierno.trim()}`,
+      `Teléfono de contacto: ${clientForm.telefonoContacto.trim()}`,
+      `Correo electrónico: ${clientForm.correoElectronico.trim()}`,
+      '',
+      'Paneles seleccionados:',
+      ...quoteServicePanels.map((panel) => buildPanelSelectionSummary(panel)),
+      '',
+      `Total de opciones seleccionadas: ${selectedOptionsCount}`,
+      `Archivo del polígono: ${polygonFile.name}`,
+      '',
+      'Saludos.',
+    ]
+
+    const body = bodyLines.join('\n')
+
+    const formData = new FormData()
+    formData.append('nombre', clientForm.nombre.trim())
+    formData.append('cargoFuncion', clientForm.puestoFuncion.trim())
+    formData.append('dependenciaGobierno', clientForm.dependenciaGobierno.trim())
+    formData.append('telefonoContacto', clientForm.telefonoContacto.trim())
+    formData.append('correoElectronico', clientForm.correoElectronico.trim())
+    formData.append('polygonFile', polygonFile, polygonFile.name)
+    formData.append('selectedServices', JSON.stringify(buildSelectedServicesPayload()))
+    formData.append('selectedOptionsCount', String(selectedOptionsCount))
+    formData.append('subjectPreview', subject)
+    formData.append('bodyPreview', body)
+    formData.append('recipientPreview', quoteRecipientEmail)
+    formData.append('sourcePage', '/servicios/proyectos/inventrees-proyectos#cotizacion-proyecto')
+
+    setIsSubmittingQuote(true)
+
+    try {
+      const response = await fetch(quoteApiUrl, {
+        method: 'POST',
+        body: formData,
+      })
+
+      const responseData = await response.json().catch(() => null)
+
+      if (!response.ok) {
+        const message =
+          typeof responseData?.error === 'string' && responseData.error.trim()
+            ? responseData.error
+            : 'No fue posible enviar la solicitud en este momento.'
+
+        setQuoteNotice({
+          type: 'error',
+          text: message,
+        })
+        return
+      }
+
+      setQuoteNotice({
+        type: 'success',
+        text: 'Solicitud enviada. Terralógica recibió su información y el archivo del polígono.',
+      })
+    } catch {
+      setQuoteNotice({
+        type: 'error',
+        text: 'No fue posible conectar con el servicio de cotización. Intente nuevamente.',
+      })
+    } finally {
+      setIsSubmittingQuote(false)
+    }
+  }
+
+  const polygonStatusMessage = polygonStatus === 'registered' ? 'Polígono registrado' : 'Polígono no registrado'
+  const filePickerLabel = polygonFile?.name || registeredPolygonFileName || 'Ningún archivo seleccionado'
+
   return (
     <main className="page-shell subpage-shell">
       <section className="hero-section subpage-hero">
@@ -218,6 +607,158 @@ function InventreesProyectos() {
                   )}
                   {projectType.postVideoTextAfterLink}
                 </p>
+              ) : null}
+
+              {projectType.slug === 'arbolado-publico' ? (
+                <div id="cotizacion-proyecto" className="inventrees-quote-project-block">
+                  <h4 className="inventrees-quote-project-title">Cotización de Proyecto</h4>
+
+                  <div className="identity-card inventory-requirements-card inventrees-quote-requirements-card">
+                    <p>
+                      El cliente debe proporcionar una capa de polígonos que delimite el área para la cual se solicita la licencia.
+                    </p>
+                    <p>
+                      Formatos aceptados: SHP (archivos comprimidos en ZIP), KML o GeoJSON. También lo puede generar <Link className="inventory-highlight-link" to="/servicios/software/inventrees/poligono" state={{ returnTo: '/servicios/proyectos/inventrees-proyectos', returnHash: 'cotizacion-proyecto' }}>AQUÍ</Link>.
+                    </p>
+
+                    <div className="inventory-file-upload">
+                      <span>Subir archivo del polígono</span>
+                      <div className="inventory-file-picker">
+                        <button
+                          type="button"
+                          className="inventory-file-picker-button"
+                          onClick={() => polygonUploadInputRef.current?.click()}
+                        >
+                          Elegir archivo
+                        </button>
+                        <span className="inventory-file-picker-name">{filePickerLabel}</span>
+                      </div>
+                      <input
+                        ref={polygonUploadInputRef}
+                        id="project-polygon-upload"
+                        className="inventory-file-upload-input"
+                        type="file"
+                        accept=".zip,.kml,.geojson,.json"
+                        onChange={handlePolygonFileUpload}
+                      />
+                    </div>
+
+                    <p className={`inventory-upload-message inventory-upload-message-${uploadStatus}`}>{uploadMessage}</p>
+
+                    <div className="inventory-polygon-actions">
+                      <div className={`inventory-polygon-status inventory-polygon-status-${polygonStatus}`}>
+                        {polygonStatusMessage}
+                      </div>
+                      {polygonStatus === 'registered' ? (
+                        <button type="button" className="inventory-clear-polygon-btn" onClick={handleClearPolygon}>
+                          Borrar polígono
+                        </button>
+                      ) : null}
+                    </div>
+                  </div>
+
+                  <p className="inventrees-quote-feature-panels-intro">
+                    Pro favor seleccione los atributos que necesita incluir en su inventario.
+                  </p>
+
+                  <div className="inventrees-quote-feature-panels" aria-label="Selección de servicios para cotización">
+                    {quoteServicePanels.map((panel) => {
+                      const panelSelections = selectedServices[panel.id] ?? []
+                      return (
+                        <article key={panel.id} className="inventrees-quote-feature-panel">
+                          <h5>{panel.title}</h5>
+                          <ul>
+                            {panel.options.map((option) => (
+                              <li key={option.id}>
+                                <label>
+                                  <input
+                                    type="checkbox"
+                                    checked={panelSelections.includes(option.id)}
+                                    onChange={() => handleServiceOptionToggle(panel.id, option.id)}
+                                  />
+                                  <span>{option.label}</span>
+                                </label>
+                              </li>
+                            ))}
+                          </ul>
+                        </article>
+                      )
+                    })}
+                  </div>
+
+                  <form className="inventrees-quote-client-form" onSubmit={handleRequestQuote}>
+                    <h5>Datos del cliente</h5>
+                    <div className="inventrees-quote-client-form-grid">
+                      <label className="inventory-field">
+                        <span>Nombre</span>
+                        <input
+                          type="text"
+                          name="nombre"
+                          value={clientForm.nombre}
+                          onChange={handleClientFieldChange}
+                          autoComplete="name"
+                          required
+                        />
+                      </label>
+
+                      <label className="inventory-field">
+                        <span>Cargo o función</span>
+                        <input
+                          type="text"
+                          name="puestoFuncion"
+                          value={clientForm.puestoFuncion}
+                          onChange={handleClientFieldChange}
+                          required
+                        />
+                      </label>
+
+                      <label className="inventory-field">
+                        <span>Dependencia de gobierno</span>
+                        <input
+                          type="text"
+                          name="dependenciaGobierno"
+                          value={clientForm.dependenciaGobierno}
+                          onChange={handleClientFieldChange}
+                          required
+                        />
+                      </label>
+
+                      <label className="inventory-field">
+                        <span>Teléfono de contacto</span>
+                        <input
+                          type="tel"
+                          name="telefonoContacto"
+                          value={clientForm.telefonoContacto}
+                          onChange={handleClientFieldChange}
+                          autoComplete="tel"
+                          required
+                        />
+                      </label>
+
+                      <label className="inventory-field">
+                        <span>Correo electrónico</span>
+                        <input
+                          type="email"
+                          name="correoElectronico"
+                          value={clientForm.correoElectronico}
+                          onChange={handleClientFieldChange}
+                          autoComplete="email"
+                          required
+                        />
+                      </label>
+                    </div>
+
+                    <button type="submit" className="inventrees-quote-submit-btn" disabled={isSubmittingQuote}>
+                      {isSubmittingQuote ? 'Enviando solicitud...' : 'Solicitar Cotización'}
+                    </button>
+
+                    {quoteNotice ? (
+                      <p className={`inventrees-quote-notice inventrees-quote-notice-${quoteNotice.type}`}>
+                        {quoteNotice.text}
+                      </p>
+                    ) : null}
+                  </form>
+                </div>
               ) : null}
 
               {projectType.featuredProjectsTitle ? (

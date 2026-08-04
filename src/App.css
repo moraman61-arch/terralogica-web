@@ -1070,6 +1070,157 @@
   transform: translateY(-1px);
 }
 
+.inventrees-quote-project-block {
+  margin-top: 1.4rem;
+  display: grid;
+  gap: 0.95rem;
+}
+
+.inventrees-quote-project-title {
+  margin: 0;
+  color: #f6f8ff;
+  font-size: 1.24rem;
+  text-align: center;
+}
+
+.inventrees-quote-requirements-card {
+  max-width: none;
+}
+
+.inventrees-quote-requirements-card .inventory-file-upload span {
+  text-align: left;
+}
+
+.inventrees-quote-feature-panels {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 0.9rem;
+}
+
+.inventrees-quote-feature-panels-intro {
+  margin: 0;
+  text-align: center;
+  color: var(--muted-strong);
+}
+
+.inventrees-quote-feature-panel {
+  padding: 0.9rem 0.95rem;
+  border: 1px solid rgba(146, 198, 255, 0.24);
+  border-radius: 1rem;
+  background:
+    radial-gradient(circle at top right, rgba(56, 144, 245, 0.15), transparent 52%),
+    linear-gradient(180deg, rgba(255, 255, 255, 0.03), rgba(255, 255, 255, 0.01));
+}
+
+.inventrees-quote-feature-panel h5 {
+  margin: 0;
+  color: #f6f8ff;
+  font-size: 1.04rem;
+  text-align: center;
+}
+
+.inventrees-quote-feature-panel ul {
+  margin: 0.75rem 0 0;
+  padding: 0;
+  list-style: none;
+  display: grid;
+  gap: 0.52rem;
+}
+
+.inventrees-quote-feature-panel li label {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  align-items: start;
+  gap: 0.5rem;
+  color: var(--muted-strong);
+  line-height: 1.34;
+  cursor: pointer;
+}
+
+.inventrees-quote-feature-panel li input[type='checkbox'] {
+  margin-top: 0.2rem;
+  width: 1.02rem;
+  height: 1.02rem;
+  accent-color: #3ea5ff;
+}
+
+.inventrees-quote-client-form {
+  padding: 1rem;
+  border: 1px solid rgba(146, 198, 255, 0.24);
+  border-radius: 1rem;
+  background: rgba(7, 19, 47, 0.48);
+  display: grid;
+  gap: 0.8rem;
+}
+
+.inventrees-quote-client-form h5 {
+  margin: 0;
+  color: #f6f8ff;
+  text-align: center;
+  font-size: 1.03rem;
+}
+
+.inventrees-quote-client-form-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.8rem;
+}
+
+.inventrees-quote-client-form-grid .inventory-field {
+  margin: 0;
+}
+
+.inventrees-quote-client-form-grid .inventory-field:last-child {
+  grid-column: 1 / -1;
+}
+
+.inventrees-quote-submit-btn {
+  justify-self: center;
+  min-height: 2.65rem;
+  padding: 0.45rem 1.2rem;
+  border-radius: 999px;
+  border: 1px solid rgba(93, 211, 130, 0.42);
+  background: rgba(15, 69, 42, 0.7);
+  color: #dcffe7;
+  font: inherit;
+  font-weight: 700;
+  cursor: pointer;
+  transition: border-color 160ms ease, background 160ms ease, transform 160ms ease;
+}
+
+.inventrees-quote-submit-btn:hover,
+.inventrees-quote-submit-btn:focus-visible {
+  border-color: rgba(129, 233, 165, 0.62);
+  background: rgba(21, 90, 54, 0.78);
+  transform: translateY(-1px);
+}
+
+.inventrees-quote-submit-btn:disabled {
+  opacity: 0.72;
+  cursor: wait;
+  transform: none;
+}
+
+.inventrees-quote-notice {
+  margin: 0;
+  padding: 0.7rem 0.85rem;
+  border-radius: 0.75rem;
+  border: 1px solid rgba(146, 198, 255, 0.25);
+  color: #dbe9ff;
+  background: rgba(7, 19, 47, 0.62);
+  text-align: center;
+}
+
+.inventrees-quote-notice-success {
+  border-color: rgba(93, 211, 130, 0.34);
+  color: #dcffe7;
+}
+
+.inventrees-quote-notice-error {
+  border-color: rgba(226, 143, 73, 0.42);
+  color: #ffe8ce;
+}
+
 .inventory-map-shell {
   gap: 1.25rem;
 }
@@ -2235,6 +2386,15 @@
 
   .inventory-feature-panels {
     grid-template-columns: 1fr;
+  }
+
+  .inventrees-quote-feature-panels,
+  .inventrees-quote-client-form-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .inventrees-quote-client-form-grid .inventory-field:last-child {
+    grid-column: auto;
   }
 
   .inventory-quote-grid {

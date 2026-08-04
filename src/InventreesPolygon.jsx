@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
-import { Link, useNavigate } from 'react-router-dom'
+import { Link, useLocation, useNavigate } from 'react-router-dom'
 import L from 'leaflet'
 import 'leaflet/dist/leaflet.css'
 import './App.css'
@@ -230,6 +230,7 @@ function readPolygonRegistration() {
 
 function InventreesPolygon() {
   const navigate = useNavigate()
+  const location = useLocation()
   const initialRegistrationState = useMemo(() => readPolygonRegistration(), [])
   const mapContainerRef = useRef(null)
   const mapRef = useRef(null)
@@ -256,6 +257,10 @@ function InventreesPolygon() {
   )
   const [isSearching, setIsSearching] = useState(false)
   const [isEstimatingRoads, setIsEstimatingRoads] = useState(false)
+
+  const returnToPath = typeof location.state?.returnTo === 'string' ? location.state.returnTo : '/servicios/software/inventrees'
+  const returnHash = typeof location.state?.returnHash === 'string' ? location.state.returnHash : ''
+  const returnUrl = returnHash ? `${returnToPath}#${returnHash}` : returnToPath
 
   useEffect(() => {
     if (!mapContainerRef.current || mapRef.current) {
@@ -428,30 +433,35 @@ function InventreesPolygon() {
 
     const polygonCoordinates = polygonPreview.map((point) => [point.lat, point.lng])
     const estimatedRoadLengthKm = await estimateRoadLengthInsidePolygonKm(polygonCoordinates)
-    const polygonAttachment =
-      initialRegistrationState.polygonAttachment ??
-      {
-        name: 'inventrees-poligono.kml',
-        mimeType: 'application/vnd.google-earth.kml+xml',
-        encoding: 'text',
-        data: polygonToKmlText(polygonCoordinates),
-      }
+    const polygonAttachment = {
+      name: 'inventrees-poligono.kml',
+      mimeType: 'application/vnd.google-earth.kml+xml',
+      encoding: 'text',
+      data: polygonToKmlText(polygonCoordinates),
+    }
 
     persistPolygonRegistration({
       status: 'registered',
       polygon: polygonCoordinates,
       roadLengthKm: estimatedRoadLengthKm,
       polygonAttachment,
-      polygonSource: initialRegistrationState.polygonSource ?? 'manual',
+      polygonFileName: polygonAttachment.name,
+      polygonFileFormat: 'KML',
+      polygonSource: 'manual',
       updatedAt: new Date().toISOString(),
     })
 
     setIsEstimatingRoads(false)
-    navigate('/servicios/software/inventrees', {
-      state: {
-        scrollToSection: 'requirements',
-      },
-    })
+    if (returnToPath === '/servicios/software/inventrees') {
+      navigate(returnUrl, {
+        state: {
+          scrollToSection: 'requirements',
+        },
+      })
+      return
+    }
+
+    navigate(returnUrl)
   }
 
   const handleCancel = () => {
@@ -462,19 +472,19 @@ function InventreesPolygon() {
       polygonSource: null,
       updatedAt: new Date().toISOString(),
     })
-    navigate('/servicios/software/inventrees')
+    navigate(returnUrl)
   }
 
   return (
     <main className="page-shell subpage-shell inventory-map-shell">
       <section className="hero-section subpage-hero inventory-map-hero">
         <header className="topbar">
-          <Link className="brand" to="/servicios/software/inventrees" aria-label="Volver a INVENTREES">
+          <Link className="brand" to={returnUrl} aria-label="Volver a INVENTREES">
             <img className="brand-logo" src="/terralogics-imago.png" alt="Imago de Terralógica" />
             <span className="brand-text">Terralógica</span>
           </Link>
           <nav className="topnav" aria-label="Navegación secundaria">
-            <Link to="/servicios/software/inventrees">Regresar</Link>
+            <Link to={returnUrl}>Regresar</Link>
           </nav>
         </header>
 

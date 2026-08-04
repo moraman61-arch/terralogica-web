@@ -1,0 +1,4 @@
+RESEND_API_KEY=REEMPLAZAR_CON_API_KEY
+ALLOWED_ORIGIN=http://127.0.0.1:5173
+NOTIFY_TO=info@terralogica.mx
+NOTIFY_FROM=Cotizador INVENTREES <noreply@terralogica.mx>
