@@ -5,6 +5,7 @@ import './App.css'
 const quoteRecipientEmail = 'info@terralogica.mx'
 const polygonStorageKey = 'inventrees-polygon-registration'
 const quoteApiUrl = (import.meta.env.VITE_QUOTE_API_URL || '/api/quote').trim()
+const maxQuoteUploadSizeBytes = 9 * 1024 * 1024
 
 const quoteServicePanels = [
   {
@@ -120,6 +121,14 @@ function getRegisteredPolygonFileName(registration) {
 function isSupportedPolygonFile(fileName) {
   const lowerName = fileName.toLowerCase()
   return supportedPolygonExtensions.some((extension) => lowerName.endsWith(extension))
+}
+
+function formatFileSizeMb(bytes) {
+  if (!Number.isFinite(bytes) || bytes <= 0) {
+    return '0.00'
+  }
+
+  return (bytes / (1024 * 1024)).toFixed(2)
 }
 
 const inventreesProjectTypes = [
@@ -284,9 +293,22 @@ function InventreesProyectos() {
 
     if (!isSupportedPolygonFile(selectedFile.name)) {
       setPolygonFile(null)
+      setRegisteredPolygonFileName(null)
       setPolygonStatus('pending')
       setUploadStatus('error')
       setUploadMessage('Formato no soportado. Use SHP en ZIP, KML o GeoJSON.')
+      setQuoteNotice(null)
+      return
+    }
+
+    if (selectedFile.size > maxQuoteUploadSizeBytes) {
+      setPolygonFile(null)
+      setRegisteredPolygonFileName(null)
+      setPolygonStatus('pending')
+      setUploadStatus('error')
+      setUploadMessage(
+        `El archivo excede el límite permitido (${formatFileSizeMb(selectedFile.size)} MB). Use un archivo menor a ${formatFileSizeMb(maxQuoteUploadSizeBytes)} MB.`,
+      )
       setQuoteNotice(null)
       return
     }
@@ -389,6 +411,14 @@ function InventreesProyectos() {
       return
     }
 
+    if (polygonFile.size > maxQuoteUploadSizeBytes) {
+      setQuoteNotice({
+        type: 'error',
+        text: `El archivo del polígono es demasiado grande (${formatFileSizeMb(polygonFile.size)} MB). El límite es ${formatFileSizeMb(maxQuoteUploadSizeBytes)} MB.`,
+      })
+      return
+    }
+
     const requiredFields = [
       clientForm.nombre,
       clientForm.puestoFuncion,
@@ -476,6 +506,9 @@ function InventreesProyectos() {
         if (response.status === 404) {
           message =
             'El servicio de cotización no está publicado todavía. Configure y despliegue el endpoint en Cloudflare Pages Functions o defina VITE_QUOTE_API_URL con la URL activa del endpoint.'
+        } else if (response.status === 413) {
+          message =
+            `El archivo del polígono supera el límite de carga permitido por el servidor. Reduzca el archivo y use menos de ${formatFileSizeMb(maxQuoteUploadSizeBytes)} MB.`
         } else if (response.status === 401 || response.status === 403) {
           message = 'El servicio rechazó la solicitud. Revise API key y variables de entorno en Cloudflare.'
         } else if (response.status >= 500) {

@@ -1,5 +1,5 @@
 const allowedExtensions = ['.zip', '.kml', '.geojson', '.json']
-const maxFileSizeBytes = 15 * 1024 * 1024
+const maxFileSizeBytes = 9 * 1024 * 1024
 
 async function fetchWithTimeout(url, options, timeoutMs = 10000) {
   const controller = new AbortController()
@@ -109,7 +109,7 @@ async function sendNotificationEmail(payload, env) {
   }
 
   if (!env.NOTIFY_TO) {
-    return { ok: false, reason: 'missing_notify_addresses' }
+    return { ok: false, reason: 'missing_notify_to' }
   }
 
   const notifyFrom = env.NOTIFY_FROM || 'Cotizador INVENTREES <onboarding@resend.dev>'
@@ -165,131 +165,154 @@ export async function onRequestOptions(context) {
 export async function onRequestPost(context) {
   const { request, env } = context
   const allowedOrigin = env.ALLOWED_ORIGIN || '*'
+  let currentStep = 'init'
 
-  if (!env.QUOTE_FILES) {
-    return jsonResponse({ error: 'No existe el binding QUOTE_FILES.' }, 500, allowedOrigin)
-  }
-
-  if (!env.QUOTES_DB) {
-    return jsonResponse({ error: 'No existe el binding QUOTES_DB.' }, 500, allowedOrigin)
-  }
-
-  let formData
   try {
-    formData = await request.formData()
-  } catch {
-    return jsonResponse({ error: 'El cuerpo de la solicitud no es valido.' }, 400, allowedOrigin)
-  }
+    if (!env.QUOTE_FILES) {
+      return jsonResponse({ error: 'No existe el binding QUOTE_FILES.' }, 500, allowedOrigin)
+    }
 
-  const nombre = sanitizeInput(formData.get('nombre'), 120)
-  const cargoFuncion = sanitizeInput(formData.get('cargoFuncion'), 120)
-  const dependenciaGobierno = sanitizeInput(formData.get('dependenciaGobierno'), 160)
-  const telefonoContacto = sanitizeInput(formData.get('telefonoContacto'), 60)
-  const correoElectronico = sanitizeInput(formData.get('correoElectronico'), 160)
-  const sourcePage = sanitizeInput(formData.get('sourcePage'), 260)
-  const selectedOptionsCount = Number(formData.get('selectedOptionsCount') || 0)
-  const selectedServices = parseSelectedServices(formData.get('selectedServices'))
-  const polygonFile = formData.get('polygonFile')
+    if (!env.QUOTES_DB) {
+      return jsonResponse({ error: 'No existe el binding QUOTES_DB.' }, 500, allowedOrigin)
+    }
 
-  if (!nombre || !cargoFuncion || !dependenciaGobierno || !telefonoContacto || !correoElectronico) {
-    return jsonResponse({ error: 'Faltan datos del cliente requeridos.' }, 400, allowedOrigin)
-  }
+    currentStep = 'parse_form_data'
+    let formData
+    try {
+      formData = await request.formData()
+    } catch {
+      return jsonResponse({ error: 'El cuerpo de la solicitud no es valido.' }, 400, allowedOrigin)
+    }
 
-  if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(correoElectronico)) {
-    return jsonResponse({ error: 'El correo electronico no es valido.' }, 400, allowedOrigin)
-  }
+    const nombre = sanitizeInput(formData.get('nombre'), 120)
+    const cargoFuncion = sanitizeInput(formData.get('cargoFuncion'), 120)
+    const dependenciaGobierno = sanitizeInput(formData.get('dependenciaGobierno'), 160)
+    const telefonoContacto = sanitizeInput(formData.get('telefonoContacto'), 60)
+    const correoElectronico = sanitizeInput(formData.get('correoElectronico'), 160)
+    const sourcePage = sanitizeInput(formData.get('sourcePage'), 260)
+    const selectedOptionsCount = Number(formData.get('selectedOptionsCount') || 0)
+    const selectedServices = parseSelectedServices(formData.get('selectedServices'))
+    const polygonFile = formData.get('polygonFile')
 
-  if (!(polygonFile instanceof File)) {
-    return jsonResponse({ error: 'Debe adjuntar el archivo del poligono.' }, 400, allowedOrigin)
-  }
+    if (!nombre || !cargoFuncion || !dependenciaGobierno || !telefonoContacto || !correoElectronico) {
+      return jsonResponse({ error: 'Faltan datos del cliente requeridos.' }, 400, allowedOrigin)
+    }
 
-  if (!isAllowedPolygonFile(polygonFile.name)) {
-    return jsonResponse({ error: 'Formato de poligono no soportado.' }, 400, allowedOrigin)
-  }
+    if (!/^([^\s@]+)@([^\s@]+)\.([^\s@]+)$/.test(correoElectronico)) {
+      return jsonResponse({ error: 'El correo electronico no es valido.' }, 400, allowedOrigin)
+    }
 
-  if (polygonFile.size <= 0 || polygonFile.size > maxFileSizeBytes) {
-    return jsonResponse({ error: 'El archivo excede el limite permitido (15 MB).' }, 400, allowedOrigin)
-  }
+    if (!(polygonFile instanceof File)) {
+      return jsonResponse({ error: 'Debe adjuntar el archivo del poligono.' }, 400, allowedOrigin)
+    }
 
-  const id = crypto.randomUUID()
-  const now = new Date()
-  const datePrefix = `${now.getUTCFullYear()}-${String(now.getUTCMonth() + 1).padStart(2, '0')}-${String(now.getUTCDate()).padStart(2, '0')}`
-  const safeName = safeFileName(polygonFile.name)
-  const polygonR2Key = `quotes/${datePrefix}/${id}/${safeName}`
+    if (!isAllowedPolygonFile(polygonFile.name)) {
+      return jsonResponse({ error: 'Formato de poligono no soportado.' }, 400, allowedOrigin)
+    }
 
-  await env.QUOTE_FILES.put(polygonR2Key, polygonFile.stream(), {
-    httpMetadata: {
-      contentType: polygonFile.type || 'application/octet-stream',
-    },
-    customMetadata: {
-      quoteId: id,
-      nombre,
-      correoElectronico,
-    },
-  })
+    if (polygonFile.size <= 0 || polygonFile.size > maxFileSizeBytes) {
+      return jsonResponse({ error: 'El archivo excede el limite permitido (9 MB).' }, 400, allowedOrigin)
+    }
 
-  const selectedServicesText = JSON.stringify(selectedServices)
+    const id = crypto.randomUUID()
+    const now = new Date()
+    const datePrefix = `${now.getUTCFullYear()}-${String(now.getUTCMonth() + 1).padStart(2, '0')}-${String(now.getUTCDate()).padStart(2, '0')}`
+    const safeName = safeFileName(polygonFile.name)
+    const polygonR2Key = `quotes/${datePrefix}/${id}/${safeName}`
 
-  await env.QUOTES_DB.prepare(
-    `INSERT INTO project_quotes (
+    currentStep = 'r2_put'
+    await env.QUOTE_FILES.put(polygonR2Key, polygonFile.stream(), {
+      httpMetadata: {
+        contentType: polygonFile.type || 'application/octet-stream',
+      },
+      customMetadata: {
+        quoteId: id,
+        nombre,
+        correoElectronico,
+      },
+    })
+
+    const selectedServicesText = JSON.stringify(selectedServices)
+
+    currentStep = 'd1_insert'
+    await env.QUOTES_DB.prepare(
+      `INSERT INTO project_quotes (
+        id,
+        created_at,
+        nombre,
+        cargo_funcion,
+        dependencia_gobierno,
+        telefono_contacto,
+        correo_electronico,
+        selected_services,
+        selected_options_count,
+        polygon_file_name,
+        polygon_content_type,
+        polygon_file_size,
+        polygon_r2_key,
+        source_page
+      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
+    )
+      .bind(
+        id,
+        now.toISOString(),
+        nombre,
+        cargoFuncion,
+        dependenciaGobierno,
+        telefonoContacto,
+        correoElectronico,
+        selectedServicesText,
+        Number.isFinite(selectedOptionsCount) ? selectedOptionsCount : 0,
+        polygonFile.name,
+        polygonFile.type || null,
+        polygonFile.size,
+        polygonR2Key,
+        sourcePage || null,
+      )
+      .run()
+
+    const notificationPayload = {
       id,
-      created_at,
-      nombre,
-      cargo_funcion,
-      dependencia_gobierno,
-      telefono_contacto,
-      correo_electronico,
-      selected_services,
-      selected_options_count,
-      polygon_file_name,
-      polygon_content_type,
-      polygon_file_size,
-      polygon_r2_key,
-      source_page
-    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
-  )
-    .bind(
-      id,
-      now.toISOString(),
       nombre,
       cargoFuncion,
       dependenciaGobierno,
       telefonoContacto,
       correoElectronico,
-      selectedServicesText,
-      Number.isFinite(selectedOptionsCount) ? selectedOptionsCount : 0,
-      polygonFile.name,
-      polygonFile.type || null,
-      polygonFile.size,
+      selectedServices,
+      selectedOptionsCount: Number.isFinite(selectedOptionsCount) ? selectedOptionsCount : 0,
+      originalFileName: polygonFile.name,
       polygonR2Key,
-      sourcePage || null,
+      sourcePage: sourcePage || 'N/D',
+    }
+
+    currentStep = 'resend_notify'
+    const emailResult = await sendNotificationEmail(notificationPayload, env)
+
+    return jsonResponse(
+      {
+        ok: true,
+        id,
+        notificationSent: Boolean(emailResult.ok),
+        notificationReason: emailResult.ok ? null : emailResult.reason,
+      },
+      200,
+      allowedOrigin,
     )
-    .run()
+  } catch (error) {
+    const safeMessage = error instanceof Error ? error.message.slice(0, 220) : 'Error no identificado'
 
-  const notificationPayload = {
-    id,
-    nombre,
-    cargoFuncion,
-    dependenciaGobierno,
-    telefonoContacto,
-    correoElectronico,
-    selectedServices,
-    selectedOptionsCount: Number.isFinite(selectedOptionsCount) ? selectedOptionsCount : 0,
-    originalFileName: polygonFile.name,
-    polygonR2Key,
-    sourcePage: sourcePage || 'N/D',
+    console.error('quote_api_error', {
+      step: currentStep,
+      message: safeMessage,
+    })
+
+    return jsonResponse(
+      {
+        error: `Fallo interno en etapa: ${currentStep}`,
+        detail: safeMessage,
+      },
+      500,
+      allowedOrigin,
+    )
   }
-
-  const emailResult = await sendNotificationEmail(notificationPayload, env)
-
-  return jsonResponse(
-    {
-      ok: true,
-      id,
-      notificationSent: Boolean(emailResult.ok),
-      notificationReason: emailResult.ok ? null : emailResult.reason,
-    },
-    200,
-    allowedOrigin,
-  )
 }
