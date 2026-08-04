@@ -75,6 +75,19 @@ function safeFileName(fileName) {
   return fileName.replace(/[^a-zA-Z0-9._-]/g, '_')
 }
 
+function arrayBufferToBase64(buffer) {
+  const bytes = new Uint8Array(buffer)
+  let binary = ''
+  const chunkSize = 0x8000
+
+  for (let i = 0; i < bytes.length; i += chunkSize) {
+    const chunk = bytes.subarray(i, i + chunkSize)
+    binary += String.fromCharCode(...chunk)
+  }
+
+  return btoa(binary)
+}
+
 function parseSelectedServices(rawValue) {
   if (typeof rawValue !== 'string') {
     return []
@@ -143,6 +156,16 @@ async function sendNotificationEmail(payload, env) {
 
   try {
     const emailBody = buildNotificationText(payload)
+    const attachments = payload.polygonAttachment
+      ? [
+          {
+            filename: payload.polygonAttachment.filename,
+            content: payload.polygonAttachment.content,
+            content_type: payload.polygonAttachment.contentType,
+          },
+        ]
+      : undefined
+
     const response = await fetchWithTimeout(
       'https://api.resend.com/emails',
       {
@@ -156,6 +179,7 @@ async function sendNotificationEmail(payload, env) {
           to: [env.NOTIFY_TO],
           subject: `Nueva solicitud de cotizacion INVENTREES | ${payload.nombre}`,
           text: emailBody,
+          attachments,
         }),
       },
       10000,
@@ -241,6 +265,14 @@ export async function onRequestPost(context) {
       return jsonResponse({ error: 'El archivo excede el limite permitido (9 MB).' }, 400, allowedOrigin)
     }
 
+    currentStep = 'polygon_to_base64'
+    const polygonArrayBuffer = await polygonFile.arrayBuffer()
+    const polygonAttachment = {
+      filename: safeFileName(polygonFile.name),
+      content: arrayBufferToBase64(polygonArrayBuffer),
+      contentType: polygonFile.type || 'application/octet-stream',
+    }
+
     const id = crypto.randomUUID()
     const now = new Date()
     const datePrefix = `${now.getUTCFullYear()}-${String(now.getUTCMonth() + 1).padStart(2, '0')}-${String(now.getUTCDate()).padStart(2, '0')}`
@@ -310,6 +342,7 @@ export async function onRequestPost(context) {
       originalFileName: polygonFile.name,
       polygonR2Key,
       sourcePage: sourcePage || 'N/D',
+      polygonAttachment,
     }
 
     currentStep = 'resend_notify'
