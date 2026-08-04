@@ -94,9 +94,11 @@ async function sendNotificationEmail(payload, env) {
     return { ok: false, reason: 'missing_resend_key' }
   }
 
-  if (!env.NOTIFY_TO || !env.NOTIFY_FROM) {
+  if (!env.NOTIFY_TO) {
     return { ok: false, reason: 'missing_notify_addresses' }
   }
+
+  const notifyFrom = env.NOTIFY_FROM || 'Cotizador INVENTREES <onboarding@resend.dev>'
 
   const emailBody = buildNotificationText(payload)
   const response = await fetch('https://api.resend.com/emails', {
@@ -106,7 +108,7 @@ async function sendNotificationEmail(payload, env) {
       'Content-Type': 'application/json',
     },
     body: JSON.stringify({
-      from: env.NOTIFY_FROM,
+      from: notifyFrom,
       to: [env.NOTIFY_TO],
       subject: `Nueva solicitud de cotizacion INVENTREES | ${payload.nombre}`,
       text: emailBody,

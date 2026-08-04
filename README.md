@@ -47,7 +47,7 @@ Variables no secretas:
 
 - `ALLOWED_ORIGIN` (ejemplo: `https://www.terralogica.mx`)
 - `NOTIFY_TO` (ejemplo: `info@terralogica.mx`)
-- `NOTIFY_FROM` (ejemplo: `Cotizador INVENTREES <noreply@terralogica.mx>`)
+- `NOTIFY_FROM` (temporal recomendado: `Cotizador INVENTREES <onboarding@resend.dev>`)
 
 Secreto:
 
@@ -79,3 +79,10 @@ En Cloudflare Dashboard (Pages > tu proyecto > Settings > Environment variables)
 ### Nota de envio de correo
 
 Cloudflare no envia el correo por si solo. El correo se envia porque el endpoint llama la API de Resend usando `RESEND_API_KEY`.
+
+### Remitente temporal sin verificar dominio
+
+Si aun no verifica dominio en Resend, puede usar temporalmente `onboarding@resend.dev` como remitente.
+
+- Ejemplo: `NOTIFY_FROM=Cotizador INVENTREES <onboarding@resend.dev>`
+- `NOTIFY_TO` puede quedarse en `info@terralogica.mx`

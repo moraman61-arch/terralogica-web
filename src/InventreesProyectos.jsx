@@ -468,10 +468,19 @@ function InventreesProyectos() {
       const responseData = await response.json().catch(() => null)
 
       if (!response.ok) {
-        const message =
+        let message =
           typeof responseData?.error === 'string' && responseData.error.trim()
             ? responseData.error
             : 'No fue posible enviar la solicitud en este momento.'
+
+        if (response.status === 404) {
+          message =
+            'El servicio de cotización no está publicado todavía. Configure y despliegue el endpoint en Cloudflare Pages Functions o defina VITE_QUOTE_API_URL con la URL activa del endpoint.'
+        } else if (response.status === 401 || response.status === 403) {
+          message = 'El servicio rechazó la solicitud. Revise API key y variables de entorno en Cloudflare.'
+        } else if (response.status >= 500) {
+          message = 'El servicio de cotización tuvo un error interno. Revise logs de Cloudflare Functions.'
+        }
 
         setQuoteNotice({
           type: 'error',
