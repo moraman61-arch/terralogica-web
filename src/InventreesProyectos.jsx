@@ -12,7 +12,7 @@ const inventreesProjectTypes = [
     postVideoLinkText: 'renta del software',
     postVideoLinkTo: '/servicios/software/inventrees',
     postVideoTextAfterLink:
-      ' a un costo muy reducido. Para las ciudades grandes ofrecemos elaborar su inventario en un tiempo de hasta 1 año dependiendo de su extensión.',
+      ' a un costo muy reducido. Para las ciudades grandes ofrecemos elaborar su inventario en un tiempo de hasta 1 año dependiendo de su extensión, y el número de árboles y tipo de atributos que desea incluir en el inventario.',
     featuredProjectsTitle: 'Proyectos Destacados',
     featuredProjectsImage: '/inventrees/arbolado-zmg-01.png',
     featuredProjectsImageAlt: 'Inventario de arbolado público urbano de la Zona Metropolitana de Guadalajara',
@@ -23,7 +23,7 @@ const inventreesProjectTypes = [
     featuredProjectsSecondImageLabel: 'INVENTREES CDMX | Portal de Seguimiento 1a. Etapa',
     featuredProjectsNotes: [
       'En 2017, para el Gobierno de Jalisco, desarrollamos el inventario del arbolado público urbano de la Zona Metropolitana de Guadalajara, que abarcó siete municipios (haga clic en la imagen para abrir el geovisualizador del proyecto):',
-      'Actualmente, Agosto de 2026, estamos iniciando la Etapa de Geolocalización del proyecto de Inventario de Arbolado Público Urbano de la CDMX, que comprende las 16 alcaldias y que concluirá en Diciembre de 2026. En el 2027 realizaremos las Etapas de Medición y Caracterización. Se estima que el inventario incluirá alrededor de 3,000,000 de árboles.',
+      'Actualmente, Agosto de 2026, para el Gobierno de la Ciudad de México, estamos iniciando la Etapa de Geolocalización del proyecto de Inventario de Arbolado Público Urbano de la CDMX, que comprende las 16 alcaldias y que concluirá en Diciembre de 2026. En el 2027 realizaremos las Etapas de Medición y Caracterización. Se estima que el inventario incluirá poco más de 3,000,000 de árboles.',
     ],
     imageAlt: 'Imagen de referencia para inventario de arbolado publico',
     mediaLabel: 'Inventario y gestión de arbolado urbano.',
