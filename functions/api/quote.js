@@ -15,6 +15,33 @@ async function fetchWithTimeout(url, options, timeoutMs = 10000) {
   }
 }
 
+function wait(ms) {
+  return new Promise((resolve) => setTimeout(resolve, ms))
+}
+
+async function putToR2WithRetry(bucket, key, file, metadata, maxAttempts = 3) {
+  let lastError = null
+
+  for (let attempt = 1; attempt <= maxAttempts; attempt += 1) {
+    try {
+      await bucket.put(key, file.stream(), metadata)
+      return
+    } catch (error) {
+      lastError = error
+      const isLastAttempt = attempt === maxAttempts
+
+      if (isLastAttempt) {
+        throw lastError
+      }
+
+      // Backoff corto para errores transitorios de R2/edge.
+      await wait(250 * attempt)
+    }
+  }
+
+  throw lastError || new Error('R2 put failed without a specific error')
+}
+
 function jsonResponse(payload, status = 200, corsOrigin = '*') {
   return new Response(JSON.stringify(payload), {
     status,
@@ -221,7 +248,7 @@ export async function onRequestPost(context) {
     const polygonR2Key = `quotes/${datePrefix}/${id}/${safeName}`
 
     currentStep = 'r2_put'
-    await env.QUOTE_FILES.put(polygonR2Key, polygonFile.stream(), {
+    await putToR2WithRetry(env.QUOTE_FILES, polygonR2Key, polygonFile, {
       httpMetadata: {
         contentType: polygonFile.type || 'application/octet-stream',
       },
