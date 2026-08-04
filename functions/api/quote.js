@@ -288,12 +288,23 @@ export async function onRequestPost(context) {
     currentStep = 'resend_notify'
     const emailResult = await sendNotificationEmail(notificationPayload, env)
 
+    if (!emailResult.ok) {
+      console.error('resend_notify_failed', {
+        reason: emailResult.reason,
+        detail: typeof emailResult.detail === 'string' ? emailResult.detail.slice(0, 400) : null,
+      })
+    }
+
     return jsonResponse(
       {
         ok: true,
         id,
         notificationSent: Boolean(emailResult.ok),
         notificationReason: emailResult.ok ? null : emailResult.reason,
+        notificationDetail:
+          emailResult.ok || typeof emailResult.detail !== 'string'
+            ? null
+            : emailResult.detail.slice(0, 400),
       },
       200,
       allowedOrigin,
