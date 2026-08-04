@@ -4,7 +4,7 @@ pages_build_output_dir = "dist"
 
 [vars]
 ALLOWED_ORIGIN = "https://www.terralogica.mx"
-NOTIFY_TO = "info@terralogica.mx"
+NOTIFY_TO = "moraman61@gmail.com"
 NOTIFY_FROM = "noreply@terralogica.mx"
 
 [[d1_databases]]
