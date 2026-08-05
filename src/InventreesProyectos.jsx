@@ -271,28 +271,40 @@ const inventreesProjectTypes = [
 
 function InventreesSectionVideo({ src }) {
   const videoRef = useRef(null)
+  const [useIframeFallback, setUseIframeFallback] = useState(false)
+
+  const normalizedSrc = typeof src === 'string' ? src.trim() : ''
+  const isHlsSource = normalizedSrc.toLowerCase().includes('.m3u8')
+  const streamIframeUrl = isHlsSource ? normalizedSrc.replace('/manifest/video.m3u8', '/iframe') : ''
 
   useEffect(() => {
     const videoElement = videoRef.current
-    if (!videoElement || !src) {
+    if (!videoElement || !normalizedSrc) {
       return undefined
     }
 
-    const normalizedSrc = src.trim()
-    const isHlsSource = normalizedSrc.toLowerCase().includes('.m3u8')
     let hlsInstance = null
 
     if (isHlsSource) {
       if (videoElement.canPlayType('application/vnd.apple.mpegurl')) {
+        setUseIframeFallback(false)
         videoElement.src = normalizedSrc
       } else if (Hls.isSupported()) {
         hlsInstance = new Hls()
+        hlsInstance.on(Hls.Events.ERROR, (_event, data) => {
+          if (data?.fatal && streamIframeUrl) {
+            setUseIframeFallback(true)
+          }
+        })
         hlsInstance.loadSource(normalizedSrc)
         hlsInstance.attachMedia(videoElement)
       } else {
-        videoElement.removeAttribute('src')
+        if (streamIframeUrl) {
+          setUseIframeFallback(true)
+        }
       }
     } else {
+      setUseIframeFallback(false)
       videoElement.src = normalizedSrc
     }
 
@@ -301,7 +313,20 @@ function InventreesSectionVideo({ src }) {
         hlsInstance.destroy()
       }
     }
-  }, [src])
+  }, [isHlsSource, normalizedSrc, streamIframeUrl])
+
+  if (useIframeFallback && streamIframeUrl) {
+    return (
+      <iframe
+        className="inventrees-section-video inventrees-section-video-iframe"
+        src={streamIframeUrl}
+        title="Presentación INVENTREES"
+        loading="lazy"
+        allow="accelerometer; gyroscope; autoplay; encrypted-media; picture-in-picture;"
+        allowFullScreen
+      />
+    )
+  }
 
   return (
     <video className="inventrees-section-video" ref={videoRef} controls preload="metadata" playsInline>

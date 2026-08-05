@@ -1966,6 +1966,10 @@
   background: #07173f;
 }
 
+.inventrees-section-video-iframe {
+  border: 0;
+}
+
 .inventrees-section-followup-text {
   margin: 1rem 0 0;
 }
