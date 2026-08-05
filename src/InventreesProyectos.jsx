@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from 'react'
+import Hls from 'hls.js'
 import { Link, useLocation } from 'react-router-dom'
 import './App.css'
 
@@ -263,6 +264,47 @@ const inventreesProjectTypes = [
     ],
   },
 ]
+
+function InventreesSectionVideo({ src }) {
+  const videoRef = useRef(null)
+
+  useEffect(() => {
+    const videoElement = videoRef.current
+    if (!videoElement || !src) {
+      return undefined
+    }
+
+    const normalizedSrc = src.trim()
+    const isHlsSource = normalizedSrc.toLowerCase().includes('.m3u8')
+    let hlsInstance = null
+
+    if (isHlsSource) {
+      if (videoElement.canPlayType('application/vnd.apple.mpegurl')) {
+        videoElement.src = normalizedSrc
+      } else if (Hls.isSupported()) {
+        hlsInstance = new Hls()
+        hlsInstance.loadSource(normalizedSrc)
+        hlsInstance.attachMedia(videoElement)
+      } else {
+        videoElement.removeAttribute('src')
+      }
+    } else {
+      videoElement.src = normalizedSrc
+    }
+
+    return () => {
+      if (hlsInstance) {
+        hlsInstance.destroy()
+      }
+    }
+  }, [src])
+
+  return (
+    <video className="inventrees-section-video" ref={videoRef} controls preload="metadata" playsInline>
+      Tu navegador no puede reproducir este video. Intenta abrir esta pagina en otro navegador o actualiza Firefox.
+    </video>
+  )
+}
 
 function InventreesProyectos() {
   const location = useLocation()
@@ -745,12 +787,7 @@ function InventreesProyectos() {
 
               {projectType.videoSrc ? (
                 <div className="inventrees-section-video-block">
-                  <video
-                    className="inventrees-section-video"
-                    src={projectType.videoSrc}
-                    controls
-                    preload="metadata"
-                  />
+                  <InventreesSectionVideo src={projectType.videoSrc} />
                 </div>
               ) : null}
 

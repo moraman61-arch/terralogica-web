@@ -86,3 +86,69 @@ Si aun no verifica dominio en Resend, puede usar temporalmente `onboarding@resen
 
 - Ejemplo: `NOTIFY_FROM=Cotizador INVENTREES <onboarding@resend.dev>`
 - `NOTIFY_TO` puede quedarse en `info@terralogica.mx`
+
+## Plantilla Operativa (Deploy + Debug + Go-Live)
+
+Esta plantilla estandariza como pedir despliegues, como reportar errores y como validar salida a produccion para el flujo de cotizacion.
+
+### 1) Prompt maestro de deploy
+
+Usa este prompt tal cual en el chat cuando quieras publicar cambios:
+
+```text
+Haz deploy a produccion siguiendo este flujo:
+1) Ejecuta build y valida que termine sin errores.
+2) Si hay ajustes pendientes, aplicalos y vuelve a validar build.
+3) Prepara commit con mensaje claro y descriptivo.
+4) Haz push a main.
+5) Verifica estado del workflow de deploy y confirma resultado final.
+
+Al final, entregame:
+- hash corto del commit
+- archivos modificados
+- estado del deploy
+- riesgos o pendientes (si aplica)
+```
+
+### 2) Formato estandar para reportar errores
+
+Cuando algo falle, comparte este bloque completo en una sola pasada:
+
+```text
+Contexto:
+- Entorno: local | produccion
+- Paso que estaba ejecutando:
+
+Request:
+- URL:
+- Metodo:
+- Payload (resumen):
+
+Response:
+- HTTP status:
+- Body JSON completo:
+
+Esperado vs actual:
+- Esperado:
+- Actual:
+
+Evidencia adicional:
+- Timestamp aproximado:
+- Captura/log (si existe):
+```
+
+### 3) Checklist pre-produccion (Go-Live)
+
+Ejecuta esta lista antes de publicar:
+
+- [ ] `npm run build` exitoso.
+- [ ] `GET /api/health` responde `ok: true` y bindings esperados.
+- [ ] `POST /api/quote` exitoso con archivo pequeno de prueba.
+- [ ] La respuesta incluye `notificationSent: true` (o razon clara si es `false`).
+- [ ] Registro confirmado en D1 (`quotes`) para la solicitud de prueba.
+- [ ] Archivo adjunto guardado en R2 y descargable.
+- [ ] Flujo Ciudad Grande redirige de Planes a Proyectos con prefill.
+- [ ] Validacion de al menos un atributo seleccionado en Proyectos funcionando.
+- [ ] Workflow de deploy en GitHub finaliza en estado exitoso.
+
+Tip: si algun punto falla, no despliegues. Primero corrige, revalida el punto y vuelve a correr el checklist completo.
