@@ -680,6 +680,8 @@ function calculateInventoryRecommendation(km, months, usersCount) {
   const recommendedUsers = Math.max(1, Math.ceil(targetImagesPerMonth / operatorImagesPerMonth))
   const selectedUsersCapacityPerMonth = normalizedUsers * operatorImagesPerMonth
   const recommendedUsersCapacityPerMonth = recommendedUsers * operatorImagesPerMonth
+  const selectedUsersCapacityKmPerMonth = selectedUsersCapacityPerMonth / estimatedImagesPerKm
+  const recommendedUsersCapacityKmPerMonth = recommendedUsersCapacityPerMonth / estimatedImagesPerKm
   const totalFreeImages = googleFreeImagesPerMonth * normalizedMonths
   const extraImagesTotal = Math.max(0, totalImages - totalFreeImages)
   const extraImagesPerMonth = extraImagesTotal / normalizedMonths
@@ -696,6 +698,8 @@ function calculateInventoryRecommendation(km, months, usersCount) {
     recommendedUsers,
     selectedUsersCapacityPerMonth,
     recommendedUsersCapacityPerMonth,
+    selectedUsersCapacityKmPerMonth,
+    recommendedUsersCapacityKmPerMonth,
     selectedUsersEnough: selectedUsersCapacityPerMonth >= targetImagesPerMonth,
     userShortfall: Math.max(0, recommendedUsers - normalizedUsers),
     totalFreeImages,
@@ -772,6 +776,22 @@ function getSuggestedUsersCount(km, months) {
   }
 
   return Math.max(1, Math.floor(recommendation.recommendedUsers))
+}
+
+function getSuggestedMonthsCount(km, usersCount) {
+  if (!Number.isFinite(km) || km <= 0) {
+    return getDefaultInventoryMonths()
+  }
+
+  const normalizedUsers = Number.isFinite(Number(usersCount)) && Number(usersCount) >= 1 ? Math.floor(Number(usersCount)) : 1
+  const totalImages = Math.ceil(km * estimatedImagesPerKm)
+  const monthlyCapacity = normalizedUsers * operatorImagesPerMonth
+
+  if (!Number.isFinite(monthlyCapacity) || monthlyCapacity <= 0) {
+    return getDefaultInventoryMonths()
+  }
+
+  return Math.max(1, Math.ceil(totalImages / monthlyCapacity))
 }
 
 function calculateQuote(plan, km, months = 1) {
@@ -1732,7 +1752,13 @@ function InventreesPlanes() {
                     }
 
                     const parsedValue = Number(rawValue)
-                    setUsersCount(Number.isFinite(parsedValue) && parsedValue >= 1 ? Math.floor(parsedValue) : 1)
+                    const nextUsersCount = Number.isFinite(parsedValue) && parsedValue >= 1 ? Math.floor(parsedValue) : 1
+                    setUsersCount(nextUsersCount)
+
+                    const parsedCurrentKm = parseKmInput(kmValue)
+                    if (Number.isFinite(parsedCurrentKm) && parsedCurrentKm > 0) {
+                      setContractMonths(getSuggestedMonthsCount(parsedCurrentKm, nextUsersCount))
+                    }
                   }}
                   placeholder="Ej. 5"
                 />
@@ -1741,16 +1767,19 @@ function InventreesPlanes() {
           </div>
 
           <p className="inventory-threshold-note">
-            <em>Nota:</em> para 250 km o menos, el cotizador recomienda la suscripción mensual para comunidades pequeñas. Para más de 250 km y hasta 3,500 km recomienda la suscripción mensual para ciudades medias. Para más de 3,500 km se recomienda solicitar una propuesta de proyecto.
+            <em>Nota:</em> para 250 km o menos, el cotizador recomienda la suscripción mensual para comunidades pequeñas. Para más de 250 km y hasta 3,500 km recomienda la suscripción mensual para ciudades medias. Para más de 3,500 km se recomienda solicitar una propuesta de proyecto. También puede solicitar una propuesta de proyecto para cualquier área o kilómetros de vialidad, si lo desea.{' '}
+            <Link className="inventory-highlight-link" to="/servicios/proyectos/inventrees-proyectos">Cotizar Proyecto</Link>
           </p>
 
           {inventoryRecommendation && !isLargeCity ? (
             <div className="inventory-threshold-note">
               <p>
                 <em>Sugerencia:</em> para concluir un inventario de <strong>{formatKmLimit(parsedKm)} km</strong> en <strong>{inventoryRecommendation.normalizedMonths} {inventoryRecommendation.normalizedMonths === 1 ? 'mes' : 'meses'}</strong>, la mejor combinación es <strong>{recommendedLicenseDetails?.licenseType}</strong> en modalidad <strong>{recommendedLicenseDetails?.licenseMode}</strong> con <strong>{inventoryRecommendation.recommendedUsers} {inventoryRecommendation.recommendedUsers === 1 ? 'usuario/licencia' : 'usuarios/licencias'}</strong>.
+                Esto supone <strong>{integerFormatter.format(inventoryRecommendation.totalImages)}</strong> imágenes en total. Para cumplir en <strong>{inventoryRecommendation.normalizedMonths} {inventoryRecommendation.normalizedMonths === 1 ? 'mes' : 'meses'}</strong> el objetivo es procesar <strong>{integerFormatter.format(inventoryRecommendation.targetImagesPerMonth)}</strong> imágenes por mes (aprox. <strong>{decimalFormatter.format(inventoryRecommendation.targetKmPerMonth)} km/mes</strong>).
               </p>
+              <p aria-hidden="true">&nbsp;</p>
               <p>
-                Esto supone <strong>{integerFormatter.format(inventoryRecommendation.totalImages)}</strong> imágenes en total, un ritmo de <strong>{integerFormatter.format(inventoryRecommendation.targetImagesPerMonth)}</strong> imágenes por mes y aproximadamente <strong>{decimalFormatter.format(inventoryRecommendation.targetKmPerMonth)} km/mes</strong> de avance operativo.
+                Con <strong>{usersCount}</strong> {usersCount === 1 ? 'usuario/licencia' : 'usuarios/licencias'}, la capacidad operativa estimada es de <strong>{integerFormatter.format(inventoryRecommendation.selectedUsersCapacityPerMonth)}</strong> imágenes por mes (aprox. <strong>{decimalFormatter.format(inventoryRecommendation.selectedUsersCapacityKmPerMonth)} km/mes</strong>).
               </p>
               <p>
                 Google Maps API aportaría <strong>{integerFormatter.format(Math.min(inventoryRecommendation.totalImages, inventoryRecommendation.totalFreeImages))}</strong> imágenes gratuitas durante el proyecto; las imágenes extra estimadas serían <strong>{integerFormatter.format(inventoryRecommendation.extraImagesTotal)}</strong>, con un costo aproximado de <strong>{currencyFormatter.format(inventoryRecommendation.extraImagesCostTotal)}</strong> en todo el proyecto ({currencyFormatter.format(inventoryRecommendation.extraImagesCostPerMonth)} por mes en promedio).
@@ -1777,7 +1806,7 @@ function InventreesPlanes() {
             {!isLargeCity ? <p className="inventory-quote-plan">{selectedPlan.type}</p> : null}
             {quote.amountLabel && selectedLicenseId !== 'monthly-medium-large' && canShowCostEstimates ? <p className="inventory-quote-amount">{quote.amountLabel}</p> : null}
             {quoteByUsers?.unitLabel && canShowCostEstimates ? <p className="inventory-quote-message">Precio unitario: {quoteByUsers.unitLabel}</p> : null}
-            {quoteByUsers?.totalLabel && canShowCostEstimates ? <p className="inventory-quote-message">Precio total por licencias: {quoteByUsers.totalLabel}</p> : null}
+            {quoteByUsers?.totalLabel && canShowCostEstimates ? <p className="inventory-quote-message">Precio total por licencias | meses: {quoteByUsers.totalLabel}</p> : null}
             {!isLargeCity ? <p className="inventory-quote-message">Número de licencias / usuarios: {usersCount}</p> : null}
             {canShowCostEstimates ? <p className="inventory-quote-message">{quote.message ?? quote.detail}</p> : null}
             {inventoryRecommendation && recommendedOption && recommendedQuoteByUsers && canShowCostEstimates ? (
@@ -1790,7 +1819,7 @@ function InventreesPlanes() {
                 {recommendedProjectCost ? (
                   <>
                     <p aria-hidden="true">&nbsp;</p>
-                    <p className="inventory-threshold-note"><em>Costos adicionales a considerar (a cargo del cliente):</em></p>
+                    <p className="inventory-threshold-note"><em>Costos adicionales a considerar (enteramente a cargo del cliente):</em></p>
                     <p>Total proyecto recomendado, operarios: {currencyFormatter.format(recommendedProjectCost.operatorsTotalCost)} ({currencyFormatter.format(recommendedProjectCost.operatorsMonthlyCost)} por mes; si ya cuenta con operarios el costo es $0.00)</p>
                     <p>Total proyecto recomendado, Google Maps API extra: {currencyFormatter.format(recommendedProjectCost.googleTotalCost)} ({currencyFormatter.format(recommendedProjectCost.googleMonthlyCost)} por mes en promedio)</p>
                     <p>Total estimado del proyecto recomendado: {currencyFormatter.format(recommendedProjectCost.grandTotal)}</p>
