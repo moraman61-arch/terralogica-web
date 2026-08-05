@@ -180,8 +180,8 @@ const inventreesProjectTypes = [
       'https://ciga-unam.maps.arcgis.com/apps/instant/compare/index.html?appid=c592a4b7222042d58d22c8006c3bbfa6',
     featuredProjectsSecondImageLabel: 'INVENTREES CDMX | Portal de Seguimiento 1a. Etapa',
     featuredProjectsNotes: [
-      'En 2017, para el Gobierno de Jalisco, desarrollamos el inventario del arbolado público urbano de la Zona Metropolitana de Guadalajara, que abarcó siete municipios (haga clic en la imagen para abrir el geovisualizador del proyecto):',
-      'Actualmente, Agosto de 2026, para el Gobierno de la Ciudad de México, estamos iniciando la Etapa de Geolocalización del proyecto de Inventario de Arbolado Público Urbano de la CDMX, que comprende las 16 alcaldias y que concluirá en Diciembre de 2026. En el 2027 realizaremos las Etapas de Medición y Caracterización. Se estima que el inventario incluirá poco más de 3,000,000 de árboles.',
+      'En 2017, para el Gobierno de Jalisco, desarrollamos el inventario del arbolado público urbano de la Zona Metropolitana de Guadalajara, que abarcó siete municipios. En total se geolocalizaron 1,158,009 árboles, de los cuales, una muestra de poco más de 44,000 posee información detallada (haga clic en la imagen para abrir el geovisualizador del proyecto):',
+      'Actualmente, agosto de 2026, para el Gobierno de la Ciudad de México, estamos iniciando la Etapa de Geolocalización del proyecto de Inventario de Arbolado Público Urbano de la CDMX, que comprende las 16 alcaldias y que concluirá en Diciembre de 2026. En el 2027 realizaremos las Etapas de Medición y Caracterización. Se estima que el inventario incluirá poco más de 3,000,000 de árboles.',
     ],
     imageAlt: 'Imagen de referencia para inventario de arbolado publico',
     mediaLabel: 'Inventario y gestión de arbolado urbano.',
@@ -961,10 +961,14 @@ function InventreesProyectos() {
                 <div className="inventrees-featured-projects-block">
                   <h4 className="inventrees-featured-projects-title">{projectType.featuredProjectsTitle}</h4>
                   {projectType.featuredProjectsNotes?.map((note, noteIndex) => (
-                    <div key={note}>
+                    <div
+                      key={note}
+                      className={`inventrees-featured-project-row${noteIndex % 2 === 1 ? ' inventrees-featured-project-row-reverse' : ''}`}
+                    >
                       <p className="inventrees-featured-projects-note">{note}</p>
                       {noteIndex === 0 && projectType.featuredProjectsImage ? (
                         <a
+                          className="inventrees-featured-projects-media"
                           href="https://ciga-unam.maps.arcgis.com/apps/instant/atlas/index.html?appid=98b26ca5a3f8426780b53694250309e4&webmap=8b248dc3cea0495c8c5071c6656d1e35&locale=es"
                           target="_blank"
                           rel="noopener noreferrer"
@@ -980,6 +984,7 @@ function InventreesProyectos() {
                       ) : null}
                       {noteIndex === 1 && projectType.featuredProjectsSecondImage ? (
                         <a
+                          className="inventrees-featured-projects-media"
                           href={projectType.featuredProjectsSecondImageLink}
                           target="_blank"
                           rel="noopener noreferrer"
