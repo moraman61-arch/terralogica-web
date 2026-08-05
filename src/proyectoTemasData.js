@@ -15,6 +15,15 @@ export const proyectoTemas = [
         imagePath: '/proyectos/unnamed-15.jpg',
         imageAlt: 'Imagen de referencia para proyectos de contaminacion ambiental y salud publica',
       },
+      {
+        title: 'Inventarios de Arbolado Público Urbano',
+        description:
+          'Levantamiento y organización del arbolado urbano que se encuentra en los espacios públicos de la ciudad. Registra la geolocalización, medición y caracterización de cada árbol.',
+        imagePath: '/planeacion/inventario-puebla-01.png',
+        imageAlt: 'Vista ilustrativa para inventarios urbanos',
+        linkTo: '/servicios/proyectos/inventrees-proyectos#arbolado-publico',
+        linkLabel: 'Arbolado Público',
+      },
     ],
   },
   {

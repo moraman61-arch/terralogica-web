@@ -73,9 +73,20 @@ function ProyectoOfertaTema() {
           <div className="service-grid projects-grid planeacion-projects-grid">
             {projectTopic.relatedPanels.map((panel) => (
               <article key={panel.title} className="service-card project-card planeacion-project-card">
-                <img className="planeacion-project-image" src={assetPath(panel.imagePath)} alt={panel.imageAlt} />
+                {panel.linkTo ? (
+                  <Link className="planeacion-project-image-link" to={panel.linkTo} aria-label={`Abrir ${panel.title}`}>
+                    <img className="planeacion-project-image" src={assetPath(panel.imagePath)} alt={panel.imageAlt} />
+                  </Link>
+                ) : (
+                  <img className="planeacion-project-image" src={assetPath(panel.imagePath)} alt={panel.imageAlt} />
+                )}
                 <h3>{panel.title}</h3>
                 <p>{panel.description}</p>
+                {panel.linkTo ? (
+                  <Link className="service-card-cta project-panel-link" to={panel.linkTo}>
+                    {panel.linkLabel ?? 'Ver más'}
+                  </Link>
+                ) : null}
               </article>
             ))}
           </div>
