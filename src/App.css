@@ -1050,6 +1050,13 @@
   margin-top: 0;
 }
 
+.inventory-polygon-actions .inventory-quote-attachment-download {
+  min-height: 2.5rem;
+  padding: 0.45rem 0.95rem;
+  font: inherit;
+  font-weight: 700;
+}
+
 .inventory-clear-polygon-btn {
   min-height: 2.5rem;
   padding: 0.45rem 0.95rem;

@@ -6,6 +6,9 @@ import { kml as kmlToGeoJSON } from '@tmcw/togeojson'
 import './App.css'
 
 const polygonStorageKey = 'inventrees-polygon-registration'
+const quoteApiUrl = (import.meta.env.VITE_QUOTE_API_URL || '/api/quote').trim()
+const maxQuoteUploadSizeBytes = 9 * 1024 * 1024
+const projectQuotePrefillStorageKey = 'inventrees-project-quote-prefill'
 
 const licenseOptions = [
   {
@@ -154,8 +157,6 @@ const licenseRecommendationDetails = {
     licenseMode: 'Ciudades medias',
   },
 }
-
-const contactEmail = 'info@terralogica.mx'
 
 const introVideos = [
   {
@@ -578,6 +579,22 @@ function formatMonthlyQuoteLabel(monthlyAmount, months) {
   return `${currencyFormatter.format(monthlyAmount)} / mes | ${currencyFormatter.format(totalAmount)} por ${monthsLabel}`
 }
 
+function formatFileSizeMb(bytes) {
+  if (!Number.isFinite(bytes) || bytes <= 0) {
+    return '0.00'
+  }
+
+  return (bytes / (1024 * 1024)).toFixed(2)
+}
+
+function persistProjectQuotePrefill(prefillPayload) {
+  try {
+    window.localStorage.setItem(projectQuotePrefillStorageKey, JSON.stringify(prefillPayload))
+  } catch {
+    // No-op: el prefill por navigation state seguirá funcionando.
+  }
+}
+
 function formatQuoteForLicenses(quote, usersCount) {
   const normalizedUsers = Number.isFinite(Number(usersCount)) && Number(usersCount) >= 1 ? Math.floor(Number(usersCount)) : 1
 
@@ -836,30 +853,6 @@ function calculateQuote(plan, km, months = 1) {
   }
 }
 
-function buildQuoteEmailDraft({ moduleName, planType, amountLabel, recommendedLabel, monthsText, usersText, recommendationSummary }) {
-  const subject = `Solicitud de cotización INVENTREES - ${moduleName}`
-  const bodyLines = [
-    'Hola,',
-    '',
-    'Solicito una cotización para INVENTREES con la siguiente configuración:',
-    `Módulo: ${moduleName}`,
-    `Licencia seleccionada: ${planType}`,
-    `Número de licencias / usuarios: ${usersText}`,
-    ...(monthsText ? [`Meses para realizar el inventario: ${monthsText}`] : []),
-    `Estimado mostrado: ${amountLabel}`,
-    `Licencia recomendada por el cotizador: ${recommendedLabel ?? 'No disponible'}`,
-    ...(recommendationSummary ? ['', recommendationSummary] : []),
-    '',
-    'Adjuntaremos la capa de polígonos requerida en formato SHP (ZIP), KML o GeoJSON.',
-    '',
-    'Quedo atento(a) a su propuesta.',
-  ]
-
-  const body = bodyLines.join('\n')
-
-  return { subject, body }
-}
-
 function attachmentToFile(attachment) {
   if (!attachment) {
     return null
@@ -947,7 +940,15 @@ function InventreesPlanes() {
     return initialFileName ? `Archivo registrado disponible: ${initialFileName}.` : 'No hay archivo cargado.'
   })
   const [selectedUploadFileName, setSelectedUploadFileName] = useState('')
-  const [quoteAttachmentMessage, setQuoteAttachmentMessage] = useState('')
+  const [quoteNotice, setQuoteNotice] = useState(null)
+  const [isSubmittingQuote, setIsSubmittingQuote] = useState(false)
+  const [clientForm, setClientForm] = useState({
+    nombre: '',
+    puestoFuncion: '',
+    dependenciaGobierno: '',
+    telefonoContacto: '',
+    correoElectronico: '',
+  })
   const introVideoRef = useRef(null)
   const introVideoAutoPausedRef = useRef(false)
   const introVideoInViewportRef = useRef(true)
@@ -1064,82 +1065,192 @@ function InventreesPlanes() {
     : 'No hay archivo cargado.'
   const uploadMessageToDisplay = uploadStatus === 'idle' ? idleUploadMessage : uploadMessage
   const filePickerLabel = selectedUploadFileName || registeredPolygonFileName || 'Ningún archivo seleccionado'
-  const quoteEmailDraft =
-    quote.status === 'valid'
-      ? buildQuoteEmailDraft({
-          moduleName: selectedModule.name,
-          planType: selectedPlan.type,
-          monthsText: String(contractMonths),
-          usersText: String(usersCount),
-          amountLabel: quote.amountLabel,
-          recommendedLabel: recommendedOption?.label,
-          recommendationSummary,
-        })
-      : {
-          subject: 'Solicitud de información INVENTREES',
-          body: 'Hola,\n\nSolicito información adicional sobre INVENTREES.\n',
-        }
+  const handleClientFieldChange = (event) => {
+    const { name, value } = event.target
+    setClientForm((previousValue) => ({
+      ...previousValue,
+      [name]: value,
+    }))
+  }
 
-  const handleRequestQuote = async () => {
+  const handleRequestQuote = async (event) => {
+    event.preventDefault()
+
+    if (isSubmittingQuote) {
+      return
+    }
+
+    if (isLargeCity) {
+      const prefillClientForm = {
+        nombre: clientForm.nombre,
+        puestoFuncion: clientForm.puestoFuncion,
+        dependenciaGobierno: clientForm.dependenciaGobierno,
+        telefonoContacto: clientForm.telefonoContacto,
+        correoElectronico: clientForm.correoElectronico,
+      }
+
+      const prefillPolygonRegistration = {
+        ...currentRegistration,
+        status:
+          Boolean(currentRegistration?.polygonAttachment) ||
+          (Array.isArray(currentRegistration?.polygon) && currentRegistration.polygon.length >= 3)
+            ? 'registered'
+            : 'pending',
+        updatedAt: new Date().toISOString(),
+      }
+
+      persistProjectQuotePrefill({
+        source: 'inventrees-planes',
+        clientForm: prefillClientForm,
+        polygonRegistration: prefillPolygonRegistration,
+        createdAt: new Date().toISOString(),
+      })
+
+      navigate('/servicios/proyectos/inventrees-proyectos#cotizacion-proyecto', {
+        state: {
+          prefillClientForm,
+          prefillPolygonRegistration,
+          prefillSource: 'inventrees-planes',
+        },
+      })
+      return
+    }
+
     if (quote.status !== 'valid') {
+      setQuoteNotice({
+        type: 'error',
+        text: 'Complete una configuración válida en el cotizador para solicitar la cotización.',
+      })
       return
     }
 
     const attachmentFile = buildAttachmentFileFromRegistration(currentRegistration)
-    let attachmentStatusMessage
-
-    if (attachmentFile && navigator.share && navigator.canShare?.({ files: [attachmentFile] })) {
-      try {
-        await navigator.share({
-          title: `Solicitud de cotización INVENTREES - ${selectedModule.name}`,
-          text: 'Se prepara el archivo del polígono para adjuntarlo a la solicitud.',
-          files: [attachmentFile],
-        })
-        attachmentStatusMessage = `Archivo preparado: ${attachmentFile.name}. Verifique que quede adjunto antes de enviar.`
-      } catch {
-        attachmentStatusMessage =
-          `Gmail Web no adjunta archivos desde mailto. Debe adjuntar manualmente: ${attachmentFile.name}.`
-      }
-    } else if (attachmentFile) {
-      downloadFile(attachmentFile)
-      attachmentStatusMessage =
-        `Se descargó ${attachmentFile.name}. En Gmail Web adjúntelo manualmente antes de enviar la cotización.`
-    } else {
-      attachmentStatusMessage = 'No se encontró archivo de polígono para adjuntar en esta solicitud.'
-    }
-
-    const draftText = [`Para: ${contactEmail}`, `Asunto: ${quoteEmailDraft.subject}`, '', quoteEmailDraft.body].join('\n')
-
-    if (navigator.clipboard?.writeText) {
-      try {
-        await navigator.clipboard.writeText(draftText)
-        setQuoteAttachmentMessage(
-          `${attachmentStatusMessage} Se copió la cotización al portapapeles para pegarla en su correo sin abrir una nueva página del navegador.`,
-        )
-      } catch {
-        setQuoteAttachmentMessage(
-          `${attachmentStatusMessage} No fue posible copiar automáticamente; use el botón y complete el correo manualmente a ${contactEmail}.`,
-        )
-      }
+    if (!attachmentFile) {
+      setQuoteNotice({
+        type: 'error',
+        text: 'Debe registrar el polígono antes de solicitar la cotización.',
+      })
       return
     }
 
-    setQuoteAttachmentMessage(
-      `${attachmentStatusMessage} Copie manualmente los datos y envíelos a ${contactEmail}.`,
-    )
+    if (attachmentFile.size > maxQuoteUploadSizeBytes) {
+      setQuoteNotice({
+        type: 'error',
+        text: `El archivo del polígono es demasiado grande (${formatFileSizeMb(attachmentFile.size)} MB). El límite es ${formatFileSizeMb(maxQuoteUploadSizeBytes)} MB.`,
+      })
+      return
+    }
+
+    const requiredFields = [
+      clientForm.nombre,
+      clientForm.puestoFuncion,
+      clientForm.dependenciaGobierno,
+      clientForm.telefonoContacto,
+      clientForm.correoElectronico,
+    ]
+
+    if (requiredFields.some((field) => !field.trim())) {
+      setQuoteNotice({
+        type: 'error',
+        text: 'Complete todos los datos del cliente para enviar la solicitud.',
+      })
+      return
+    }
+
+    const emailLooksValid = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(clientForm.correoElectronico.trim())
+    if (!emailLooksValid) {
+      setQuoteNotice({
+        type: 'error',
+        text: 'Ingrese un correo electrónico válido.',
+      })
+      return
+    }
+
+    const quoteContextLines = [
+      `Módulo: ${selectedModule.name}`,
+      `Licencia: ${selectedPlan.type}`,
+      `Km de vialidad: ${Number.isFinite(parsedKm) ? formatKmLimit(parsedKm) : 'No definido'}`,
+      `Meses para inventario: ${contractMonths}`,
+      `Licencias/usuarios: ${usersCount}`,
+      `Estimado mostrado: ${quoteByUsers?.totalLabel || quote.amountLabel || quote.detail || 'No disponible'}`,
+    ]
+
+    if (recommendationSummary) {
+      quoteContextLines.push(recommendationSummary)
+    }
+
+    const selectedServicesPayload = [
+      {
+        id: 'inventrees-software-cotizador',
+        title: 'Cotizador de software INVENTREES',
+        selectedOptions: quoteContextLines,
+      },
+    ]
+
+    const formData = new FormData()
+    formData.append('nombre', clientForm.nombre.trim())
+    formData.append('cargoFuncion', clientForm.puestoFuncion.trim())
+    formData.append('dependenciaGobierno', clientForm.dependenciaGobierno.trim())
+    formData.append('telefonoContacto', clientForm.telefonoContacto.trim())
+    formData.append('correoElectronico', clientForm.correoElectronico.trim())
+    formData.append('polygonFile', attachmentFile, attachmentFile.name)
+    formData.append('selectedServices', JSON.stringify(selectedServicesPayload))
+    formData.append('selectedOptionsCount', String(quoteContextLines.length))
+    formData.append('sourcePage', '/servicios/software/inventrees#cotizador-rapido')
+
+    setIsSubmittingQuote(true)
+
+    try {
+      const response = await fetch(quoteApiUrl, {
+        method: 'POST',
+        body: formData,
+      })
+
+      const responseData = await response.json().catch(() => null)
+
+      if (!response.ok) {
+        let message =
+          typeof responseData?.error === 'string' && responseData.error.trim()
+            ? responseData.error
+            : 'No fue posible enviar la solicitud en este momento.'
+
+        if (response.status === 404) {
+          message =
+            'El servicio de cotización no está publicado todavía. Configure y despliegue el endpoint en Cloudflare Pages Functions o defina VITE_QUOTE_API_URL con la URL activa del endpoint.'
+        } else if (response.status === 413) {
+          message =
+            `El archivo del polígono supera el límite permitido por el servidor. Reduzca el archivo y use menos de ${formatFileSizeMb(maxQuoteUploadSizeBytes)} MB.`
+        } else if (response.status === 401 || response.status === 403) {
+          message = 'El servicio rechazó la solicitud. Revise API key y variables de entorno en Cloudflare.'
+        } else if (response.status >= 500) {
+          message = 'El servicio de cotización tuvo un error interno. Revise logs de Cloudflare Functions.'
+        }
+
+        setQuoteNotice({ type: 'error', text: message })
+        return
+      }
+
+      setQuoteNotice({
+        type: 'success',
+        text: 'Solicitud enviada. Terralógica recibió su información, el resumen del cotizador y el archivo del polígono.',
+      })
+    } catch {
+      setQuoteNotice({
+        type: 'error',
+        text: 'No fue posible conectar con el servicio de cotización. Intente nuevamente.',
+      })
+    } finally {
+      setIsSubmittingQuote(false)
+    }
   }
 
   const handleDownloadPolygonAttachment = () => {
     const attachmentFile = buildAttachmentFileFromRegistration(currentRegistration)
     if (!attachmentFile) {
-      setQuoteAttachmentMessage('No hay un polígono disponible para descargar.')
       return
     }
 
     downloadFile(attachmentFile)
-    setQuoteAttachmentMessage(
-      `Archivo descargado: ${attachmentFile.name}. Guárdelo y adjúntelo manualmente en su correo.`,
-    )
   }
 
   const currentIntroVideo = introVideos[currentIntroVideoIndex]
@@ -1514,6 +1625,14 @@ function InventreesPlanes() {
             <div className={`inventory-polygon-status inventory-polygon-status-${polygonStatus}`}>
               {polygonStatusMessage}
             </div>
+            <button
+              type="button"
+              className="secondary-link inventory-quote-attachment-download"
+              onClick={handleDownloadPolygonAttachment}
+              disabled={!hasPolygonForAttachment}
+            >
+              Descargar polígono
+            </button>
             {polygonStatus === 'registered' ? (
               <button type="button" className="inventory-clear-polygon-btn" onClick={handleClearRegisteredPolygon}>
                 Borrar polígono
@@ -1679,23 +1798,78 @@ function InventreesPlanes() {
                 ) : null}
               </div>
             ) : null}
-            <button
-              type="button"
-              className={`primary-link inventory-quote-cta${quote.status !== 'valid' ? ' inventory-quote-cta-disabled' : ''}`}
-              onClick={handleRequestQuote}
-              disabled={quote.status !== 'valid'}
-            >
-              Solicitar cotización
-            </button>
-            <button
-              type="button"
-              className="secondary-link inventory-quote-attachment-download"
-              onClick={handleDownloadPolygonAttachment}
-              disabled={!hasPolygonForAttachment}
-            >
-              Descargar archivo del polígono
-            </button>
-            {quoteAttachmentMessage ? <p className="inventory-quote-attachment-hint">{quoteAttachmentMessage}</p> : null}
+            <form className="inventrees-quote-client-form" onSubmit={handleRequestQuote}>
+              <h5>Datos de contacto para la cotización</h5>
+              <div className="inventrees-quote-client-form-grid">
+                <label className="inventory-field">
+                  <span>Nombre</span>
+                  <input
+                    type="text"
+                    name="nombre"
+                    value={clientForm.nombre}
+                    onChange={handleClientFieldChange}
+                    autoComplete="name"
+                    required
+                  />
+                </label>
+                <label className="inventory-field">
+                  <span>Cargo o función</span>
+                  <input
+                    type="text"
+                    name="puestoFuncion"
+                    value={clientForm.puestoFuncion}
+                    onChange={handleClientFieldChange}
+                    autoComplete="organization-title"
+                    required
+                  />
+                </label>
+                <label className="inventory-field">
+                  <span>Dependencia de gobierno</span>
+                  <input
+                    type="text"
+                    name="dependenciaGobierno"
+                    value={clientForm.dependenciaGobierno}
+                    onChange={handleClientFieldChange}
+                    autoComplete="organization"
+                    required
+                  />
+                </label>
+                <label className="inventory-field">
+                  <span>Teléfono de contacto</span>
+                  <input
+                    type="tel"
+                    name="telefonoContacto"
+                    value={clientForm.telefonoContacto}
+                    onChange={handleClientFieldChange}
+                    autoComplete="tel"
+                    required
+                  />
+                </label>
+                <label className="inventory-field">
+                  <span>Correo electrónico</span>
+                  <input
+                    type="email"
+                    name="correoElectronico"
+                    value={clientForm.correoElectronico}
+                    onChange={handleClientFieldChange}
+                    autoComplete="email"
+                    required
+                  />
+                </label>
+              </div>
+              <button
+                type="submit"
+                className="inventrees-quote-submit-btn"
+                disabled={(quote.status !== 'valid' && !isLargeCity) || isSubmittingQuote}
+              >
+                {isSubmittingQuote ? 'Enviando solicitud...' : 'Solicitar cotización'}
+              </button>
+            </form>
+            {quoteNotice ? (
+              <p className={`inventrees-quote-notice inventrees-quote-notice-${quoteNotice.type}`} role="status">
+                {quoteNotice.text}
+              </p>
+            ) : null}
           </div>
         </div>
 

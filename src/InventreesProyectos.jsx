@@ -4,6 +4,7 @@ import './App.css'
 
 const quoteRecipientEmail = 'info@terralogica.mx'
 const polygonStorageKey = 'inventrees-polygon-registration'
+const projectQuotePrefillStorageKey = 'inventrees-project-quote-prefill'
 const quoteApiUrl = (import.meta.env.VITE_QUOTE_API_URL || '/api/quote').trim()
 const maxQuoteUploadSizeBytes = 9 * 1024 * 1024
 
@@ -79,6 +80,32 @@ function readPolygonRegistration() {
 
 function persistPolygonRegistration(payload) {
   window.localStorage.setItem(polygonStorageKey, JSON.stringify(payload))
+}
+
+function readProjectQuotePrefill() {
+  try {
+    const rawValue = window.localStorage.getItem(projectQuotePrefillStorageKey)
+    if (!rawValue) {
+      return null
+    }
+
+    const parsedValue = JSON.parse(rawValue)
+    if (!parsedValue || typeof parsedValue !== 'object') {
+      return null
+    }
+
+    return parsedValue
+  } catch {
+    return null
+  }
+}
+
+function clearProjectQuotePrefill() {
+  try {
+    window.localStorage.removeItem(projectQuotePrefillStorageKey)
+  } catch {
+    // Ignore storage cleanup errors.
+  }
 }
 
 function attachmentToFile(attachment) {
@@ -186,7 +213,7 @@ const inventreesProjectTypes = [
     imageAlt: 'Imagen de referencia para inventario de senalizacion urbana',
     mediaLabel: 'Inventario de señalética y seguridad vial.',
     description:
-      'La signaléctica urbana requiere un sistema de inventario que ayude a garantizar la seguridad y eficiencia del tránsito, y a orientar, guiar e informar adecuadamente a los ciudadanos y visitantes de la ciudad. El inventario contiene la ubicación, características y condición de las señales verticales en los espacios públicos de la ciudad.',
+      'La señalética urbana requiere un sistema de inventario que ayude a garantizar la seguridad y eficiencia del tránsito, y a orientar, guiar e informar adecuadamente a los ciudadanos y visitantes de la ciudad. El inventario contiene la ubicación, características y condición de las señales verticales en los espacios públicos de la ciudad.',
     sectionIntro:
       'Desarrollamos inventarios de señalización para ordenar activos, detectar faltantes, evaluar condición y fortalecer programas de seguridad vial y movilidad urbana.',
     solutions: [
@@ -263,6 +290,88 @@ function InventreesProyectos() {
     telefonoContacto: '',
     correoElectronico: '',
   })
+
+  useEffect(() => {
+    const storagePayload = readProjectQuotePrefill()
+    const statePrefill = location.state?.prefillClientForm
+    const storagePrefill = storagePayload?.clientForm
+    const candidatePrefill = statePrefill && typeof statePrefill === 'object' ? statePrefill : storagePrefill
+    const statePolygonPrefill = location.state?.prefillPolygonRegistration
+    const storagePolygonPrefill = storagePayload?.polygonRegistration
+    const candidatePolygonPrefill =
+      statePolygonPrefill && typeof statePolygonPrefill === 'object'
+        ? statePolygonPrefill
+        : storagePolygonPrefill && typeof storagePolygonPrefill === 'object'
+          ? storagePolygonPrefill
+          : null
+
+    let anyPrefillApplied = false
+
+    if (candidatePrefill && typeof candidatePrefill === 'object') {
+      setClientForm((previousValue) => ({
+        ...previousValue,
+        nombre: typeof candidatePrefill.nombre === 'string' ? candidatePrefill.nombre : previousValue.nombre,
+        puestoFuncion:
+          typeof candidatePrefill.puestoFuncion === 'string'
+            ? candidatePrefill.puestoFuncion
+            : previousValue.puestoFuncion,
+        dependenciaGobierno:
+          typeof candidatePrefill.dependenciaGobierno === 'string'
+            ? candidatePrefill.dependenciaGobierno
+            : previousValue.dependenciaGobierno,
+        telefonoContacto:
+          typeof candidatePrefill.telefonoContacto === 'string'
+            ? candidatePrefill.telefonoContacto
+            : previousValue.telefonoContacto,
+        correoElectronico:
+          typeof candidatePrefill.correoElectronico === 'string'
+            ? candidatePrefill.correoElectronico
+            : previousValue.correoElectronico,
+      }))
+      anyPrefillApplied = true
+    }
+
+    if (candidatePolygonPrefill) {
+      const normalizedPolygonPrefill = {
+        ...candidatePolygonPrefill,
+        status:
+          candidatePolygonPrefill.status === 'registered' ||
+          Boolean(candidatePolygonPrefill?.polygonAttachment) ||
+          (Array.isArray(candidatePolygonPrefill?.polygon) && candidatePolygonPrefill.polygon.length >= 3)
+            ? 'registered'
+            : 'pending',
+        updatedAt: new Date().toISOString(),
+      }
+
+      persistPolygonRegistration(normalizedPolygonPrefill)
+
+      const prefilledPolygonFile = buildAttachmentFileFromRegistration(normalizedPolygonPrefill)
+      const prefilledPolygonFileName = getRegisteredPolygonFileName(normalizedPolygonPrefill)
+
+      setPolygonFile(prefilledPolygonFile)
+      setRegisteredPolygonFileName(prefilledPolygonFileName)
+      setPolygonStatus(normalizedPolygonPrefill.status)
+      setUploadStatus(prefilledPolygonFileName ? 'success' : 'idle')
+      setUploadMessage(
+        prefilledPolygonFileName
+          ? `Archivo registrado disponible: ${prefilledPolygonFileName}.`
+          : 'No hay archivo cargado.',
+      )
+
+      anyPrefillApplied = true
+    }
+
+    if (!anyPrefillApplied) {
+      return
+    }
+
+    setQuoteNotice({
+      type: 'success',
+      text: 'Se recuperaron los datos del cliente y el polígono desde el cotizador de software para continuar la cotización de proyecto.',
+    })
+
+    clearProjectQuotePrefill()
+  }, [location.state])
 
   useEffect(() => {
     if (!location.hash) {
@@ -419,6 +528,19 @@ function InventreesProyectos() {
       return
     }
 
+    const selectedOptionsCount = Object.values(selectedServices).reduce(
+      (total, currentPanelSelections) => total + currentPanelSelections.length,
+      0,
+    )
+
+    if (selectedOptionsCount < 1) {
+      setQuoteNotice({
+        type: 'error',
+        text: 'Seleccione al menos un atributo para el inventario antes de solicitar la cotización.',
+      })
+      return
+    }
+
     const requiredFields = [
       clientForm.nombre,
       clientForm.puestoFuncion,
@@ -443,11 +565,6 @@ function InventreesProyectos() {
       })
       return
     }
-
-    const selectedOptionsCount = Object.values(selectedServices).reduce(
-      (total, currentPanelSelections) => total + currentPanelSelections.length,
-      0,
-    )
 
     const subject = 'Solicitud de Cotización - Proyecto INVENTREES'
     const bodyLines = [
@@ -524,7 +641,7 @@ function InventreesProyectos() {
 
       setQuoteNotice({
         type: 'success',
-        text: 'Solicitud enviada. Terralógica recibió su información y el archivo del polígono.',
+        text: 'Solicitud enviada. Terralógica recibió su información y el archivo del polígono. En breve nos comunicaremos con usted al correo que proporcionó',
       })
     } catch {
       setQuoteNotice({
@@ -700,7 +817,7 @@ function InventreesProyectos() {
                   </div>
 
                   <p className="inventrees-quote-feature-panels-intro">
-                    Pro favor seleccione los atributos que necesita incluir en su inventario.
+                    Por favor seleccione los atributos que necesita incluir en su inventario.
                   </p>
 
                   <div className="inventrees-quote-feature-panels" aria-label="Selección de servicios para cotización">

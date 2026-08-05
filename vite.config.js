@@ -18,6 +18,13 @@ export default defineConfig(() => {
       host: '127.0.0.1',
       port: 5173,
       strictPort: true,
+      proxy: {
+        '/api': {
+          target: 'https://terralogica-sitio-web.pages.dev',
+          changeOrigin: true,
+          secure: true,
+        },
+      },
     },
   }
 })
