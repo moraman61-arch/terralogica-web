@@ -164,7 +164,7 @@ const inventreesProjectTypes = [
     slug: 'arbolado-publico',
     title: 'Arbolado público',
     image: '/inventrees/inventario-arbolado-publico.png',
-    videoSrc: '/videos/presentacion-inventrees.mp4',
+    videoSrc: 'https://customer-kywq3a5r9m82v8jr.cloudflarestream.com/5009262acf9a8bc8d7a1fe77f16502d5/manifest/video.m3u8',
     postVideoTextBeforeLink:
       'Diseñamos y desarrollamos su proyecto de inventario de arbolado por etapas, según sus necesidades y presupuesto. Para localidades pequeñas y medias recomendamos la ',
     postVideoLinkText: 'renta del software',
