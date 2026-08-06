@@ -24,6 +24,13 @@ export const proyectoTemas = [
         linkTo: '/servicios/proyectos/inventrees-proyectos#arbolado-publico',
         linkLabel: 'Arbolado Público',
       },
+      {
+        title: 'Deforestación, Fragmentación y Restauración Forestal',
+        description:
+          'Diseñamos proyectos para detectar pérdida de cobertura vegetal, analizar la fragmentación del paisaje y planear acciones de restauración forestal con enfoque territorial.',
+        imagePath: '/proyectos/proyecto-medio-ambiente-recursos.png',
+        imageAlt: 'Imagen de referencia para proyectos de deforestacion, fragmentacion y restauracion forestal',
+      },
     ],
   },
   {

@@ -185,7 +185,7 @@ const inventreesProjectTypes = [
     ],
     featuredProjectsNotes: [
       'En 2018, para el Gobierno de Jalisco, participamos en el proyecto de Inventario del Arbolado Público Urbano de la Zona Metropolitana de Guadalajara, que abarcó siete municipios. En total se geolocalizaron 1,158,009 árboles, de los cuales, una muestra de poco más de 44,000, posee información detallada (haga clic en la imagen para abrir el geovisualizador del proyecto):',
-      'Desde agosto de 2026, para el Gobierno de la Ciudad de México, iniciamos la Etapa de Geolocalización del proyecto de Inventario de Arbolado Público Urbano de la CDMX, que comprende las 16 alcaldias y que concluirá en Diciembre de 2026. En el 2027 realizaremos las Etapas de Medición y Caracterización. Se estima que el inventario incluirá poco más de 3,000,000 de árboles.',
+      'Desde agosto de 2026, para el Gobierno de la Ciudad de México, iniciamos la Etapa de Geolocalización del proyecto de Inventario de Arbolado Público Urbano de la CDMX, que comprende las 16 alcaldías y que concluirá en Diciembre de 2026. En el 2027 realizaremos las Etapas de Medición y Caracterización. Se estima que el inventario incluirá poco más de 3,000,000 de árboles.',
     ],
     imageAlt: 'Imagen de referencia para inventario de arbolado publico',
     mediaLabel: 'Inventario y gestión de arbolado urbano.',
