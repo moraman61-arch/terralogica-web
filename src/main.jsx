@@ -13,6 +13,7 @@ const GestionRiesgosProteccionCivil = lazy(() => import('./GestionRiesgosProtecc
 const Amenazas = lazy(() => import('./Amenazas.jsx'))
 const Vulnerabilidad = lazy(() => import('./Vulnerabilidad.jsx'))
 const Riesgos = lazy(() => import('./Riesgos.jsx'))
+const ContaminacionAmbiental = lazy(() => import('./ContaminacionAmbiental.jsx'))
 const InventreesProyectos = lazy(() => import('./InventreesProyectos.jsx'))
 const Capacitacion = lazy(() => import('./Capacitacion.jsx'))
 const Software = lazy(() => import('./Software.jsx'))
@@ -45,6 +46,7 @@ createRoot(document.getElementById('root')).render(
           <Route path="/servicios/proyectos/gestion-riesgos-proteccion-civil/amenazas" element={<Amenazas />} />
           <Route path="/servicios/proyectos/gestion-riesgos-proteccion-civil/vulnerabilidad" element={<Vulnerabilidad />} />
           <Route path="/servicios/proyectos/gestion-riesgos-proteccion-civil/riesgos" element={<Riesgos />} />
+          <Route path="/servicios/proyectos/medio-ambiente/contaminacion-ambiental" element={<ContaminacionAmbiental />} />
           <Route path="/servicios/proyectos/inventrees-proyectos" element={<InventreesProyectos />} />
           <Route path="/servicios/capacitacion" element={<Capacitacion />} />
           <Route path="/servicios/software" element={<Software />} />

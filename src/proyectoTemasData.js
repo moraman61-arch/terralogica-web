@@ -14,6 +14,8 @@ export const proyectoTemas = [
           'Implementamos proyectos para identificar fuentes de contaminación, evaluar impactos y priorizar acciones de mitigación con enfoque de salud pública.',
         imagePath: '/proyectos/unnamed-15.jpg',
         imageAlt: 'Imagen de referencia para proyectos de contaminacion ambiental y salud publica',
+        linkTo: '/servicios/proyectos/medio-ambiente/contaminacion-ambiental',
+        linkLabel: 'Contaminación Ambiental',
       },
       {
         title: 'Inventarios de Arbolado Público Urbano',
