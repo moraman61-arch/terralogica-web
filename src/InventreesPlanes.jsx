@@ -1602,7 +1602,7 @@ function InventreesPlanes() {
           </div>
           <h2 className="inventory-hero-title">Contar con un inventario de arbolado público urbano es ahora ¡muy fácil!</h2>
           <p className="hero-text inventory-hero-description">
-            Estructura comercial flexible y equitativa para comunidades pequeñas, ciudades medias y ciudades grandes, con reglas claras por cobertura de km de vialidad. INVENTREES es solo para gobiernos locales y comunidades. No trabajamos con empresas ni con entidades intermediarias.
+            Estructura comercial flexible y equitativa para comunidades pequeñas, ciudades medias y ciudades grandes, con reglas claras por cobertura de km de vialidad. La renta del software INVENTREES es solo para gobiernos locales y comunidades. No trabajamos con empresas ni con entidades intermediarias.
           </p>
         </div>
       </section>
