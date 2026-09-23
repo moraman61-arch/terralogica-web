@@ -166,11 +166,11 @@ const inventreesProjectTypes = [
     image: '/inventrees/inventario-arbolado-publico.png',
     videoSrc: 'https://customer-kywq3a5r9m82v8jr.cloudflarestream.com/5009262acf9a8bc8d7a1fe77f16502d5/manifest/video.m3u8',
     postVideoTextBeforeLink:
-      'Diseñamos y desarrollamos su proyecto de inventario de arbolado por etapas, según sus necesidades y presupuesto. Para localidades pequeñas y medias recomendamos la ',
+      'Diseñamos y desarrollamos su proyecto de inventario de arbolado por etapas, según sus necesidades y presupuesto. Para localidades pequeñas recomendamos la ',
     postVideoLinkText: 'renta del software',
     postVideoLinkTo: '/servicios/software/inventrees',
     postVideoTextAfterLink:
-      ' a un costo muy reducido. Para las ciudades grandes ofrecemos elaborar su inventario en un tiempo de hasta 1 año dependiendo de su extensión, y el número y tipo de atributos que desea incluir en el inventario.',
+      ' a un costo muy reducido. Para las ciudades grandes y medias ofrecemos elaborar su inventario en un tiempo de hasta 1 año dependiendo de su extensión, y el número y tipo de atributos que desea incluir en el inventario.',
     imageAlt: 'Imagen de referencia para inventario de arbolado publico',
     mediaLabel: 'Inventario y gestión de arbolado urbano.',
     description:
