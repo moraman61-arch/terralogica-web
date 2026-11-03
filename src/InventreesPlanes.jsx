@@ -1834,7 +1834,7 @@ function InventreesPlanes() {
                 {recommendedProjectCost ? (
                   <>
                     <p aria-hidden="true">&nbsp;</p>
-                    <p className="inventory-threshold-note"><em>Costos adicionales a considerar (enteramente a cargo del cliente): no incluyen coordinación del proyecto, supervisión de control de calidad, administración, uso de oficinas, uso de equipo de cómputo, internet de alta velocidad, electricidad, limpieza de oficinas, seguridad</em></p>
+                    <p className="inventory-threshold-note"><em>Costos adicionales a considerar (enteramente a cargo del cliente): NO incluyen coordinación del proyecto, supervisión de control de calidad, administración, uso de oficinas, uso de equipo de cómputo, internet de alta velocidad, electricidad, limpieza de oficinas, seguridad</em></p>
                     <p>Costo operarios: {currencyFormatter.format(recommendedProjectCost.operatorsTotalCost)} ({currencyFormatter.format(recommendedProjectCost.operatorsMonthlyCost)} por mes; si ya cuenta con operarios el costo es $0.00)</p>
                     <p>Costo Google Maps API imágenes panorámicas extra: {currencyFormatter.format(recommendedProjectCost.googleTotalCost)} ({currencyFormatter.format(recommendedProjectCost.googleMonthlyCost)} por mes en promedio)</p>
                     <p>Total estimado del proyecto: {currencyFormatter.format(recommendedProjectCost.grandTotal)}</p>
