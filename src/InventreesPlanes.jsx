@@ -41,14 +41,13 @@ const plansByModule = [
       {
         licenseId: 'monthly-medium-large',
         type: 'Suscripción mensual para ciudades medias',
-        price: 'USD 450.00 a USD 500.00 mensuales (descuento por meses)',
-        range: 'Más de 250 km y hasta 3,500 km',
+        price: 'USD 450.00 a USD 500.00 mensuales (descuento por kilometraje)',
+        range: 'Más de 250 km (USD $1.80 / km) y hasta 3,500 km (USD $0.15 / km)',
         mode: 'scaled-monthly',
         minAmount: 450,
         maxAmount: 500,
         startKm: 250,
         endKm: 3500,
-        discountPerExtraMonth: 0.01,
         minKm: 250,
         minKmExclusive: true,
         maxKm: 3500,
@@ -74,14 +73,13 @@ const plansByModule = [
       {
         licenseId: 'monthly-medium-large',
         type: 'Suscripción mensual para ciudades medias',
-        price: 'USD 500.00 a USD 550.00 mensuales (descuento por meses)',
-        range: 'Más de 250 km y hasta 3,500 km',
+        price: 'USD 500.00 a USD 2,000.00 mensuales (descuento por kilometraje)',
+        range: 'Más de 250 km (USD $2.00 / km) y hasta 3,500 km (USD $0.57 / km)',
         mode: 'scaled-monthly',
         minAmount: 500,
-        maxAmount: 550,
+        maxAmount: 2000,
         startKm: 250,
         endKm: 3500,
-        discountPerExtraMonth: 0.01,
         minKm: 250,
         minKmExclusive: true,
         maxKm: 3500,
@@ -107,14 +105,13 @@ const plansByModule = [
       {
         licenseId: 'monthly-medium-large',
         type: 'Suscripción mensual para ciudades medias',
-        price: 'USD 500.00 a USD 550.00 mensuales (descuento por meses)',
-        range: 'Más de 250 km y hasta 3,500 km',
+        price: 'USD 500.00 a USD 2,000.00 mensuales (descuento por kilometraje)',
+        range: 'Más de 250 km (USD $2.00 / km) y hasta 3,500 km (USD $0.57 / km)',
         mode: 'scaled-monthly',
         minAmount: 500,
-        maxAmount: 550,
+        maxAmount: 2000,
         startKm: 250,
         endKm: 3500,
-        discountPerExtraMonth: 0.01,
         minKm: 250,
         minKmExclusive: true,
         maxKm: 3500,
@@ -824,20 +821,14 @@ function calculateQuote(plan, km, months = 1) {
     const kmBase = Math.min(Math.max(km, plan.startKm), plan.endKm)
     const kmSpan = Math.max(plan.endKm - plan.startKm, 1)
     const growthRatio = (kmBase - plan.startKm) / kmSpan
-    const baseAmount = plan.minAmount + (plan.maxAmount - plan.minAmount) * growthRatio
-    const discountRate = normalizedMonths >= 2 ? (normalizedMonths - 1) * (plan.discountPerExtraMonth ?? 0) : 0
-    const discountedAmount = Math.max(baseAmount * (1 - discountRate), 0)
-    const discountPercent = Math.max(discountRate * 100, 0)
+    const monthlyAmount = plan.minAmount + (plan.maxAmount - plan.minAmount) * growthRatio
 
     return {
       status: 'valid',
-      amountLabel: formatMonthlyQuoteLabel(discountedAmount, normalizedMonths),
-      monthlyAmount: discountedAmount,
+      amountLabel: formatMonthlyQuoteLabel(monthlyAmount, normalizedMonths),
+      monthlyAmount,
       months: normalizedMonths,
-      detail:
-        normalizedMonths >= 2
-          ? `Escala mensual entre ${currencyFormatter.format(plan.minAmount)} y ${currencyFormatter.format(plan.maxAmount)} según km. Incluye descuento de ${discountPercent.toFixed(0)}% por contratar ${normalizedMonths} meses desde el inicio.`
-          : `Escala mensual entre ${currencyFormatter.format(plan.minAmount)} y ${currencyFormatter.format(plan.maxAmount)} según km.`,
+      detail: `Escala mensual entre ${currencyFormatter.format(plan.minAmount)} y ${currencyFormatter.format(plan.maxAmount)} según km. El descuento es por kilometraje: a mayor kilometraje, menor es el precio por km.`,
     }
   }
 
