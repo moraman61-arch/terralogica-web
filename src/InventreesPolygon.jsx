@@ -579,7 +579,7 @@ function InventreesPolygon() {
     }
 
     setIsEstimatingRoads(true)
-    setSearchStatus('Calculando km de vialidades dentro del polígono...')
+    setSearchStatus('Calculando km de vialidades dentro del polígono... puede tardar hasta un minuto.')
 
     const polygonCoordinates = polygonPreview.map((point) => [point.lat, point.lng])
     const { roadLengthKm: estimatedRoadLengthKm, reason: estimationFailureReason } =
