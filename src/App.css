@@ -1321,6 +1321,39 @@
   background: #07173f;
 }
 
+/* En modo dibujo el puntero debe marcar el punto exacto, no sugerir arrastre del mapa. */
+.inventory-map-canvas.inventory-map-canvas-drawing,
+.inventory-map-canvas.inventory-map-canvas-drawing.leaflet-grab,
+.inventory-map-canvas.inventory-map-canvas-drawing.leaflet-touch-drag,
+.leaflet-dragging .inventory-map-canvas.inventory-map-canvas-drawing.leaflet-grab {
+  cursor: crosshair;
+}
+
+.inventory-map-canvas.inventory-map-canvas-drawing .leaflet-interactive {
+  cursor: crosshair;
+}
+
+.inventory-map-error {
+  display: grid;
+  gap: 0.6rem;
+  padding: 0.85rem 1rem;
+  border-radius: 0.85rem;
+  border: 1px solid rgba(226, 143, 73, 0.45);
+  background: rgba(74, 33, 12, 0.5);
+  color: #ffe8ce;
+}
+
+.inventory-map-error-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.6rem;
+}
+
+.inventory-map-error-detail {
+  font-size: 0.8rem;
+  opacity: 0.75;
+}
+
 .inventory-map-help {
   padding: 1rem 1.1rem;
   border-radius: 1rem;

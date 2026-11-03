@@ -19,6 +19,14 @@ const kmValueFormatter = new Intl.NumberFormat('en-US', {
   maximumFractionDigits: 2,
 })
 
+const areaIntegerFormatter = new Intl.NumberFormat('en-US', {
+  maximumFractionDigits: 0,
+})
+
+function formatAreaKm2(areaKm2) {
+  return areaKm2 >= 100 ? areaIntegerFormatter.format(areaKm2) : kmValueFormatter.format(areaKm2)
+}
+
 function waitFor(ms) {
   return new Promise((resolve) => {
     window.setTimeout(resolve, ms)
@@ -42,6 +50,25 @@ async function fetchWithTimeout(resource, options = {}, timeoutMs = 22000) {
 
 function persistPolygonRegistration(payload) {
   window.localStorage.setItem(polygonStorageKey, JSON.stringify(payload))
+}
+
+function polygonAreaKm2(polygonCoordinates) {
+  if (!Array.isArray(polygonCoordinates) || polygonCoordinates.length < 3) {
+    return 0
+  }
+
+  const earthRadiusKm = 6371
+  const toRadians = (value) => (value * Math.PI) / 180
+  let total = 0
+
+  for (let index = 0; index < polygonCoordinates.length; index += 1) {
+    const [lat1, lon1] = polygonCoordinates[index]
+    const [lat2, lon2] = polygonCoordinates[(index + 1) % polygonCoordinates.length]
+    total +=
+      toRadians(lon2 - lon1) * (2 + Math.sin(toRadians(lat1)) + Math.sin(toRadians(lat2)))
+  }
+
+  return Math.abs((total * earthRadiusKm * earthRadiusKm) / 2)
 }
 
 function polygonToKmlText(polygonCoordinates) {
@@ -383,6 +410,8 @@ function InventreesPolygon() {
   const polygonLayerRef = useRef(null)
   const drawingPointsRef = useRef([])
   const isDrawingRef = useRef(true)
+  const [isDrawingMode, setIsDrawingMode] = useState(true)
+  const [estimationError, setEstimationError] = useState(null)
   const [searchText, setSearchText] = useState('')
   const [searchStatus, setSearchStatus] = useState(
     Array.isArray(initialRegistrationState.polygon) && initialRegistrationState.polygon.length >= 3
@@ -479,6 +508,7 @@ function InventreesPolygon() {
       updatePreview()
       setSearchStatus('Polígono trazado. Puede borrarlo, aceptarlo o cancelarlo.')
       isDrawingRef.current = false
+      setIsDrawingMode(false)
     }
 
     map.on('click', handleMapClick)
@@ -510,9 +540,12 @@ function InventreesPolygon() {
   const resetDrawing = () => {
     drawingPointsRef.current = []
     isDrawingRef.current = true
+    setIsDrawingMode(true)
     setDrawingPointCount(0)
     setPolygonPreview(null)
+    setEstimationError(null)
     setSearchStatus('Polígono borrado. Puede iniciar uno nuevo con clic izquierdo.')
+    mapRef.current?.getContainer().focus?.()
 
     if (polygonLayerRef.current) {
       polygonLayerRef.current.remove()
@@ -579,6 +612,7 @@ function InventreesPolygon() {
     }
 
     setIsEstimatingRoads(true)
+    setEstimationError(null)
     setSearchStatus('Calculando km de vialidades dentro del polígono... puede tardar hasta un minuto.')
 
     const polygonCoordinates = polygonPreview.map((point) => [point.lat, point.lng])
@@ -611,24 +645,30 @@ function InventreesPolygon() {
         `Kilómetros de vialidad calculados: ${kmValueFormatter.format(estimatedRoadLengthKm)} km. Se enviaron al cotizador rápido.`,
       )
     } else {
+      // Se permanece en la pagina para que el usuario pueda redibujar un poligono mas pequeno:
+      // a mayor area, mas tarda Overpass y mas probable es que la consulta falle.
+      setEstimationError({
+        reason: estimationFailureReason || 'sin detalle',
+        areaKm2: polygonAreaKm2(polygonCoordinates),
+      })
       setSearchStatus(
-        `El polígono quedó registrado, pero el servicio de vialidades no respondió (${estimationFailureReason || 'sin detalle'}). Escriba los km de vialidad manualmente en el cotizador o intente de nuevo con «Aceptar polígono».`,
+        'No fue posible calcular los km de vialidad con este polígono. Reintente o dibuje un polígono más pequeño.',
       )
+      return
     }
 
-    await waitFor(hasCalculatedKm ? 1400 : 2600)
+    await waitFor(1400)
 
     if (returnToPath === '/servicios/software/inventrees') {
       navigate(returnUrl, {
         state: {
           scrollToSection: 'requirements',
-          ...(hasCalculatedKm ? {} : { polygonKmWarning: true }),
         },
       })
       return
     }
 
-    navigate(returnUrl, { state: hasCalculatedKm ? null : { polygonKmWarning: true } })
+    navigate(returnUrl)
   }
 
   const handleCancel = () => {
@@ -702,6 +742,8 @@ function InventreesPolygon() {
                 className="primary-link inventory-tool-button"
                 onClick={() => {
                   isDrawingRef.current = true
+                  setIsDrawingMode(true)
+                  setEstimationError(null)
                   setSearchStatus('Modo dibujo activo. Haga clic izquierdo para marcar puntos.')
                 }}
               >
@@ -729,6 +771,41 @@ function InventreesPolygon() {
 
             <div className="inventory-map-status">
               <p>{searchStatus}</p>
+              {estimationError ? (
+                <div className="inventory-map-error" role="alert">
+                  <p>
+                    <strong>No se pudo calcular el kilometraje de vialidades.</strong>
+                    {estimationError.areaKm2 > 0 ? (
+                      <>
+                        {' '}
+                        El área dibujada es de aproximadamente{' '}
+                        <strong>{formatAreaKm2(estimationError.areaKm2)} km²</strong>.
+                      </>
+                    ) : null}{' '}
+                    Los polígonos grandes suelen fallar más porque la consulta tarda demasiado.
+                  </p>
+                  <p>
+                    Divida el área en polígonos más pequeños y calcule cada uno por separado, o reintente.
+                    {estimationError.areaKm2 >= 5000
+                      ? ' Si el área es mayor que una ciudad, acerque el mapa (zoom) y dibuje solo el sector que desea inventariar.'
+                      : ''}
+                  </p>
+                  <div className="inventory-map-error-actions">
+                    <button
+                      type="button"
+                      className="primary-link inventory-tool-button"
+                      onClick={handleAccept}
+                      disabled={isEstimatingRoads}
+                    >
+                      Reintentar cálculo
+                    </button>
+                    <button type="button" className="primary-link inventory-tool-button" onClick={resetDrawing}>
+                      Dibujar polígono más pequeño
+                    </button>
+                  </div>
+                  <p className="inventory-map-error-detail">Detalle técnico: {estimationError.reason}</p>
+                </div>
+              ) : null}
               <p>
                 Vértices actuales: <strong>{drawingPointCount}</strong>
               </p>
@@ -746,7 +823,7 @@ function InventreesPolygon() {
 
           <div className="inventory-map-main">
             <div className="inventory-map-frame">
-              <div ref={mapContainerRef} className="inventory-map-canvas" aria-label="Mapa interactivo para dibujar el polígono" />
+              <div ref={mapContainerRef} className={`inventory-map-canvas${isDrawingMode ? ' inventory-map-canvas-drawing' : ''}`} aria-label="Mapa interactivo para dibujar el polígono" />
             </div>
           </div>
         </div>
