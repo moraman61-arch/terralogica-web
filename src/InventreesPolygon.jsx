@@ -198,20 +198,49 @@ function simplifyPolygonForQuery(polygonCoordinates, maxVertices = 240) {
   return simplified.length >= 3 ? simplified : polygonCoordinates
 }
 
+function polygonCoverageRatio(polygonCoordinates) {
+  const meanLatitude = polygonCoordinates.reduce((sum, [lat]) => sum + lat, 0) / polygonCoordinates.length
+  const longitudeScale = Math.cos((meanLatitude * Math.PI) / 180) || 1
+  let doubledArea = 0
+
+  for (let index = 0; index < polygonCoordinates.length; index += 1) {
+    const [lat1, lon1] = polygonCoordinates[index]
+    const [lat2, lon2] = polygonCoordinates[(index + 1) % polygonCoordinates.length]
+    doubledArea += lon1 * longitudeScale * lat2 - lon2 * longitudeScale * lat1
+  }
+
+  const lats = polygonCoordinates.map(([lat]) => lat)
+  const lons = polygonCoordinates.map(([, lon]) => lon)
+  const boundingArea =
+    (Math.max(...lats) - Math.min(...lats)) * (Math.max(...lons) - Math.min(...lons)) * longitudeScale
+
+  if (!(boundingArea > 0)) {
+    return 0
+  }
+
+  return Math.abs(doubledArea) / 2 / boundingArea
+}
+
 function buildRoadLengthQuery(polygonCoordinates) {
   const queryPolygon = simplifyPolygonForQuery(polygonCoordinates)
-  const closedPolygon =
-    queryPolygon.length > 2 &&
-    (queryPolygon[0][0] !== queryPolygon[queryPolygon.length - 1][0] ||
-      queryPolygon[0][1] !== queryPolygon[queryPolygon.length - 1][1])
-      ? [...queryPolygon, queryPolygon[0]]
-      : queryPolygon
+  const lats = queryPolygon.map(([lat]) => lat)
+  const lons = queryPolygon.map(([, lon]) => lon)
+  const minLat = Math.min(...lats)
+  const maxLat = Math.max(...lats)
+  const minLon = Math.min(...lons)
+  const maxLon = Math.max(...lons)
+  const polygonLatLon = [...queryPolygon, queryPolygon[0]].map(([lat, lon]) => `${lat} ${lon}`).join(' ')
 
-  const polygonLatLon = closedPolygon.map(([lat, lon]) => `${lat} ${lon}`).join(' ')
+  // La caja delimitadora usa el indice espacial de Overpass y responde mucho mas rapido que
+  // (poly:"..."); el recorte exacto al poligono se hace despues al medir cada segmento.
+  const areaFilter =
+    polygonCoverageRatio(queryPolygon) >= 0.4
+      ? `${minLat},${minLon},${maxLat},${maxLon}`
+      : `poly:"${polygonLatLon}"`
 
   return `[out:json][timeout:40];
 (
-  way["highway"]["highway"!~"footway|path|cycleway|bridleway|steps|pedestrian|corridor"](poly:"${polygonLatLon}");
+  way["highway"]["highway"!~"footway|path|cycleway|bridleway|steps|pedestrian|corridor"](${areaFilter});
 );
 out geom qt;`
 }
@@ -228,7 +257,7 @@ async function requestRoadLengthFromApi(polygonCoordinates) {
         },
         body: JSON.stringify({ polygon: polygonCoordinates }),
       },
-      90000,
+      110000,
     )
 
     if (!response.ok) {

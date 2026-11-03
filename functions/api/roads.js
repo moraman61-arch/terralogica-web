@@ -1,15 +1,18 @@
 // Overpass bloquea las peticiones de navegador y de redes de nube en varios espejos
 // (overpass-api.de responde 521/406). Este proxy consulta el espejo que sí responde
 // desde el edge de Cloudflare y devuelve solo el kilometraje ya calculado.
-const overpassEndpoints = [
+const overpassAttemptPlan = [
+  'https://maps.mail.ru/osm/tools/overpass/api/interpreter',
+  'https://maps.mail.ru/osm/tools/overpass/api/interpreter',
+  'https://overpass.private.coffee/api/interpreter',
   'https://maps.mail.ru/osm/tools/overpass/api/interpreter',
   'https://overpass-api.de/api/interpreter',
-  'https://overpass.private.coffee/api/interpreter',
+  'https://maps.mail.ru/osm/tools/overpass/api/interpreter',
 ]
 
 const overpassUserAgent = 'TerralogicaINVENTREES/1.0 (+https://www.terralogica.mx)'
-const attemptTimeoutMs = 45000
-const totalBudgetMs = 80000
+const attemptTimeoutMs = 25000
+const totalBudgetMs = 95000
 
 async function fetchWithTimeout(url, options, timeoutMs) {
   const controller = new AbortController()
@@ -84,19 +87,55 @@ function estimateSegmentInsideRatio(startPoint, endPoint, polygonRing, samples =
   return insideSamples / samples
 }
 
-function buildRoadLengthQuery(polygonCoordinates, timeoutSeconds = 35) {
-  const closedPolygon =
-    polygonCoordinates.length > 2 &&
-    (polygonCoordinates[0][0] !== polygonCoordinates[polygonCoordinates.length - 1][0] ||
-      polygonCoordinates[0][1] !== polygonCoordinates[polygonCoordinates.length - 1][1])
-      ? [...polygonCoordinates, polygonCoordinates[0]]
-      : polygonCoordinates
+function polygonCoverageRatio(polygonCoordinates) {
+  const meanLatitude = polygonCoordinates.reduce((sum, [lat]) => sum + lat, 0) / polygonCoordinates.length
+  const longitudeScale = Math.cos((meanLatitude * Math.PI) / 180) || 1
+  let doubledArea = 0
 
-  const polygonLatLon = closedPolygon.map(([lat, lon]) => `${lat} ${lon}`).join(' ')
+  for (let index = 0; index < polygonCoordinates.length; index += 1) {
+    const [lat1, lon1] = polygonCoordinates[index]
+    const [lat2, lon2] = polygonCoordinates[(index + 1) % polygonCoordinates.length]
+    doubledArea += lon1 * longitudeScale * lat2 - lon2 * longitudeScale * lat1
+  }
+
+  const lats = polygonCoordinates.map(([lat]) => lat)
+  const lons = polygonCoordinates.map(([, lon]) => lon)
+  const boundingArea =
+    (Math.max(...lats) - Math.min(...lats)) * (Math.max(...lons) - Math.min(...lons)) * longitudeScale
+
+  if (!(boundingArea > 0)) {
+    return 0
+  }
+
+  return Math.abs(doubledArea) / 2 / boundingArea
+}
+
+function buildRoadLengthQuery(polygonCoordinates, timeoutSeconds = 35) {
+  const lats = polygonCoordinates.map(([lat]) => lat)
+  const lons = polygonCoordinates.map(([, lon]) => lon)
+  const minLat = Math.min(...lats)
+  const maxLat = Math.max(...lats)
+  const minLon = Math.min(...lons)
+  const maxLon = Math.max(...lons)
+
+  // El filtro por caja delimitadora usa el indice espacial de Overpass y responde mucho mas
+  // rapido que (poly:"..."); el recorte exacto al poligono se hace despues al medir segmentos.
+  const areaFilter =
+    polygonCoverageRatio(polygonCoordinates) >= 0.4
+      ? `${minLat},${minLon},${maxLat},${maxLon}`
+      : `poly:"${(() => {
+          const closedPolygon =
+            polygonCoordinates[0][0] !== polygonCoordinates[polygonCoordinates.length - 1][0] ||
+            polygonCoordinates[0][1] !== polygonCoordinates[polygonCoordinates.length - 1][1]
+              ? [...polygonCoordinates, polygonCoordinates[0]]
+              : polygonCoordinates
+
+          return closedPolygon.map(([lat, lon]) => `${lat} ${lon}`).join(' ')
+        })()}"`
 
   return `[out:json][timeout:${timeoutSeconds}];
 (
-  way["highway"]["highway"!~"footway|path|cycleway|bridleway|steps|pedestrian|corridor"](poly:"${polygonLatLon}");
+  way["highway"]["highway"!~"footway|path|cycleway|bridleway|steps|pedestrian|corridor"](${areaFilter});
 );
 out geom qt;`
 }
@@ -193,7 +232,7 @@ export async function onRequestPost(context) {
   const startedAt = Date.now()
   const failures = []
 
-  for (const endpoint of overpassEndpoints) {
+  for (const endpoint of overpassAttemptPlan) {
     if (Date.now() - startedAt > totalBudgetMs) {
       failures.push('tiempo total agotado')
       break
