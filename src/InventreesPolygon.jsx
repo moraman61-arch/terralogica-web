@@ -5,7 +5,6 @@ import 'leaflet/dist/leaflet.css'
 import './App.css'
 
 const polygonStorageKey = 'inventrees-polygon-registration'
-const roadsApiUrl = (import.meta.env.VITE_ROADS_API_URL || '/api/roads').trim()
 const defaultView = [18, 0]
 const defaultZoom = 2
 const overpassEndpoints = [
@@ -129,69 +128,110 @@ function estimateSegmentInsideRatio(startPoint, endPoint, polygonRing, samples =
   return insideSamples / samples
 }
 
+function perpendicularDistanceToSegment(point, start, end) {
+  const [x, y] = point
+  const [x1, y1] = start
+  const [x2, y2] = end
+  const dx = x2 - x1
+  const dy = y2 - y1
+  const lengthSquared = dx * dx + dy * dy
+
+  if (lengthSquared === 0) {
+    return Math.hypot(x - x1, y - y1)
+  }
+
+  const projection = ((x - x1) * dx + (y - y1) * dy) / lengthSquared
+  const clampedProjection = Math.min(Math.max(projection, 0), 1)
+
+  return Math.hypot(x - (x1 + clampedProjection * dx), y - (y1 + clampedProjection * dy))
+}
+
+function simplifyRingByTolerance(points, tolerance) {
+  if (points.length < 3) {
+    return points.slice()
+  }
+
+  let farthestIndex = 0
+  let farthestDistance = 0
+
+  for (let index = 1; index < points.length - 1; index += 1) {
+    const distance = perpendicularDistanceToSegment(points[index], points[0], points[points.length - 1])
+    if (distance > farthestDistance) {
+      farthestDistance = distance
+      farthestIndex = index
+    }
+  }
+
+  if (farthestDistance <= tolerance) {
+    return [points[0], points[points.length - 1]]
+  }
+
+  const leftPart = simplifyRingByTolerance(points.slice(0, farthestIndex + 1), tolerance)
+  const rightPart = simplifyRingByTolerance(points.slice(farthestIndex), tolerance)
+
+  return [...leftPart.slice(0, -1), ...rightPart]
+}
+
+// Un poligono dibujado a mano puede tener cientos de vertices y volver la consulta a Overpass
+// demasiado pesada; se simplifica el anillo solo para la consulta (el filtro final sigue usando el original).
+function simplifyPolygonForQuery(polygonCoordinates, maxVertices = 240) {
+  if (polygonCoordinates.length <= maxVertices) {
+    return polygonCoordinates
+  }
+
+  const lats = polygonCoordinates.map(([lat]) => lat)
+  const lons = polygonCoordinates.map(([, lon]) => lon)
+  const span = Math.max(
+    Math.max(...lats) - Math.min(...lats),
+    Math.max(...lons) - Math.min(...lons),
+  )
+
+  let tolerance = span / 4000
+  let simplified = simplifyRingByTolerance(polygonCoordinates, tolerance)
+
+  for (let round = 0; round < 10 && simplified.length > maxVertices; round += 1) {
+    tolerance *= 2
+    simplified = simplifyRingByTolerance(polygonCoordinates, tolerance)
+  }
+
+  return simplified.length >= 3 ? simplified : polygonCoordinates
+}
+
 function buildRoadLengthQuery(polygonCoordinates) {
+  const queryPolygon = simplifyPolygonForQuery(polygonCoordinates)
   const closedPolygon =
-    polygonCoordinates.length > 2 &&
-    (polygonCoordinates[0][0] !== polygonCoordinates[polygonCoordinates.length - 1][0] ||
-      polygonCoordinates[0][1] !== polygonCoordinates[polygonCoordinates.length - 1][1])
-      ? [...polygonCoordinates, polygonCoordinates[0]]
-      : polygonCoordinates
+    queryPolygon.length > 2 &&
+    (queryPolygon[0][0] !== queryPolygon[queryPolygon.length - 1][0] ||
+      queryPolygon[0][1] !== queryPolygon[queryPolygon.length - 1][1])
+      ? [...queryPolygon, queryPolygon[0]]
+      : queryPolygon
 
   const polygonLatLon = closedPolygon.map(([lat, lon]) => `${lat} ${lon}`).join(' ')
 
-  return `[out:json][timeout:30];
+  return `[out:json][timeout:40];
 (
   way["highway"]["highway"!~"footway|path|cycleway|bridleway|steps|pedestrian|corridor"](poly:"${polygonLatLon}");
 );
-out geom;`
-}
-
-async function requestRoadLengthFromApi(polygonCoordinates) {
-  try {
-    const response = await fetchWithTimeout(
-      roadsApiUrl,
-      {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          Accept: 'application/json',
-        },
-        body: JSON.stringify({ polygon: polygonCoordinates }),
-      },
-      50000,
-    )
-
-    if (!response.ok) {
-      return null
-    }
-
-    const data = await response.json()
-    const roadLengthKm = Number(data?.roadLengthKm)
-
-    return Number.isFinite(roadLengthKm) ? roadLengthKm : null
-  } catch {
-    return null
-  }
+out geom qt;`
 }
 
 async function estimateRoadLengthInsidePolygonKm(polygonCoordinates) {
   if (!Array.isArray(polygonCoordinates) || polygonCoordinates.length < 3) {
-    return null
-  }
-
-  // Primero el proxy propio: evita bloqueos de CORS/User-Agent de los servicios publicos de OSM.
-  const proxiedRoadLengthKm = await requestRoadLengthFromApi(polygonCoordinates)
-  if (Number.isFinite(proxiedRoadLengthKm)) {
-    return proxiedRoadLengthKm
+    return { roadLengthKm: null, reason: 'el polígono no tiene suficientes vértices' }
   }
 
   const query = buildRoadLengthQuery(polygonCoordinates)
   const polygonRingLonLat = polygonCoordinates.map(([lat, lon]) => [lon, lat])
+  const attemptTimeoutMs = 45000
+  const totalBudgetMs = 100000
+  const startedAt = Date.now()
+  const failures = []
 
-  const maxAttempts = 5
-
-  for (let attempt = 0; attempt < maxAttempts; attempt += 1) {
-    const endpoint = overpassEndpoints[attempt % overpassEndpoints.length]
+  for (const endpoint of overpassEndpoints) {
+    if (Date.now() - startedAt > totalBudgetMs) {
+      failures.push('tiempo total agotado')
+      break
+    }
 
     try {
       const response = await fetchWithTimeout(
@@ -204,11 +244,12 @@ async function estimateRoadLengthInsidePolygonKm(polygonCoordinates) {
           },
           body: query,
         },
-        18000,
+        attemptTimeoutMs,
       )
 
       if (!response.ok) {
-        throw new Error(`Overpass status ${response.status}`)
+        failures.push(`HTTP ${response.status}`)
+        continue
       }
 
       const data = await response.json()
@@ -236,15 +277,13 @@ async function estimateRoadLengthInsidePolygonKm(polygonCoordinates) {
         }
       }
 
-      return Number(totalLengthKm.toFixed(2))
-    } catch {
-      if (attempt < maxAttempts - 1) {
-        await waitFor(450 * (attempt + 1))
-      }
+      return { roadLengthKm: Number(totalLengthKm.toFixed(2)), reason: null }
+    } catch (error) {
+      failures.push(error?.name === 'AbortError' ? 'sin respuesta en 45 s' : 'error de red')
     }
   }
 
-  return null
+  return { roadLengthKm: null, reason: [...new Set(failures)].join(', ') }
 }
 
 function readPolygonRegistration() {
@@ -478,7 +517,8 @@ function InventreesPolygon() {
     setSearchStatus('Calculando km de vialidades dentro del polígono...')
 
     const polygonCoordinates = polygonPreview.map((point) => [point.lat, point.lng])
-    const estimatedRoadLengthKm = await estimateRoadLengthInsidePolygonKm(polygonCoordinates)
+    const { roadLengthKm: estimatedRoadLengthKm, reason: estimationFailureReason } =
+      await estimateRoadLengthInsidePolygonKm(polygonCoordinates)
     const hasCalculatedKm = Number.isFinite(estimatedRoadLengthKm) && estimatedRoadLengthKm > 0
     const polygonAttachment = {
       name: 'inventrees-poligono.kml',
@@ -507,7 +547,7 @@ function InventreesPolygon() {
       )
     } else {
       setSearchStatus(
-        'El polígono quedó registrado, pero el servicio de vialidades no respondió. Escriba los km de vialidad manualmente en el cotizador.',
+        `El polígono quedó registrado, pero el servicio de vialidades no respondió (${estimationFailureReason || 'sin detalle'}). Escriba los km de vialidad manualmente en el cotizador o intente de nuevo con «Aceptar polígono».`,
       )
     }
 
