@@ -5,6 +5,7 @@ import 'leaflet/dist/leaflet.css'
 import './App.css'
 
 const polygonStorageKey = 'inventrees-polygon-registration'
+const roadsApiUrl = (import.meta.env.VITE_ROADS_API_URL || '/api/roads').trim()
 const defaultView = [18, 0]
 const defaultZoom = 2
 const overpassEndpoints = [
@@ -215,9 +216,44 @@ function buildRoadLengthQuery(polygonCoordinates) {
 out geom qt;`
 }
 
+async function requestRoadLengthFromApi(polygonCoordinates) {
+  try {
+    const response = await fetchWithTimeout(
+      roadsApiUrl,
+      {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Accept: 'application/json',
+        },
+        body: JSON.stringify({ polygon: polygonCoordinates }),
+      },
+      90000,
+    )
+
+    if (!response.ok) {
+      return null
+    }
+
+    const data = await response.json()
+    const roadLengthKm = Number(data?.roadLengthKm)
+
+    return Number.isFinite(roadLengthKm) ? roadLengthKm : null
+  } catch {
+    return null
+  }
+}
+
 async function estimateRoadLengthInsidePolygonKm(polygonCoordinates) {
   if (!Array.isArray(polygonCoordinates) || polygonCoordinates.length < 3) {
     return { roadLengthKm: null, reason: 'el polígono no tiene suficientes vértices' }
+  }
+
+  // El proxy propio consulta Overpass desde el edge: es la via que funciona cuando la red del
+  // visitante o el propio Overpass bloquean las peticiones directas del navegador.
+  const proxiedRoadLengthKm = await requestRoadLengthFromApi(polygonCoordinates)
+  if (Number.isFinite(proxiedRoadLengthKm)) {
+    return { roadLengthKm: proxiedRoadLengthKm, reason: null }
   }
 
   const query = buildRoadLengthQuery(polygonCoordinates)
