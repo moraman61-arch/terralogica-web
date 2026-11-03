@@ -10,7 +10,13 @@ const defaultZoom = 2
 const overpassEndpoints = [
   'https://overpass-api.de/api/interpreter',
   'https://overpass.kumi.systems/api/interpreter',
+  'https://overpass.private.coffee/api/interpreter',
 ]
+
+const kmValueFormatter = new Intl.NumberFormat('en-US', {
+  minimumFractionDigits: 0,
+  maximumFractionDigits: 2,
+})
 
 function waitFor(ms) {
   return new Promise((resolve) => {
@@ -147,7 +153,7 @@ async function estimateRoadLengthInsidePolygonKm(polygonCoordinates) {
   const query = buildRoadLengthQuery(polygonCoordinates)
   const polygonRingLonLat = polygonCoordinates.map(([lat, lon]) => [lon, lat])
 
-  const maxAttempts = 4
+  const maxAttempts = 5
 
   for (let attempt = 0; attempt < maxAttempts; attempt += 1) {
     const endpoint = overpassEndpoints[attempt % overpassEndpoints.length]
@@ -159,10 +165,11 @@ async function estimateRoadLengthInsidePolygonKm(polygonCoordinates) {
           method: 'POST',
           headers: {
             'Content-Type': 'text/plain;charset=UTF-8',
+            Accept: 'application/json',
           },
           body: query,
         },
-        22000,
+        18000,
       )
 
       if (!response.ok) {
@@ -257,6 +264,10 @@ function InventreesPolygon() {
   )
   const [isSearching, setIsSearching] = useState(false)
   const [isEstimatingRoads, setIsEstimatingRoads] = useState(false)
+  const [calculatedRoadLengthKm, setCalculatedRoadLengthKm] = useState(() => {
+    const storedKm = Number(initialRegistrationState.roadLengthKm)
+    return initialRegistrationState.status === 'registered' && Number.isFinite(storedKm) && storedKm > 0 ? storedKm : null
+  })
 
   const returnToPath = typeof location.state?.returnTo === 'string' ? location.state.returnTo : '/servicios/software/inventrees'
   const returnHash = typeof location.state?.returnHash === 'string' ? location.state.returnHash : ''
@@ -433,6 +444,7 @@ function InventreesPolygon() {
 
     const polygonCoordinates = polygonPreview.map((point) => [point.lat, point.lng])
     const estimatedRoadLengthKm = await estimateRoadLengthInsidePolygonKm(polygonCoordinates)
+    const hasCalculatedKm = Number.isFinite(estimatedRoadLengthKm) && estimatedRoadLengthKm > 0
     const polygonAttachment = {
       name: 'inventrees-poligono.kml',
       mimeType: 'application/vnd.google-earth.kml+xml',
@@ -443,7 +455,7 @@ function InventreesPolygon() {
     persistPolygonRegistration({
       status: 'registered',
       polygon: polygonCoordinates,
-      roadLengthKm: estimatedRoadLengthKm,
+      roadLengthKm: hasCalculatedKm ? estimatedRoadLengthKm : null,
       polygonAttachment,
       polygonFileName: polygonAttachment.name,
       polygonFileFormat: 'KML',
@@ -451,17 +463,32 @@ function InventreesPolygon() {
       updatedAt: new Date().toISOString(),
     })
 
+    setCalculatedRoadLengthKm(hasCalculatedKm ? estimatedRoadLengthKm : null)
     setIsEstimatingRoads(false)
+
+    if (hasCalculatedKm) {
+      setSearchStatus(
+        `Kilómetros de vialidad calculados: ${kmValueFormatter.format(estimatedRoadLengthKm)} km. Se enviaron al cotizador rápido.`,
+      )
+    } else {
+      setSearchStatus(
+        'El polígono quedó registrado, pero el servicio de vialidades no respondió. Escriba los km de vialidad manualmente en el cotizador.',
+      )
+    }
+
+    await waitFor(hasCalculatedKm ? 1400 : 2600)
+
     if (returnToPath === '/servicios/software/inventrees') {
       navigate(returnUrl, {
         state: {
           scrollToSection: 'requirements',
+          ...(hasCalculatedKm ? {} : { polygonKmWarning: true }),
         },
       })
       return
     }
 
-    navigate(returnUrl)
+    navigate(returnUrl, { state: hasCalculatedKm ? null : { polygonKmWarning: true } })
   }
 
   const handleCancel = () => {
@@ -472,6 +499,7 @@ function InventreesPolygon() {
       polygonSource: null,
       updatedAt: new Date().toISOString(),
     })
+    setCalculatedRoadLengthKm(null)
     navigate(returnUrl)
   }
 
@@ -568,6 +596,11 @@ function InventreesPolygon() {
                 Estado inicial:{' '}
                 <strong>{initialRegistrationState.status === 'registered' ? 'Polígono registrado' : 'Polígono no registrado'}</strong>
               </p>
+              {calculatedRoadLengthKm !== null ? (
+                <p>
+                  Km de vialidad calculados: <strong>{kmValueFormatter.format(calculatedRoadLengthKm)} km</strong>
+                </p>
+              ) : null}
             </div>
           </aside>
 

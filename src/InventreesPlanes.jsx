@@ -945,6 +945,23 @@ function InventreesPlanes() {
   const [currentIntroVideoIndex, setCurrentIntroVideoIndex] = useState(0)
   const [isIntroVideoPlaying, setIsIntroVideoPlaying] = useState(true)
   const [polygonStatus, setPolygonStatus] = useState(() => polygonRegistration.status)
+  const [polygonKmNotice, setPolygonKmNotice] = useState(() => {
+    if (location.state?.polygonKmWarning) {
+      return {
+        type: 'error',
+        text: 'El polígono quedó registrado, pero el servicio de vialidades no respondió al calcular los km. Escriba los km de vialidad para completar la estimación.',
+      }
+    }
+
+    if (initialKmValue) {
+      return {
+        type: 'success',
+        text: `Km de vialidad cargados automáticamente desde el polígono registrado: ${formatInitialKmValue(initialKmValue)} km.`,
+      }
+    }
+
+    return null
+  })
   const [uploadStatus, setUploadStatus] = useState('idle')
   const [uploadMessage, setUploadMessage] = useState(() => {
     const initialFileName = getRegisteredPolygonFileName(polygonRegistration)
@@ -989,6 +1006,7 @@ function InventreesPlanes() {
     const recommendedLicenseId = getRecommendedLicenseId(parsedNextKm)
 
     setKmValue(nextKmValue)
+    setPolygonKmNotice(null)
 
     if (recommendedLicenseId && recommendedLicenseId !== selectedLicenseId) {
       setSelectedLicenseId(recommendedLicenseId)
@@ -1407,6 +1425,10 @@ function InventreesPlanes() {
         const nextPlan = nextModule.plans.find((plan) => plan.licenseId === nextLicenseId) ?? nextModule.plans[0]
 
         setKmValue(formattedKm)
+        setPolygonKmNotice({
+          type: 'success',
+          text: `Km de vialidad cargados automáticamente desde el polígono registrado: ${formattedKm} km.`,
+        })
         if (nextLicenseId) {
           setSelectedLicenseId(nextLicenseId)
         }
@@ -1416,6 +1438,7 @@ function InventreesPlanes() {
 
       if (latestRegistration.status !== 'registered') {
         setKmValue('')
+        setPolygonKmNotice(null)
       }
     }
 
@@ -1528,6 +1551,7 @@ function InventreesPlanes() {
 
     setPolygonStatus('pending')
     setKmValue('')
+    setPolygonKmNotice(null)
     setSelectedLicenseId(licenseOptions[0].id)
     setUploadStatus('idle')
     setSelectedUploadFileName('')
@@ -1660,6 +1684,11 @@ function InventreesPlanes() {
         </div>
 
         <div className="identity-card inventory-quote-card">
+          {polygonKmNotice ? (
+            <p className={`inventory-upload-message inventory-upload-message-${polygonKmNotice.type}`} role="status">
+              {polygonKmNotice.text}
+            </p>
+          ) : null}
           <div className="inventory-quote-grid">
             <label className="inventory-field">
               <span>Módulo</span>
