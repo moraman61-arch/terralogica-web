@@ -1794,12 +1794,7 @@ function InventreesPlanes() {
 
           <div className={`inventory-quote-result inventory-quote-result-${quote.status}`}>
             {!isLargeCity ? <p className="inventory-quote-title">{selectedModule.name}</p> : null}
-            {!isLargeCity ? <p className="inventory-quote-plan">{selectedPlan.type}</p> : null}
-            {quote.amountLabel && selectedLicenseId !== 'monthly-medium-large' && canShowCostEstimates ? <p className="inventory-quote-amount">{quote.amountLabel}</p> : null}
-            {quoteByUsers?.unitLabel && canShowCostEstimates ? <p className="inventory-quote-message">Precio unitario: {quoteByUsers.unitLabel}</p> : null}
-            {quoteByUsers?.totalLabel && canShowCostEstimates ? <p className="inventory-quote-message">Precio total por licencias | meses: {quoteByUsers.totalLabel}</p> : null}
-            {!isLargeCity ? <p className="inventory-quote-message">Número de licencias / usuarios: {usersCount}</p> : null}
-            {canShowCostEstimates ? <p className="inventory-quote-message">{quote.message ?? quote.detail}</p> : null}
+            {!isLargeCity && quote.message ? <p className="inventory-quote-message">{quote.message}</p> : null}
             {inventoryRecommendation && recommendedOption && recommendedQuoteByUsers && canShowCostEstimates ? (
               <div className="inventory-quote-recommendation">
                 <p>
